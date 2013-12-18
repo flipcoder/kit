@@ -5,7 +5,7 @@ Various reusable code "modules" for C++11 projects
 Classes for serializable meta-objects and property trees
 
 ## freq
-Realtime animation scheduling and waypoints
+Timelines, alarms, animation/easing, waypoints/keyframes, interpolation
 
 ## args
 Command-line parameter parsing
