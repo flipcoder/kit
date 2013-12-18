@@ -1,5 +1,6 @@
 # kit
 Various reusable code "modules" for C++11 projects
+Some parts may still be unstable, everything is a work in progress
 
 ## meta
 Classes for serializable meta-objects and property trees
