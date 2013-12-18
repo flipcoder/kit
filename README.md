@@ -7,9 +7,6 @@ Classes for serializable meta-objects and property trees
 ## freq
 Realtime animation scheduling and waypoints
 
-## daemon
-IPC-controlled daemon system
-
 ## args
 Command-line parameter parsing
 
@@ -19,7 +16,7 @@ Data structures with unused id approximation
 ## log
 Logging and Error codes
 
-# math
+## math
 some math stuff to use with glm
 
 ## common (kit.h)
