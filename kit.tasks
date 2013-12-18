@@ -1,0 +1,77 @@
+* meta
+    * fixes
+        [ ] fix serialization warnings
+    [-] switch keys to bimap for faster removal key changes
+        # may need to do some research first... (drop-in won't work)
+    [x] removal
+    [x] look up by index (different from hook)
+    [x] iteration
+    [x] updating elements, set()
+    [x] recursive merging
+    [x] merge timeouts
+    [x] incremental merging
+        [x] mostly done
+        [x] merge should be destructive when in incremental mode
+            # destruction should grabbed replace objects as null
+    [|] json serialization (recursive)
+        [x] primitive values
+        [x] nested metas
+        [x] empty/null
+            # needed for Meta::merge incremental to add null values without reallocation
+        [ ] serialize without indentation (flag?)
+        [ ] use pure flag for json hint (serialize as [] vs. {}?)
+        [.] fast type check instead of branching -- use typeid as offset ;)
+        [.] containers (vectors, maps?)
+    [x] json deserialization (recursive)
+        [x] empty/null
+    [x] traversing
+        [x] impl each() -- still needs recursion
+        [x] test each() (both flat and recursive) -- use RECURSE flag
+    [-] treespace locks
+        # update: don't actually need this anymore with weak-locking system
+        # optional read-writer lock on the entire treespace would be useful
+        # treespace isn't all the data, just the hierarchy of Metas
+        # for more complicated nested scenarios
+        # only happens if Meta is associated with a treespace
+        # another option would be to cache the root
+    [-] faster index-in-parent look-up, possibly cached
+        # update: don't actually need this anymore with weak-locking system
+        # ---
+        # ensure the parent pointer is respected in disconnect routines
+        # incorporate m_IndexOfSelfInParent in add(), set(), etc.?
+    [ ] path
+    [-] binary
+        [-] serial
+        [-] deserial
+    [|] Meta::Serializable
+        [|] serialization
+            [x] impl
+            [ ] test
+        [|] deserialization
+            [x] impl
+            [ ] test
+    [x] parent(recursion_levels=0)
+    [x] parent try() lock flags
+    [?] parent(recursion_levels=0) should use the (optional) treespace lock
+    * iteration
+        [ ] move each() to .cpp file
+        [-] each_of_type<>() -- each() with check function isn't good enough?
+        [-] any iteration -- each() is fine
+    [L] input stream errors are vague and should include filename
+
+* kit.h (util)
+    [x] lock exceptions
+
+* coroutine
+
+* log
+    * fixes
+        [x] log indents should not be are global (affect all threads)
+        [x] separate log indent track for each thread (check a thread_id?)
+        [x] errors should not output on throw, but instead by catchable (and emitable)
+        [ ] log capturing count should be in a map of thread_ids, this will
+            make capturing be thread-safe
+        [ ] copy above behavior for other non-thread-safe areas of Log
+        [ ] would be nice to have capture levels for logging
+    [ ] optional thread_ids in output
+
