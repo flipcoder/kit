@@ -5,6 +5,8 @@
 #include <vector>
 #include <memory>
 #include <stdexcept>
+#include <string>
+#include <unordered_map>
 //#include <boost/any.hpp>
 #include <cassert>
 #include <limits>
@@ -14,7 +16,7 @@
 // TODO: or how about add second callback for after the ctor (?)
 //   Let's use signals :D
 
-template<class Class, class T>
+template<class Class, class T, class ClassName=std::string>
 class Factory
 {
     private:
@@ -26,6 +28,8 @@ class Factory
             >
         > m_Classes;
 
+        std::unordered_map<ClassName, unsigned> m_ClassNames;
+
         //boost::signals2::signal<void (Class*)> m_Callback;
 
         // TODO: add this feature
@@ -36,7 +40,7 @@ class Factory
 
         // class resolution functor, best not to make this public since we want a threading policy eventually,
         // so still needs encapsulation (also, should be read-only from outside)
-        std::function<unsigned int(const T&)> m_Resolver;
+        std::function<unsigned(const T&)> m_Resolver;
 
     public:
 
@@ -48,12 +52,15 @@ class Factory
         
         //TOD: register_class should allow ID to set to instead of returning one?
         template <class YourClass>
-        unsigned int register_class(unsigned int id = std::numeric_limits<unsigned int>::max()) {
+        unsigned register_class(
+            ClassName name = ClassName(),
+            unsigned id = std::numeric_limits<unsigned>::max()
+        ) {
             // bind subclass's make_shared() to functor and store it in m_Classes list
             // TODO: exceptions?
 
             const size_t size = m_Classes.size();
-            if(id == std::numeric_limits<unsigned int>::max()) // don't care about class ID
+            if(id == std::numeric_limits<unsigned>::max()) // don't care about class ID
             {
                 m_Classes.push_back(
                     std::bind(
@@ -61,7 +68,9 @@ class Factory
                         std::placeholders::_1
                     )
                 );
-                return static_cast<unsigned int>(size);  //return index (-1 is invalid)
+                if(!name.empty())
+                    m_ClassNames[name] = static_cast<unsigned>(size);
+                return static_cast<unsigned>(size);
             }
             else
             {
@@ -71,20 +80,32 @@ class Factory
                     &std::make_shared<YourClass, const T&>,
                     std::placeholders::_1
                 );
+                if(!name.empty())
+                    m_ClassNames[name] = static_cast<unsigned>(size);
                 return id;
             }
         }
 
-        void register_resolver(std::function<unsigned int(const T&)> func) {
+        void register_resolver(std::function<unsigned(const T&)> func) {
             m_Resolver = func;
         }
 
-        std::shared_ptr<Class> create(unsigned int id, const T& args) const {
+        unsigned class_id(ClassName name) const {
+            try{
+                return m_ClassNames.at(name);
+            } catch(const std::out_of_range&) {}
+            return std::numeric_limits<unsigned>::max();
+        }
+        static unsigned invalid_id() {
+            return std::numeric_limits<unsigned>::max();
+        }
+
+        std::shared_ptr<Class> create(unsigned id, const T& args) const {
             return m_Classes.at(id)(args);
         }
 
         std::shared_ptr<Class> create(const T& args) const {
-            unsigned int id = m_Resolver(args);
+            unsigned id = m_Resolver(args);
             return create(id, args);
         }
 
@@ -107,7 +128,7 @@ class Factory
 //> Factory<Class> ::m_Classes;
 
 //template<class Class> std::function<
-//    unsigned int(boost::any&)
+//    unsigned(boost::any&)
 //> Factory<Class> ::m_Resolver;
 
 #endif
