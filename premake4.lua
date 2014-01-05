@@ -70,6 +70,8 @@ solution("kit")
         links {
             "pthread",
             --"boost_thread",
+            "SDL2",
+            "SDL2main",
             "boost_system",
             "boost_regex",
             "boost_filesystem",

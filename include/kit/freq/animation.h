@@ -6,7 +6,8 @@
 #include <vector>
 #include <deque>
 #include <cmath>
-//#include "kit/freq/freq.h"
+#include <boost/signals2.hpp>
+#include "../kit.h"
 #include "freq.h"
 
 template<class T> class Animation;
@@ -62,6 +63,8 @@ class Frame
         //Animation<T>* m_pAnimation;
         Freq::Timeline* m_pTimeline;
 
+        std::shared_ptr<boost::signals2::signal<void()>> m_pCallback;
+        
     public:
         
         Frame(
@@ -75,7 +78,8 @@ class Frame
             m_Time(time),
             m_Easing(easing),
             m_pTimeline(timeline),
-            m_Alarm(timeline)
+            m_Alarm(timeline),
+            m_pCallback(std::make_shared<boost::signals2::signal<void()>>())
             //m_pAnimation(nav)
         {
             //assert(m_pTimeline);
@@ -88,6 +92,15 @@ class Frame
         virtual ~Frame() {}
         void go() {
             m_Alarm.set(m_Time);
+        }
+
+        template<class Func>
+        void callback(Func func) {
+            m_pCallback->connect(func);
+        }
+        
+        std::shared_ptr<boost::signals2::signal<void()>> callback() {
+            return m_pCallback;
         }
 
         //virtual void logic(Freq::Time t) {
@@ -147,11 +160,14 @@ class Animation
         void process() const {
             while(!m_Frames.empty() && m_Frames.front().elapsed())
             {
-                auto& w = m_Frames.front();
-                Freq::Time excess = w.alarm().excess();
-                m_Current = m_Frames.front().value();
+                auto& frame = m_Frames.front();
+                Freq::Time excess = frame.alarm().excess();
+                m_Current = frame.value();
+                std::shared_ptr<boost::signals2::signal<void()>> cb =
+                    frame.callback();
                 m_Frames.pop_front();
                 reset(excess);
+                (*cb)();
             }
         }
         
@@ -164,6 +180,17 @@ class Animation
         Animation& operator=(T&& a){
             m_Current = a;
             return *this;
+        }
+
+        Frame<T>* first_frame() {
+            if(!m_Frames.empty())
+                return &m_Frames.front();
+            return nullptr;
+        }
+        Frame<T>* last_frame() {
+            if(!m_Frames.empty())
+                return &m_Frames.back();
+            return nullptr;
         }
 
         //Animation(
