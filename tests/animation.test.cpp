@@ -61,20 +61,25 @@ TEST_CASE("Animation","[animation]") {
 
     SECTION("interpolation")
     {
-        float start = Interpolation::in_sine(0.0f, 1.0f, 0.0f);
-        REQUIRE(floatcmp(start, 0.0f));
+        float start, end, x;
         
-        float end = Interpolation::in_sine(0.0f, 1.0f, 1.0f);
+        start = Interpolation::in_sine(0.0f, 1.0f, 0.0f);
+        REQUIRE(floatcmp(start, 0.0f));
+        end = Interpolation::in_sine(0.0f, 1.0f, 1.0f);
         REQUIRE(floatcmp(end, 1.0f));
         
-        float x = Interpolation::in_sine(0.0f, 1.0f, 0.5f);
+        start = Interpolation::out_sine(0.0f, 1.0f, 0.0f);
+        REQUIRE(floatcmp(start, 0.0f));
+        end = Interpolation::out_sine(0.0f, 1.0f, 1.0f);
+        REQUIRE(floatcmp(end, 1.0f));
+
+        x = Interpolation::in_sine(0.0f, 1.0f, 0.5f);
         REQUIRE(x > 0.29f);
         REQUIRE(x < 3.0f);
         
-        float y = Interpolation::out_sine(0.0f, 1.0f, 0.5f);
+        x = Interpolation::out_sine(0.0f, 1.0f, 0.5f);
         REQUIRE(x > 0.7f);
         REQUIRE(x < 0.71f);
-        
     }
 }
 
