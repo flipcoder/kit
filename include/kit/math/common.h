@@ -8,7 +8,7 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/transform2.hpp>
 
-#define EPSILON 0.00001
+#define K_EPSILON 0.00001
 
 #define K_PI 3.1415926535897932385
 #define K_TAU 6.2831853071795864770
@@ -39,7 +39,7 @@ inline double tan_deg(double theta){
 }
 
 inline bool floatcmp(float a, float b){
-    return(fabs(a-b) < EPSILON);
+    return(fabs(a-b) < K_EPSILON);
 }
 
 template <class T>

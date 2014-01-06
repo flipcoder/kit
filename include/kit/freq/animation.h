@@ -9,6 +9,7 @@
 #include <boost/signals2.hpp>
 #include "../kit.h"
 #include "freq.h"
+#include "../math/common.h"
 
 template<class T> class Animation;
 
@@ -16,6 +17,18 @@ namespace Interpolation {
     template<class T>
     T linear(const T& a, const T& b, float t) {
         return a + (b-a)*t;
+    }
+    template<class T>
+    T out_sine(const T& a, const T& b, float t) {
+        const float qtau = K_TAU / 4.0f;
+        const float nt = sin(t * qtau);
+        return linear(a,b,nt);
+    }
+    template<class T>
+    T in_sine(const T& a, const T& b, float t) {
+        const float qtau = K_TAU / 4.0f;
+        const float nt = 1.0f + sin((t - 1.0f) * qtau);
+        return linear(a,b,nt);
     }
 }
 

@@ -1,6 +1,7 @@
 #include <functional>
 #include <catch.hpp>
 #include "../include/kit/math/common.h"
+#include "../include/kit/log/log.h"
 #include <SDL2/SDL.h>
 #include "../include/kit/freq/animation.h"
 using namespace std;
@@ -56,6 +57,24 @@ TEST_CASE("Animation","[animation]") {
         
         // check that callback was triggered twice, one for each frame completion
         REQUIRE(callbacks == 2);
+    }
+
+    SECTION("interpolation")
+    {
+        float start = Interpolation::in_sine(0.0f, 1.0f, 0.0f);
+        REQUIRE(floatcmp(start, 0.0f));
+        
+        float end = Interpolation::in_sine(0.0f, 1.0f, 1.0f);
+        REQUIRE(floatcmp(end, 1.0f));
+        
+        float x = Interpolation::in_sine(0.0f, 1.0f, 0.5f);
+        REQUIRE(x > 0.29f);
+        REQUIRE(x < 3.0f);
+        
+        float y = Interpolation::out_sine(0.0f, 1.0f, 0.5f);
+        REQUIRE(x > 0.7f);
+        REQUIRE(x < 0.71f);
+        
     }
 }
 
