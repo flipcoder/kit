@@ -75,10 +75,10 @@ TEST_CASE("Animation","[animation]") {
 
         x = Interpolation::in_sine(0.0f, 1.0f, 0.5f);
         REQUIRE(x > 0.29f);
-        REQUIRE(x < 3.0f);
+        REQUIRE(x < 3.00f);
         
         x = Interpolation::out_sine(0.0f, 1.0f, 0.5f);
-        REQUIRE(x > 0.7f);
+        REQUIRE(x > 0.70f);
         REQUIRE(x < 0.71f);
     }
 }

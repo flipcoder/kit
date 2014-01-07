@@ -10,6 +10,8 @@
 //#include <boost/any.hpp>
 #include <cassert>
 #include <limits>
+#include "ifactory.h"
+#include "../kit.h"
 
 // TODO: add some way to have resolvers pass data into constructor instead
 //   of relying on unchangable ctor parameters (hmm...)
@@ -17,7 +19,9 @@
 //   Let's use signals :D
 
 template<class Class, class T, class ClassName=std::string>
-class Factory
+class Factory:
+    public IFactory,
+    virtual public kit::mutexed<std::recursive_mutex>
 {
     private:
 
@@ -47,6 +51,7 @@ class Factory
         virtual ~Factory() {}
 
         bool empty() const {
+            auto l = lock();
             return m_Classes.empty();
         }
         
@@ -58,6 +63,7 @@ class Factory
         ) {
             // bind subclass's make_shared() to functor and store it in m_Classes list
             // TODO: exceptions?
+            auto l = lock();
 
             const size_t size = m_Classes.size();
             if(id == std::numeric_limits<unsigned>::max()) // don't care about class ID
@@ -87,10 +93,12 @@ class Factory
         }
 
         void register_resolver(std::function<unsigned(const T&)> func) {
+            auto l = lock();
             m_Resolver = func;
         }
 
         unsigned class_id(ClassName name) const {
+            auto l = lock();
             try{
                 return m_ClassNames.at(name);
             } catch(const std::out_of_range&) {}
@@ -101,10 +109,12 @@ class Factory
         }
 
         std::shared_ptr<Class> create(unsigned id, const T& args) const {
+            auto l = lock();
             return m_Classes.at(id)(args);
         }
 
         std::shared_ptr<Class> create(const T& args) const {
+            auto l = lock();
             unsigned id = m_Resolver(args);
             return create(id, args);
         }

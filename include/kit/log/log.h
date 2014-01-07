@@ -194,20 +194,21 @@ private:
 #define WARNING(X) Log::get().warn(X)
 #define WARNINGf(X,Y) Log::get().warn((boost::format(X) % Y).str())
 #define ERROR(CODE,X) {\
-    if(ErrorCode::CODE != ErrorCode::UNKNOWN)\
+    if(ErrorCode::CODE != ErrorCode::UNKNOWN) {\
         Log::get().error(g_ErrorString[(unsigned)ErrorCode::CODE]\
-             + ": " + std::string(X));\
-    else\
+             + ": " + X);\
+    }else{\
         Log::get().error(X);\
-    \
+    }\
     throw Error(ErrorCode::CODE, X);\
 }
 #define ERRORf(CODE,X,Y) {\
     const std::string _err = (boost::format(X) % Y).str();\
-    if(ErrorCode::CODE != ErrorCode::UNKNOWN)\
+    if(ErrorCode::CODE != ErrorCode::UNKNOWN){\
         Log::get().error(g_ErrorString[(unsigned)ErrorCode::CODE] + ": " + _err);\
-    else\
+    }else{\
         Log::get().error(_err);\
+    }\
     throw Error(ErrorCode::CODE, _err);\
 }
 
