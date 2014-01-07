@@ -42,9 +42,8 @@ class Factory:
         //    size_t index
         //> m_ClassNames;
 
-        // class resolution functor, best not to make this public since we want a threading policy eventually,
-        // so still needs encapsulation (also, should be read-only from outside)
         std::function<unsigned(const T&)> m_Resolver;
+        std::function<T(const T&)> m_Transformer;
 
     public:
 
@@ -108,15 +107,29 @@ class Factory:
             return std::numeric_limits<unsigned>::max();
         }
 
-        std::shared_ptr<Class> create(unsigned id, const T& args) const {
+        std::shared_ptr<Class> create(unsigned id, T args) const {
             auto l = lock();
+            if(m_Transformer)
+                args = m_Transformer(args);
             return m_Classes.at(id)(args);
         }
 
-        std::shared_ptr<Class> create(const T& args) const {
+        std::shared_ptr<Class> create(T args) const {
             auto l = lock();
+            if(m_Transformer)
+                args = m_Transformer(args);
             unsigned id = m_Resolver(args);
             return create(id, args);
+        }
+
+        template<class Cast>
+        std::shared_ptr<Cast> create_as(const T& args) const {
+            return std::dynamic_pointer_cast<Cast>(create(args));
+        }
+        
+        void register_transformer(std::function<T(const T&)> f) {
+            auto l = lock();
+            m_Transformer=f;
         }
 
         //std::vector<std::shared_ptr<Class>> create_all(

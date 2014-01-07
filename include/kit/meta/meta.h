@@ -954,8 +954,16 @@ class Meta:
              */
         //    DETECT_KEYS = kit::bit(0)
         //};
-        void deserialize(Format fmt, const std::string& data);
-        void deserialize(Format fmt, std::istream& data);
+        void deserialize(
+            Format fmt,
+            const std::string& data,
+            const std::string& fn = std::string()
+        );
+        void deserialize(
+            Format fmt,
+            std::istream& data,
+            const std::string& fn = std::string()
+        );
         
         void deserialize() {
             auto l = lock();

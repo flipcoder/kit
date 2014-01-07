@@ -325,13 +325,13 @@ string Meta :: serialize(Meta::Format fmt) const
     return data;
 }
 
-void Meta :: deserialize(Meta::Format fmt, const string& data)
+void Meta :: deserialize(Meta::Format fmt, const string& data, const std::string& fn)
 {
     istringstream iss(data);
-    deserialize(fmt, iss);
+    deserialize(fmt, iss, fn);
 }
 
-void Meta :: deserialize(Meta::Format fmt,  istream& data)
+void Meta :: deserialize(Meta::Format fmt,  istream& data, const std::string& fn)
 {
     auto l = lock();
 
@@ -341,7 +341,10 @@ void Meta :: deserialize(Meta::Format fmt,  istream& data)
         Json::Reader reader;
 
         if(!reader.parse(data, root))
-            ERROR(PARSE, "input stream data");
+            if(fn.empty())
+                ERROR(PARSE, "Meta input stream data")
+            else
+                ERROR(PARSE, fn);
 
         deserialize_json(root);
     }
@@ -373,7 +376,7 @@ void Meta :: deserialize(const string& fn)
 
 
     // may throw, but dont catch
-    deserialize(filename_to_format(fn), file);
+    deserialize(filename_to_format(fn), file, fn);
 
     m_Filename = fn;
 }
