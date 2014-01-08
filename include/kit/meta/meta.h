@@ -27,7 +27,16 @@ class Meta:
     public kit::mutexed<std::recursive_mutex>
 {
     public:
-
+        
+        enum Serialize {
+            /*
+             * JSON data makes a distinction between maps and arrays.
+             * Since Meta does not, we can store the kv elements as a
+             * separate map {key: value}.
+             */
+            STORE_KEY = kit::bit(0),
+            MINIMIZE = kit::bit(1)
+        };
         //struct Iterator
         //{
         //    Iterator(Meta* m):
@@ -164,14 +173,6 @@ class Meta:
             Element(Element&& e) = default;
             Element& operator=(const Element& e) = default;
 
-            enum SerializeFlag {
-                /*
-                 * JSON data makes a distinction between maps and arrays.
-                 * Since Meta does not, we can store the kv elements as a
-                 * separate map {key: value}.
-                 */
-                STORE_KEY = kit::bit(0)
-            };
             Json::Value serialize_json(unsigned flags = 0) const;
             void deserialize_json(const Json::Value&);
 
@@ -340,8 +341,8 @@ class Meta:
         enum class Format {
             UNKNOWN=0,
             HUMAN,
-            JSON,
-            BSON
+            JSON
+            //BSON
         };
 
         enum Which {
@@ -940,9 +941,9 @@ class Meta:
 
         // TODO: make a value factory (store it in typepalette?)
 
-        std::string serialize(Format fmt) const;
-        void serialize(const std::string& fn) const;
-        void serialize() const {
+        std::string serialize(Format fmt, unsigned flags = 0) const;
+        void serialize(const std::string& fn, unsigned flags = 0) const;
+        void serialize(unsigned flags = 0) const {
             auto l = lock();
             serialize(m_Filename);
         }
@@ -1093,7 +1094,7 @@ class Meta:
         //std::unordered_map<unsigned, std::shared_ptr<unsigned>> m_Hooks;
         std::vector<Element> m_Elements; // elements also contain keys
 
-        std::shared_ptr<boost::shared_mutex> m_Treespace;
+        //std::shared_ptr<boost::shared_mutex> m_Treespace;
 
         //void unsafe_merge(Meta&& t, unsigned flags);
 

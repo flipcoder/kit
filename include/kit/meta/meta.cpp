@@ -204,7 +204,7 @@ Json::Value Meta::Element::serialize_json(
     // This is the best way to deal with an array that contains
     // key-values but isn't purely a map
     // This allows us to preserve ordering, and merge-on-deserialize
-    if((flags & SerializeFlag::STORE_KEY) && !key.empty())
+    if((flags & STORE_KEY) && !key.empty())
     {
         Json::Value tup;
         //tup.append(key);
@@ -242,7 +242,7 @@ void Meta :: serialize_json(Json::Value& v) const
         {
             try{
                 //if(e.key.empty())
-                v.append(e.serialize_json(Element::SerializeFlag::STORE_KEY));
+                v.append(e.serialize_json(STORE_KEY));
                 //else
                 //    keys[e.key] = e.serialize_json();
             }catch(...){
@@ -302,7 +302,7 @@ void Meta :: deserialize_json(
     }
 }
 
-string Meta :: serialize(Meta::Format fmt) const
+string Meta :: serialize(Meta::Format fmt, unsigned flags) const
 {
     auto l = lock();
 
@@ -311,12 +311,15 @@ string Meta :: serialize(Meta::Format fmt) const
     {
         Json::Value root;
         serialize_json(root);
-        return root.toStyledString();
+        if(flags & MINIMIZE)
+            return root.asString();
+        else
+            return root.toStyledString();
     }
-    else if (fmt == Format::BSON)
-    {
+    //else if (fmt == Format::BSON)
+    //{
         
-    }
+    //}
     else if (fmt == Format::HUMAN)
         assert(false);
     else
@@ -353,10 +356,10 @@ void Meta :: deserialize(Meta::Format fmt,  istream& data, const std::string& fn
         // human deserialization unsupported
         assert(false);
     }
-    else if (fmt == Format::BSON)
-    {
+    //else if (fmt == Format::BSON)
+    //{
         
-    }
+    //}
     else
     {
         WARNING("Unknown serialization format");
@@ -381,7 +384,7 @@ void Meta :: deserialize(const string& fn)
     m_Filename = fn;
 }
 
-void Meta :: serialize(const string& fn) const
+void Meta :: serialize(const string& fn, unsigned flags) const
 {
     auto l = lock();
 
@@ -396,7 +399,7 @@ void Meta :: serialize(const string& fn) const
     if(!file.is_open() || file.bad())
         ERROR(WRITE, fn);
 
-    file << serialize(filename_to_format(fn));
+    file << serialize(filename_to_format(fn), flags);
 }
 
 tuple<shared_ptr<Meta>, bool> Meta :: ensure_path(

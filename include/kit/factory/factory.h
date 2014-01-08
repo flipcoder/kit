@@ -132,6 +132,10 @@ class Factory:
             m_Transformer=f;
         }
 
+        T transform(const T& t){
+            return m_Transformer(t);
+        }
+
         //std::vector<std::shared_ptr<Class>> create_all(
         //    const std::vector<T>& object_list
         //) const {
