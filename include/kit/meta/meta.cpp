@@ -343,11 +343,13 @@ void Meta :: deserialize(Meta::Format fmt,  istream& data, const std::string& fn
         Json::Value root;
         Json::Reader reader;
 
-        if(!reader.parse(data, root))
-            if(fn.empty())
+        if(!reader.parse(data, root)) {
+            if(fn.empty()) {
                 ERROR(PARSE, "Meta input stream data")
-            else
+            } else {
                 ERROR(PARSE, fn);
+            }
+        }
 
         deserialize_json(root);
     }

@@ -887,6 +887,8 @@ class Meta:
         /*
          * Get the full key path of the current node
          * If this is a virtual fs, this is the abs path from the root
+         *
+         * NOT YET IMPLEMENTED
          */
         std::vector<std::string> path(
             unsigned lock_flags = 0
@@ -919,7 +921,7 @@ class Meta:
 
             //std::vector<std::string> abs_path;
             //return parent()->path();
-            //return std::vector<std::string>();
+            return std::vector<std::string>();
         }
 
         /*
