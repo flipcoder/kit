@@ -32,9 +32,9 @@ namespace Interpolation {
     }
 }
 
-#define INTERPOLATE(FUNC)\
+#define INTERPOLATE(T, FUNC)\
     std::bind(\
-        &Interpolation::FUNC<float>,\
+        &Interpolation::FUNC<T>,\
         placeholders::_1,\
         placeholders::_2,\
         placeholders::_3\
@@ -187,6 +187,9 @@ class Animation
     public:
     
         Animation() = default;
+        Animation(Freq::Timeline* tl):
+            m_pTimeline(tl)
+        {}
         //Animation(T&& current):
         //    m_Current(current)
         //{}

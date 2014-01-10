@@ -844,7 +844,7 @@ class Meta:
         }
         void pop_front() {
             auto l = lock();
-            remove(0);
+            assert(false);
         }
 
         // May throw out_of_range
