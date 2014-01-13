@@ -123,7 +123,7 @@ class Meta:
                 }
                 else
                 {
-                    WARNINGf("unserializable type: %s", typeid(T).name());
+                    //WARNINGf("unserializable type: %s", typeid(T).name());
                     id = ID::USER;
                 }
             }
@@ -569,6 +569,19 @@ class Meta:
             return boost::any_cast<T>(m_Elements.at(idx).value);
         }
 
+        std::shared_ptr<Meta> meta(const std::string& key) {
+            auto l = lock();
+            return boost::any_cast<std::shared_ptr<Meta>>(
+                m_Elements.at(m_Keys.at(key)).value
+            );
+        }
+        std::shared_ptr<const Meta> meta(const std::string& key) const {
+            auto l = lock();
+            return boost::any_cast<std::shared_ptr<Meta>>(
+                m_Elements.at(m_Keys.at(key)).value
+            );
+        }
+        
         /*
          * May throw bad_any_cast or out_of_range
          */
