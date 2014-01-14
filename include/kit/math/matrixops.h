@@ -9,7 +9,7 @@
 
 // extra Matrix functions that aren't easily provided by glm
 
-namespace Matrix{
+namespace Matrix {
 
     inline float index(glm::mat4& m, unsigned int idx) {
         float* f = glm::value_ptr(m);
@@ -20,6 +20,18 @@ namespace Matrix{
         float* f = glm::value_ptr(m);
         f[1]=f[2]=f[4]=f[5]=f[8]=f[9]=0.0f;
         f[0]=f[5]=f[10]=1.0f;
+    }
+    inline glm::mat3 orientation(const glm::mat4& m) {
+        glm::mat3 r;
+        float* rf = glm::value_ptr(r);
+        const float* mf = glm::value_ptr(m);
+        for(unsigned i=0;i<=2;++i)
+            rf[i] = mf[i];
+        for(unsigned i=4;i<=6;++i)
+            rf[i-1] = mf[i];
+        for(unsigned i=8;i<=10;++i)
+            rf[i-2] = mf[i];
+        return r;
     }
     inline glm::vec3 translation(const glm::mat4& m){
         const float* f = glm::value_ptr(m);
