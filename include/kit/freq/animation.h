@@ -150,9 +150,16 @@ class Frame
         Freq::Timeline* timeline() { return m_pTimeline; }
 };
 
+
+class IAnimation
+{
+    public:
+        virtual ~IAnimation() {}
+};
+
 template<class T>
-class Animation
-    //public IRealtime
+class Animation:
+    public IAnimation
 {
     private:
 
@@ -197,6 +204,7 @@ class Animation
             m_Current = a;
             return *this;
         }
+        virtual ~Animation() {}
 
         Frame<T>* first_frame() {
             if(!m_Frames.empty())
@@ -231,8 +239,6 @@ class Animation
         ) {
             m_Current=current;
         }
-
-        virtual ~Animation() {}
 
         operator T() const {
             return get();

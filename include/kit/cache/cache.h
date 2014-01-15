@@ -48,6 +48,10 @@ class Cache:
                 arg = m_Transformer(arg);
             return cache_raw(arg);
         }
+
+        //template<class Cast>
+        //virtual void cache(const std::shared_ptr<Cast>& blah) {
+        //}
         
         template<class Cast>
         std::shared_ptr<Cast> cache_as(T arg) {
@@ -85,6 +89,9 @@ class Cache:
             m_Resources.clear();
         }
 
+        T transform(const T& t){
+            return m_Transformer(t);
+        }
         void register_transformer(std::function<T(const T&)> f) {
             auto l = lock();
             m_Transformer=f;
