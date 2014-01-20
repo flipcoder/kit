@@ -15,6 +15,8 @@ class Args
 {
     public:
         Args() = default;
+        Args(const Args& args) = default;
+        Args& operator=(const Args& args) = default;
 
         Args(const std::vector<std::string>& args):
             m_Args(args)

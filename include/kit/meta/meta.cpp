@@ -334,7 +334,7 @@ void Meta :: deserialize(Meta::Format fmt, const string& data, const std::string
     deserialize(fmt, iss, fn);
 }
 
-void Meta :: deserialize(Meta::Format fmt,  istream& data, const std::string& fn)
+void Meta :: deserialize(Meta::Format fmt, istream& data, const std::string& fn)
 {
     auto l = lock();
 

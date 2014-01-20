@@ -5,7 +5,6 @@
 #include <string>
 #include <sstream>
 #include <glm/glm.hpp>
-#include <glm/gtc/swizzle.hpp>
 
 // extra Matrix functions that aren't easily provided by glm
 
@@ -133,11 +132,13 @@ namespace Matrix {
     
     inline glm::vec3 mult(const glm::vec3& v, const glm::mat4& m)
     {
-        return glm::swizzle<glm::X, glm::Y, glm::Z>(glm::vec4(v, 1.0f) * m);
+        auto r = glm::vec4(v, 1.0f) * m;
+        return glm::vec3(r.x, r.y, r.z);
     }
     inline glm::vec3 mult(const glm::mat4& m, const glm::vec3& v)
     {
-        return glm::swizzle<glm::X, glm::Y, glm::Z>(m * glm::vec4(v, 1.0f));
+        auto r = m * glm::vec4(v, 1.0f);
+        return glm::vec3(r.x,r.y,r.z);
     }
     
     inline glm::mat4 from_array(const float* f)
