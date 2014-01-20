@@ -19,26 +19,24 @@ void Log::write(const std::string& s, Log::Message::eLoggingLevel lev)
     //m_cbLog.push_back(Message(s,lev));
 
     auto l = lock();
+    auto& th = this_log();
 
-
-    if(!m_bSilence || m_bCapture)
+    if(!th.m_bSilence || th.m_bCapture)
     {
         ostringstream line;
         if(lev == Message::LL_ERROR)
         {
-            unsigned tabs = indents();
-            for(unsigned i=0;i<tabs;++i)
+            for(unsigned i=0;i<th.m_Indents;++i)
                 line << "  ";
             line << "[ERROR] " << s;
-            if(!m_bSilence)
+            if(!th.m_bSilence)
                 cerr << line.str() << endl;
-            if(m_bCapture)
-                m_Captured.push_back(line.str());
+            if(th.m_bCapture)
+                th.m_Captured.push_back(line.str());
         }
         else
         {
-            unsigned tabs = indents();
-            for(unsigned i=0;i<tabs;++i)
+            for(unsigned i=0;i<th.m_Indents;++i)
                 line << "  ";
             if(lev == Message::LL_WARNING)
                 line << "[WARNING] ";

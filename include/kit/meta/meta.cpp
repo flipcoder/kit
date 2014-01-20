@@ -7,7 +7,7 @@ using namespace std;
 Meta :: Meta(const string& fn):
     m_Filename(fn)
 {
-    //deserialize();
+    deserialize();
 }
 
 Meta :: Meta(Meta::Format fmt, const std::string& data)

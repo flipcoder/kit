@@ -401,7 +401,7 @@ class Meta:
          */
         void parent(const std::shared_ptr<Meta>& p) {
             auto l = lock();
-            m_Parent = std::weak_ptr<Meta>(p);
+            m_pParent = p.get();
         }
 
         // TODO: Treespace lock is important for recursion here
@@ -422,17 +422,25 @@ class Meta:
 
             if(!recursion)
             {
-                //auto p = m_Parent.lock();
+                //auto p = m_pParent.lock();
                 //return p ? p : shared_from_this();
-                return m_Parent.lock(); // allow null for this case
+                //return m_pParent.lock(); // allow null for this case
+                return m_pParent ? m_pParent->shared() : std::shared_ptr<Meta>();
             }
             else
             {
-                auto p = m_Parent.lock();
-                return p ?
-                    p->parent(lock_flags, recursion) :
+                //auto p = m_pParent.lock();
+                return m_pParent ?
+                    m_pParent->parent(lock_flags, recursion) :
                     shared_from_this();
             }
+        }
+
+        std::shared_ptr<Meta> shared() {
+            return shared_from_this();
+        }
+        std::shared_ptr<const Meta> shared() const {
+            return shared_from_this();
         }
 
         /*
@@ -1125,7 +1133,8 @@ class Meta:
         // may be empty / incorrect, search parent to resolve
         //unsigned m_IndexOfSelfInParent = std::numeric_limits<unsigned>::max();
 
-        std::weak_ptr<Meta> m_Parent;
+        //std::weak_ptr<Meta> m_pParent;
+        Meta* m_pParent = nullptr;
 
         bool m_bCallbacks = true;
 

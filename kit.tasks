@@ -69,9 +69,9 @@
         [x] log indents should not be are global (affect all threads)
         [x] separate log indent track for each thread (check a thread_id?)
         [x] errors should not output on throw, but instead by catchable (and emitable)
-        [ ] log capturing count should be in a map of thread_ids, this will
+        [x] log capturing count should be in a map of thread_ids, this will
             make capturing be thread-safe
-        [ ] copy above behavior for other non-thread-safe areas of Log
-        [ ] would be nice to have capture levels for logging
-    [ ] optional thread_ids in output
+        [x] copy above behavior for other non-thread-safe areas of Log
+        [x] would be nice to have capture levels for logging
+    [ ] optional thread_ids in output (for errors, especially)
 
