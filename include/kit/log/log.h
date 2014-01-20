@@ -165,15 +165,16 @@ public:
         return this_log().m_bSilence;
     }
 
-    unsigned num_threads() const {
-        auto l = lock();
-        return m_Threads.size();
-    }
+    //unsigned num_threads() const {
+    //    auto l = lock();
+    //    return m_Threads.size();
+    //}
 
-    void clear_threads() {
-        auto l = lock();
-        m_Threads.clear();
-    }
+    //void clear_threads() {
+    //    auto l = lock();
+    //    m_Threads.clear();
+    //}
+    
     void clear_indents() {
         auto l = lock();
         this_log().m_Indents = 0;
@@ -188,27 +189,30 @@ public:
     //    return "";
     //}
     
-    LogThread& this_log() {
-        auto l = lock();
-        return m_Threads[std::this_thread::get_id()];
-    }
-    const LogThread this_log() const {
-        auto l = lock();
-        return m_Threads.at(std::this_thread::get_id());
+    LogThread& this_log() const {
+        #ifdef USE_THREAD_LOCAL
+            //thread_local LogThread th;
+            //return th;
+        #else
+            auto l = lock();
+            return m_Threads[std::this_thread::get_id()];
+        #endif
     }
 
 private:
     
     void optimize() {
-        //auto l = lock(); // already locked
-        for(auto itr = m_Threads.begin();
-            itr != m_Threads.end();)
-        {
-            if(itr->second.empty())
-                itr = m_Threads.erase(itr);
-            else
-                ++itr;
-        }
+        #ifndef USE_THREAD_LOCAL
+            //auto l = lock(); // already locked
+            for(auto itr = m_Threads.begin();
+                itr != m_Threads.end();)
+            {
+                if(itr->second.empty())
+                    itr = m_Threads.erase(itr);
+                else
+                    ++itr;
+            }
+        #endif
     }
 
     //boost::circular_buffer<Message> m_cbLog;
@@ -221,7 +225,9 @@ private:
     //unsigned m_Indent = 0;
 
     //std::unordered_map<std::thread::id, unsigned> m_Indents;
-    std::unordered_map<std::thread::id, LogThread> m_Threads;
+    #ifndef USE_THREAD_LOCAL
+        mutable std::unordered_map<std::thread::id, LogThread> m_Threads;
+    #endif
 };
 
 #define LOG(X) Log::get().write(X)
