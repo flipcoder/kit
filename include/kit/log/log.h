@@ -144,8 +144,17 @@ public:
             optimize();
     }
     unsigned indents() const {
-        auto l = lock();
-        return this_log().m_Indents;
+        #ifdef USE_THREAD_LOCAL
+            assert(false);
+            return 0;
+        #else
+            auto l = lock();
+            auto itr = m_Threads.find(std::this_thread::get_id());
+            if(itr != m_Threads.end())
+                return itr->second.m_Indents;
+            else
+                return 0;
+        #endif
     }
 
     void write(const std::string& s, Message::eLoggingLevel lev = Message::LL_INFO);
@@ -165,10 +174,13 @@ public:
         return this_log().m_bSilence;
     }
 
-    //unsigned num_threads() const {
-    //    auto l = lock();
-    //    return m_Threads.size();
-    //}
+    unsigned num_threads() const {
+        #ifndef USE_THREAD_LOCAL
+            auto l = lock();
+            return m_Threads.size();
+        #endif
+        return 0;
+    }
 
     //void clear_threads() {
     //    auto l = lock();

@@ -109,7 +109,8 @@ solution("kit")
         --    "src/tests/*"
         --}
         configuration { "gmake" }
-            buildoptions { "-std=c++11",  "-pedantic", "-Wall", "-Wextra" }
+            --buildoptions { "-std=c++11",  "-pedantic", "-Wall", "-Wextra" }
+            buildoptions { "-std=c++11" }
             configuration { "macosx" }
                 buildoptions { "-U__STRICT_ANSI__", "-stdlib=libc++" }
                 linkoptions { "-stdlib=libc++" }

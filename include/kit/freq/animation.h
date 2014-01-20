@@ -32,9 +32,9 @@ namespace Interpolation {
     }
 }
 
-#define INTERPOLATE(T, FUNC)\
+#define INTERPOLATE(FUNC)\
     std::bind(\
-        &Interpolation::FUNC<T>,\
+        &Interpolation::FUNC,\
         placeholders::_1,\
         placeholders::_2,\
         placeholders::_3\

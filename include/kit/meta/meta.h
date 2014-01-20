@@ -865,7 +865,9 @@ class Meta:
         }
         void pop_front() {
             auto l = lock();
-            assert(false);
+            if(m_Elements.empty())
+                throw std::out_of_range("meta empty");
+            m_Elements.erase(m_Elements.begin());
         }
 
         // May throw out_of_range

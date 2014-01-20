@@ -379,7 +379,6 @@ void Meta :: deserialize(const string& fn)
     if(!file.good())
         ERROR(READ, fn);
 
-
     // may throw, but dont catch
     deserialize(filename_to_format(fn), file, fn);
 

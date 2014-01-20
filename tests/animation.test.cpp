@@ -24,7 +24,7 @@ TEST_CASE("Animation","[animation]") {
         auto frame = Frame<float>(
             1.0f,
             Freq::Time::seconds(1),
-            INTERPOLATE(linear)
+            INTERPOLATE(linear<float>)
         );
         frame.callback(callback_counter);
         anim.frame(frame);
@@ -34,7 +34,7 @@ TEST_CASE("Animation","[animation]") {
         anim.frame(Frame<float>(
             10.0f,
             Freq::Time::seconds(1),
-            INTERPOLATE(linear)
+            INTERPOLATE(linear<float>)
         ));
         
         // add callback through anim's current frame ptr

@@ -12,9 +12,9 @@ TEST_CASE("Log","[log]") {
 
             auto t = std::thread([]{
                 REQUIRE(Log::get().indents() == 0);
-                REQUIRE(Log::get().num_indented_threads() == 1);
+                REQUIRE(Log::get().num_threads() == 1);
                 Log::get().push_indent();
-                REQUIRE(Log::get().num_indented_threads() == 2);
+                REQUIRE(Log::get().num_threads() == 2);
                 Log::get().push_indent();
                 REQUIRE(Log::get().indents() == 2);
                 Log::get().pop_indent();
@@ -23,7 +23,7 @@ TEST_CASE("Log","[log]") {
             });
 
             REQUIRE(Log::get().indents() == 1);
-            REQUIRE(Log::get().num_indented_threads() == 1);
+            REQUIRE(Log::get().num_threads() == 1);
             t.join();
 
             Log::Indent b;
@@ -38,6 +38,6 @@ TEST_CASE("Log","[log]") {
         REQUIRE(Log::get().indents() == 0);
 
         // make sure all indent counts for threads auto-cleared
-        REQUIRE(Log::get().num_indented_threads() == 0);
+        REQUIRE(Log::get().num_threads() == 0);
     }
 }
