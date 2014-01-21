@@ -126,6 +126,10 @@ class Factory:
         std::shared_ptr<Cast> create_as(const T& args) const {
             return std::dynamic_pointer_cast<Cast>(create(args));
         }
+        template<class Cast>
+        std::shared_ptr<Cast> create_as(unsigned id, const T& args) const {
+            return std::dynamic_pointer_cast<Cast>(create(id, args));
+        }
         
         void register_transformer(std::function<T(const T&)> f) {
             auto l = lock();
