@@ -159,7 +159,7 @@ public:
 
     void write(const std::string& s, Message::eLoggingLevel lev = Message::LL_INFO);
     void warn(const std::string&s) { write(s,Message::LL_WARNING); }
-    void error(const std::string&s) {write(s,Message::LL_ERROR);}
+    void error(const std::string& s) {write(s,Message::LL_ERROR);}
 
     //unsigned int size() const { return m_cbLog.size(); }
     //bool empty() const { return (size()==0); }
@@ -242,27 +242,61 @@ private:
     #endif
 };
 
-#define LOG(X) Log::get().write(X)
-#define LOGf(X,Y) Log::get().write((boost::format(X) % Y).str())
-#define WARNING(X) Log::get().warn(X)
-#define WARNINGf(X,Y) Log::get().warn((boost::format(X) % Y).str())
+#ifdef DEBUG
+    #define LOG_FORMAT boost::format("(%s:%s): %s")
+    #define ERR_FORMAT boost::format("%s (%s:%s): %s")
+    #define DEBUG_OPTIONAL(X) X
+#else
+    #define LOG_FORMAT boost::format("%s")
+    #define ERR_FORMAT boost::format("%s: %s")
+    #define DEBUG_OPTIONAL(X)
+#endif
+
+#define LOG(X) {\
+    auto msg = (LOG_FORMAT %\
+        DEBUG_OPTIONAL(__FILE__ % __LINE__ %)\
+        std::string(X)\
+    ).str();\
+    Log::get().write(msg);\
+}
+#define LOGf(X,Y) {\
+    auto msg = (LOG_FORMAT  %\
+        DEBUG_OPTIONAL(__FILE__ % __LINE__ %)\
+        (boost::format(X) % Y).str()\
+    ).str();\
+    Log::get().write(msg);\
+}
+#define WARNING(X) {\
+    auto msg = (LOG_FORMAT %\
+        DEBUG_OPTIONAL(__FILE__ % __LINE__ %)\
+        std::string(X)\
+    ).str();\
+    Log::get().warn(msg);\
+}
+#define WARNINGf(X,Y) {\
+    auto msg = (LOG_FORMAT %\
+        DEBUG_OPTIONAL(__FILE__ % __LINE__ %)\
+        (boost::format(X) % Y).str()\
+    ).str();\
+    Log::get().warn(msg);\
+}
 #define ERROR(CODE,X) {\
-    Log::get().error((boost::format("%s (%s:%s): %s") %\
+    auto msg = (ERR_FORMAT %\
         g_ErrorString[(unsigned)ErrorCode::CODE] %\
-        __FILE__ %\
-        __LINE__ %\
-        (X)\
-    ).str());\
-    throw Error(ErrorCode::CODE, X);\
+        DEBUG_OPTIONAL(__FILE__ % __LINE__ %)\
+        std::string(X)\
+    ).str();\
+    Log::get().error(msg);\
+    throw Error(ErrorCode::CODE, msg);\
 }
 #define ERRORf(CODE,X,Y) {\
-    Log::get().error((boost::format("%s (%s:%s): %s") %\
+    auto msg = (ERR_FORMAT %\
         g_ErrorString[(unsigned)ErrorCode::CODE] %\
-        __FILE__ %\
-        __LINE__ %\
+        DEBUG_OPTIONAL(__FILE__ % __LINE__ %)\
         (boost::format(X) % Y).str()\
-    ).str());\
-    throw Error(ErrorCode::CODE, X);\
+    ).str();\
+    Log::get().error(msg);\
+    throw Error(ErrorCode::CODE, msg);\
 }
             
 #endif
