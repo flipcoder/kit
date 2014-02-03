@@ -494,6 +494,8 @@ class Meta:
          * TODO: timeout callback if we hit a lock
          * TODO: incremental behavior (merge only what you can without locking)
          *  so you can loop this until `t` is empty)
+         *
+         *  For throw-on-conflict behavior, throw inside of `which`
          */
         void merge(
             const std::shared_ptr<Meta>& t,
@@ -1140,8 +1142,7 @@ class Meta:
 
         bool m_bCallbacks = true;
 
-        // TODO: need to store a file hash(?) (if was associated with file)
-        //  for syncing
+        //bool m_bQuiet = false; // don't throw on file not found
 };
 
 #endif

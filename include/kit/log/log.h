@@ -46,15 +46,18 @@ public:
     {
     public:
         Capturer(){
-            auto l = Log::get().lock();
+            //auto l = Log::get().lock();
             m_bOldValue = Log::get().capture();
             Log::get().capture(true);
         }
         ~Capturer(){
-            auto l = Log::get().lock();
+            //auto l = Log::get().lock();
             Log::get().capture(m_bOldValue);
             if(!m_bOldValue)
                 Log::get().emit();
+        }
+        std::string emit() const {
+            return Log::get().emit();
         }
     private:
         bool m_bOldValue;
