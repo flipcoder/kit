@@ -475,6 +475,15 @@ namespace kit
             {}
     };
 
+    class interupt:
+        public std::runtime_error
+    {
+        public:
+            interupt():
+                std::runtime_error("interupt")
+            {}
+    };
+
     class null_ptr_exception:
         public std::runtime_error
     {
