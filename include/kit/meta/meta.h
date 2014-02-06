@@ -1,5 +1,5 @@
-#ifndef _META_H
-#define _META_H
+#ifndef _META_H_59ROLBDK
+#define _META_H_59ROLBDK
 
 #include <boost/signals2.hpp>
 #include <boost/any.hpp>
@@ -487,6 +487,10 @@ class Meta:
         typedef std::function<boost::variant<Which, Meta::Element>(
             const Meta::Element&, const Meta::Element&
         )> WhichCallback_t;
+        
+        typedef std::function<void(
+            const std::shared_ptr<Meta>, const Meta::Element&
+        )> VisitorCallback_t;
 
         /*
          * Merge a meta into this one, recursively
@@ -501,7 +505,8 @@ class Meta:
             const std::shared_ptr<Meta>& t,
             WhichCallback_t which,
             unsigned flags = (unsigned)MergeFlags::DEFAULTS, // MergeFlags
-            TimeoutCallback_t timeout = TimeoutCallback_t()
+            TimeoutCallback_t timeout = TimeoutCallback_t(),
+            VisitorCallback_t visit = VisitorCallback_t()
         );
 
         void merge(

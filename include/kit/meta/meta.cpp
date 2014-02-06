@@ -462,7 +462,8 @@ void Meta :: merge(
     const shared_ptr<Meta>& t,
     WhichCallback_t which,
     unsigned flags,
-    TimeoutCallback_t timeout
+    TimeoutCallback_t timeout,
+    VisitorCallback_t visit
 ){
     assert(t);
 
@@ -496,26 +497,11 @@ void Meta :: merge(
         }
     }
 
-    //unsafe_merge(t, flags);
-
-    // not all elements have to have keys, so use Elements size
-
-    //for(auto&& k: t.keys_ref())
-    //    k.second += keys_offset;
-
-    //// TODO: this will not do overwrites
-    //m_Keys.insert(
-    //    t.keys_ref().begin(),
-    //    t.keys_ref().end()
-    //);
-
-    //unsigned keys_offset = m_Elements.size();
-
-    //for(const auto& k: m_Keys)
-    //    m_Keys[k.first] = k.second + keys_offset;
-
     for(auto&& e: t->elements_ref())
     {
+        if(visit)
+            visit(t, e);
+        
         if(e.key.empty())
             m_Elements.push_back(e);
         else if(m_Keys.find(e.key)==m_Keys.end())
