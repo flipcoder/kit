@@ -497,7 +497,7 @@ void Meta :: merge(
         }
     }
 
-    for(auto&& e: t->elements_ref())
+    for(auto& e: t->elements_ref())
     {
         if(visit)
             visit(t, e);

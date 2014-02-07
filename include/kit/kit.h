@@ -596,7 +596,7 @@ namespace kit
     template <class Time>
     bool retry(int count, Time delay, std::function<bool()> func)
     {
-        for(int i=0; i<count; i==-1 || ++i)
+        for(int i=0; i<count || count<0; count<0 || ++i)
         {
             if(func())
                 return true;
