@@ -622,16 +622,18 @@ class Meta:
         T at(const std::string& key, T def) {
             try{
                 return at<T>(key);
-            }catch(const std::out_of_range&){}
-            //}catch(...){} // allow bad type throwing
+            }catch(const std::out_of_range&){
+            }catch(const boost::bad_any_cast&){
+            }
             return def;
         }
         template<class T>
         T at(const std::string& key, T def) const {
             try{
                 return at<T>(key);
-            }catch(const std::out_of_range&){}
-            //}catch(...){} // allow bad type throwing
+            }catch(const std::out_of_range&){
+            }catch(const boost::bad_any_cast&){
+            }
             return def;
         }
         /*
