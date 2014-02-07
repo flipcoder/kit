@@ -19,11 +19,11 @@ Meta::Loop Meta::each(
     std::function<Loop(
         const std::shared_ptr<Meta>&, Element&, unsigned
     )> func,
+    unsigned flags, // use EachFlag enum
     std::deque<std::tuple<
         std::shared_ptr<Meta>,
         std::unique_lock<std::recursive_mutex>
     >>* metastack,
-    unsigned flags, // use EachFlag enum
     unsigned level
 ){
     auto l = lock();
@@ -90,8 +90,8 @@ Meta::Loop Meta::each(
                 status =
                     mp->each(
                         func,
-                        metastack,
                         flags,
+                        metastack,
                         level+1
                     );
 

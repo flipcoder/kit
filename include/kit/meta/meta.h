@@ -329,12 +329,11 @@ class Meta:
             std::function<Loop(
                 const std::shared_ptr<Meta>&, Element&, unsigned
             )> func,
-            //Func func,
+            unsigned flags = 0, // use EachFlag enum
             std::deque<std::tuple<
                 std::shared_ptr<Meta>,
                 std::unique_lock<std::recursive_mutex>
             >>* metastack = nullptr,
-            unsigned flags = 0, // use EachFlag enum
             unsigned level = 0
         );
         
