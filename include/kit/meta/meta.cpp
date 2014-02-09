@@ -312,7 +312,10 @@ string Meta :: serialize(Meta::Format fmt, unsigned flags) const
         Json::Value root;
         serialize_json(root);
         if(flags & MINIMIZE)
-            return root.asString();
+        {
+            Json::FastWriter writer;
+            return writer.write(root);
+        }
         else
             return root.toStyledString();
     }

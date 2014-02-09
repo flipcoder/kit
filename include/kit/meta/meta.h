@@ -978,7 +978,7 @@ class Meta:
         void serialize(const std::string& fn, unsigned flags = 0) const;
         void serialize(unsigned flags = 0) const {
             auto l = lock();
-            serialize(m_Filename);
+            serialize(m_Filename, flags);
         }
 
         // use enforce flags instead

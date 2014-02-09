@@ -212,6 +212,15 @@ class Args
         //}
         //unsigned find(std::string s) {}
 
+        typedef std::vector<std::string>::iterator iterator;
+        iterator begin() { return m_Args.begin(); }
+        iterator end() { return m_Args.end(); }
+        typedef std::vector<std::string>::const_iterator const_iterator;
+        const_iterator begin() const { return m_Args.begin(); }
+        const_iterator end() const { return m_Args.end(); }
+        const_iterator cbegin() const { return m_Args.begin(); }
+        const_iterator cend() const { return m_Args.end(); }
+        
     private:
 
         void analyze();
