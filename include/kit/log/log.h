@@ -88,20 +88,26 @@ public:
         std::string m_ExitMsg;
         bool m_bPushed = false;
     public:
-        Indent() = default;
+        Indent(std::nullptr_t) {}
         Indent(
-            const std::string& msg,
+            const std::string& msg = std::string(),
             const std::string& exit_msg = std::string()
         ):
             m_ExitMsg(exit_msg)
         {
             push(msg);
         }
-        Indent& operator=(Indent&& rhs) = default;
+        Indent& operator=(Indent&& rhs) {
+            m_ExitMsg = std::move(rhs.m_ExitMsg);
+            m_bPushed = rhs.m_bPushed;
+            rhs.m_bPushed = false;
+            return *this;
+        }
         Indent(Indent&& rhs):
             m_ExitMsg(std::move(rhs.m_ExitMsg)),
             m_bPushed(std::move(rhs.m_bPushed))
         {
+            rhs.m_bPushed = false;
         }
         operator bool() const {
             return m_bPushed;
@@ -109,7 +115,8 @@ public:
         void push(std::string msg) {
             if(!m_bPushed) {
                 m_bPushed = true;
-                Log::get().write(std::move(msg));
+                if(!msg.empty())
+                    Log::get().write(std::move(msg));
                 Log::get().push_indent();
             }
         }
@@ -124,7 +131,8 @@ public:
             if(m_bPushed) {
                 m_bPushed = false;
                 Log::get().pop_indent();
-                Log::get().write(move(m_ExitMsg));
+                if(!m_ExitMsg.empty())
+                    Log::get().write(move(m_ExitMsg));
             }
         }
         unsigned level() const {
@@ -337,9 +345,10 @@ private:
 #ifdef DEBUG
     #define _()\
         Log::Indent _li(\
-            std::string("[TRACE] ")+std::string(BOOST_CURRENT_FUNCTION)+std::string(" { "),\
-            std::string("[TRACE] } ")+BOOST_CURRENT_FUNCTION\
-        );
+            std::string(BOOST_CURRENT_FUNCTION)+" {",\
+            "}"\
+        );\
+        Log::Indent _li2;
 #else
     #define _()
 #endif

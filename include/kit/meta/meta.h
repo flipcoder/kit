@@ -740,7 +740,9 @@ class Meta:
                 // key exists?
                 if((itr = m_Keys.find(key)) != m_Keys.end()) {
                     // TODO: if dynamic typing is off, check type compatibility
-                    m_Elements[itr->second].value = val;
+                    auto& e = m_Elements[itr->second];
+                    e.type = Type(val); // overwrite type just in case
+                    e.value = val;
                     // TODO: trigger change listener?... or maybe only for sync()?
                     return itr->second;
                 }
