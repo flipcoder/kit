@@ -14,7 +14,7 @@ Log::Log()
     //ios::sync_with_stdio(false);
 }
 
-void Log::write(const std::string& s, Log::Message::eLoggingLevel lev)
+void Log::write(std::string s, Log::Message::eLoggingLevel lev)
 {
     //m_cbLog.push_back(Message(s,lev));
 

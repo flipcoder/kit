@@ -7,6 +7,8 @@
 //#include <boost/circular_buffer.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
+#include <boost/utility.hpp>
+#include <boost/current_function.hpp>
 #include <unordered_map>
 #include "errors.h"
 #include "../kit.h"
@@ -79,21 +81,51 @@ public:
     };
 
     // Scoped indentation
-    class Indent
+    class Indent:
+        boost::noncopyable
     {
+    private:
+        std::string m_ExitMsg;
+        bool m_bPushed = false;
     public:
-        Indent(){
-            //auto l = Log::get().lock();
-            Log::get().push_indent();
+        Indent() = default;
+        Indent(
+            const std::string& msg,
+            const std::string& exit_msg = std::string()
+        ):
+            m_ExitMsg(exit_msg)
+        {
+            push(msg);
         }
-        Indent(const std::string& msg){
-            //auto l = Log::get().lock();
-            Log::get().write(msg);
-            Log::get().push_indent();
+        Indent& operator=(Indent&& rhs) = default;
+        Indent(Indent&& rhs):
+            m_ExitMsg(std::move(rhs.m_ExitMsg)),
+            m_bPushed(std::move(rhs.m_bPushed))
+        {
+        }
+        operator bool() const {
+            return m_bPushed;
+        }
+        void push(std::string msg) {
+            if(!m_bPushed) {
+                m_bPushed = true;
+                Log::get().write(std::move(msg));
+                Log::get().push_indent();
+            }
         }
         ~Indent(){
             //auto l = Log::get().lock();
-            Log::get().pop_indent();
+            try{
+                pop();
+            }catch(...) {}
+            
+        }
+        void pop() {
+            if(m_bPushed) {
+                m_bPushed = false;
+                Log::get().pop_indent();
+                Log::get().write(move(m_ExitMsg));
+            }
         }
         unsigned level() const {
             return Log::get().indents();
@@ -160,9 +192,9 @@ public:
         #endif
     }
 
-    void write(const std::string& s, Message::eLoggingLevel lev = Message::LL_INFO);
-    void warn(const std::string&s) { write(s,Message::LL_WARNING); }
-    void error(const std::string& s) {write(s,Message::LL_ERROR);}
+    void write(std::string s, Message::eLoggingLevel lev = Message::LL_INFO);
+    void warn(std::string s) { write(s,Message::LL_WARNING); }
+    void error(std::string s) {write(s,Message::LL_ERROR);}
 
     //unsigned int size() const { return m_cbLog.size(); }
     //bool empty() const { return (size()==0); }
@@ -301,6 +333,16 @@ private:
     Log::get().error(msg);\
     throw Error(ErrorCode::CODE, msg);\
 }
-            
+
+#ifdef DEBUG
+    #define _()\
+        Log::Indent _li(\
+            std::string("[TRACE] ")+std::string(BOOST_CURRENT_FUNCTION)+std::string(" { "),\
+            std::string("[TRACE] } ")+BOOST_CURRENT_FUNCTION\
+        );
+#else
+    #define _()
+#endif
+
 #endif
 
