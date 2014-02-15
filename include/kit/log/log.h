@@ -121,11 +121,9 @@ public:
             }
         }
         ~Indent(){
-            //auto l = Log::get().lock();
             try{
                 pop();
             }catch(...) {}
-            
         }
         void pop() {
             if(m_bPushed) {
