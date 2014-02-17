@@ -337,10 +337,10 @@ class Meta:
             unsigned level = 0
         );
         
-        enum class Format {
+        enum Format {
             UNKNOWN=0,
+            JSON,
             HUMAN,
-            JSON
             //BSON
         };
 
