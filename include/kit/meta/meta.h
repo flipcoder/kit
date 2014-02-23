@@ -234,9 +234,13 @@ class Meta:
         {
             public:
                 Serializable() = default;
-                Serializable(const std::string& fn):
+                explicit Serializable(const std::string& fn):
                     m_Cached(std::make_shared<Meta>(fn))
                 {}
+                explicit Serializable(const std::shared_ptr<Meta>& m):
+                    m_Cached(m)
+                {}
+
                 //Serializable(const std::shared_ptr<Meta>& meta) {
                 //    deserialize(meta);
                 //}
