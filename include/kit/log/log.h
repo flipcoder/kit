@@ -343,8 +343,7 @@ private:
 #ifdef DEBUG
     #define _()\
         Log::Indent _li(\
-            std::string(BOOST_CURRENT_FUNCTION)+" {",\
-            "}"\
+            std::string(BOOST_CURRENT_FUNCTION)+":"\
         );\
         Log::Indent _li2;
 #else
