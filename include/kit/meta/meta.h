@@ -964,19 +964,19 @@ class Meta:
         /*
          * Is meta completely serializable?
          */
-        bool is_serializable() const {
-            auto l = lock();
-            assert(false);
-            return false;
-        }
+        //bool is_serializable() const {
+        //    auto l = lock();
+        //    assert(false);
+        //    return false;
+        //}
 
         /*
          * Is value serializable?
          */
-        static bool is_serializable(boost::any value) {
-            assert(false);
-            return false;
-        }
+        //static bool is_serializable(boost::any value) {
+        //    assert(false);
+        //    return false;
+        //}
 
         // TODO: make a value factory (store it in typepalette?)
 
