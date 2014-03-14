@@ -320,7 +320,7 @@ class Meta:
 
         //    private:
 
-        //        std::list<std::unique_lock<std::recursive_mutex>> m_Locks;
+        //        std::list<std::unique_lock<Mutex>> m_Locks;
         //};
 
         enum class Loop : unsigned {
@@ -337,7 +337,7 @@ class Meta:
             unsigned flags = 0, // use EachFlag enum
             std::deque<std::tuple<
                 std::shared_ptr<Meta>,
-                std::unique_lock<std::recursive_mutex>
+                std::unique_lock<Mutex>
             >>* metastack = nullptr,
             unsigned level = 0
         );
@@ -1082,7 +1082,7 @@ class Meta:
 
     private:
 
-        //std::optional<std::recursive_mutex> m_Treespace;
+        //std::optional<Mutex> m_Treespace;
 
         void serialize_json(Json::Value& v) const;
         void deserialize_json(const Json::Value& v);
