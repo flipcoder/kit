@@ -18,7 +18,7 @@
         [x] nested metas
         [x] empty/null
             # needed for Meta::merge incremental to add null values without reallocation
-        [ ] serialize without indentation (flag?)
+        [x] serialize without indentation (flag?)
         [ ] use pure flag for json hint (serialize as [] vs. {}?)
         [.] fast type check instead of branching -- use typeid as offset ;)
         [.] containers (vectors, maps?)
@@ -58,6 +58,7 @@
         [-] each_of_type<>() -- each() with check function isn't good enough?
         [-] any iteration -- each() is fine
     [L] input stream errors are vague and should include filename
+    [x] template mutex type determines thread policy (dummy_mutex disables)
 
 * kit.h (util)
     [x] lock exceptions
