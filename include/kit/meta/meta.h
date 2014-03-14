@@ -22,9 +22,10 @@
 #include <atomic>
 #include <boost/type_traits.hpp>
 
+template<class Mutex=std::recursive_mutex>
 class Meta:
-    public std::enable_shared_from_this<Meta>,
-    public kit::mutexed<std::recursive_mutex>
+    public std::enable_shared_from_this<Meta<Mutex>>,
+    public kit::mutexed<Mutex>
 {
     public:
         
@@ -230,7 +231,7 @@ class Meta:
          * Serializable allows any class's objects to act as metas
          */
         class Serializable:
-            virtual public kit::mutexed<std::recursive_mutex>
+            virtual public kit::mutexed<Mutex>
         {
             public:
                 Serializable() = default;
@@ -252,7 +253,7 @@ class Meta:
                  * Set up necessary change listeners at each level of the meta
                  * if necessary
                  */
-                virtual void serialize(std::shared_ptr<Meta>& meta) const = 0;
+                virtual void serialize(std::shared_ptr<Meta<Mutex>>& meta) const = 0;
 
                 /*
                  * Return shared_ptr<Meta> with placeholder values representing
@@ -275,7 +276,7 @@ class Meta:
                     deserialize(m_Cached);
                 }
                 virtual void deserialize(
-                    const std::shared_ptr<Meta>& meta
+                    const std::shared_ptr<Meta<Mutex>>& meta
                 ) = 0;
 
                 /*
@@ -371,18 +372,23 @@ class Meta:
         
         virtual ~Meta() {}
 
+        //using lock = kit::mutexed<Mutex>::lock;
+        //std::unique_lock<Mutex> this->lock() const {
+        //    return kit::mutexed<Mutex>::lock();
+        //}
+        
         explicit operator bool() const {
-            auto l = lock();
+            auto l = this->lock();
             return !m_Elements.empty();
         }
 
         bool empty() const {
-            auto l = lock();
+            auto l = this->lock();
             return m_Elements.empty();
         }
 
         bool all_null() const {
-            auto l = lock();
+            auto l = this->lock();
             for(auto&& e: elements_ref())
                 if(e.type.id != Type::ID::EMPTY)
                     return false;
@@ -390,12 +396,12 @@ class Meta:
         }
 
         size_t size() const {
-            auto l = lock();
+            auto l = this->lock();
             return m_Elements.size();
         }
 
         size_t key_count() const {
-            auto l = lock();
+            auto l = this->lock();
             return m_Keys.size();
         }
 
@@ -403,7 +409,7 @@ class Meta:
          * May throw on null
          */
         void parent(const std::shared_ptr<Meta>& p) {
-            auto l = lock();
+            auto l = this->lock();
             m_pParent = p.get();
         }
 
@@ -412,7 +418,7 @@ class Meta:
             unsigned lock_flags=0,
             bool recursion=false
         ){
-            auto l = lock(std::defer_lock);
+            auto l = this->lock(std::defer_lock);
             if(lock_flags & (unsigned)LockFlags::TRY)
             {
                 if(l.try_lock() >= 0)
@@ -435,15 +441,15 @@ class Meta:
                 //auto p = m_pParent.lock();
                 return m_pParent ?
                     m_pParent->parent(lock_flags, recursion) :
-                    shared_from_this();
+                    this->shared_from_this();
             }
         }
 
         std::shared_ptr<Meta> shared() {
-            return shared_from_this();
+            return this->shared_from_this();
         }
         std::shared_ptr<const Meta> shared() const {
-            return shared_from_this();
+            return this->shared_from_this();
         }
 
         /*
@@ -458,11 +464,11 @@ class Meta:
         //}
 
         void filename(const std::string& fn) {
-            auto l = lock();
+            auto l = this->lock();
             m_Filename = fn;
         }
         std::string filename() const {
-            auto l = lock();
+            auto l = this->lock();
             return m_Filename;
         }
 
@@ -531,7 +537,7 @@ class Meta:
         //);
 
         unsigned id(const std::string& key) {
-            auto l = lock();
+            auto l = this->lock();
             return m_Keys.at(key);
             //TODO return m_Keys[s]
         }
@@ -540,7 +546,7 @@ class Meta:
          * Is the value out of range or empty?
          */
         bool has(unsigned id) const {
-            auto l = lock();
+            auto l = this->lock();
             try{
                 return bool(m_Elements.at(id));
             }catch(const std::out_of_range&){
@@ -548,7 +554,7 @@ class Meta:
             }
         }
         bool has(const std::string& key) const {
-            auto l = lock();
+            auto l = this->lock();
             try{
                 return m_Keys.find(key) != m_Keys.end();
             }catch(const std::out_of_range&){
@@ -569,7 +575,7 @@ class Meta:
          * May throw out_of_range()
          */
         unsigned index(const std::string& key) {
-            auto l = lock();
+            auto l = this->lock();
             return m_Keys.at(key);
         }
 
@@ -578,23 +584,23 @@ class Meta:
          */
         template<class T>
         T at(unsigned idx) const {
-            auto l = lock();
+            auto l = this->lock();
             return boost::any_cast<T>(m_Elements.at(idx).value);
         }
         template<class T>
         T at(unsigned idx) {
-            auto l = lock();
+            auto l = this->lock();
             return boost::any_cast<T>(m_Elements.at(idx).value);
         }
 
         std::shared_ptr<Meta> meta(const std::string& key) {
-            auto l = lock();
+            auto l = this->lock();
             return boost::any_cast<std::shared_ptr<Meta>>(
                 m_Elements.at(m_Keys.at(key)).value
             );
         }
         std::shared_ptr<const Meta> meta(const std::string& key) const {
-            auto l = lock();
+            auto l = this->lock();
             return boost::any_cast<std::shared_ptr<Meta>>(
                 m_Elements.at(m_Keys.at(key)).value
             );
@@ -605,7 +611,7 @@ class Meta:
          */
         template<class T>
         T at(const std::string& key) const {
-            auto l = lock();
+            auto l = this->lock();
             return boost::any_cast<T>(
                 m_Elements.at(m_Keys.at(key)).value
             );
@@ -616,7 +622,7 @@ class Meta:
          */
         template<class T>
         T at(const std::string& key) {
-            auto l = lock();
+            auto l = this->lock();
             return boost::any_cast<T>(
                 m_Elements.at(m_Keys.at(key)).value
             );
@@ -656,7 +662,7 @@ class Meta:
          * Triggers the change callbacks on the key with the specific id
          */
         void trigger_change(unsigned id) {
-            auto l = lock();
+            auto l = this->lock();
             m_Elements.at(id).trigger();
             //(*m_Change.at(id))();
         }
@@ -697,7 +703,7 @@ class Meta:
             const T& val
         ){
             assert(!key.empty());
-            auto l = lock();
+            auto l = this->lock();
             unsigned idx;
             try{
                 // element exists?
@@ -734,7 +740,7 @@ class Meta:
             T val
             //unsigned flags = 0
         ){
-            auto l = lock();
+            auto l = this->lock();
 
             // entry has a key
             if(!key.empty())
@@ -767,7 +773,7 @@ class Meta:
                 m_Elements[idx].type.id == Type::ID::META
                 //m_Elements[idx].type.storage == Type::Storage::SHARED
             ){
-                at<std::shared_ptr<Meta>>(idx)->parent(shared_from_this());
+                at<std::shared_ptr<Meta>>(idx)->parent(this->shared_from_this());
             }
 
             return idx;
@@ -840,7 +846,7 @@ class Meta:
         //    unsigned id,
         //    std::function<void()>&& callback
         //){
-        //    auto l = lock();
+        //    auto l = this->lock();
 
         //    //if(id>=m_Change.size())
         //    //    m_Change.resize(id+1);
@@ -863,7 +869,7 @@ class Meta:
 
         // May throw out_of_range
         void remove(unsigned id) {
-            auto l = lock();
+            auto l = this->lock();
             // TODO: remove hooks too?
             if(!m_Elements.at(id).key.empty())
                 remove(m_Elements[id].key);
@@ -871,14 +877,14 @@ class Meta:
         }
 
         void pop_back() {
-            auto l = lock();
+            auto l = this->lock();
             if(!m_Elements.empty())
                 m_Elements.pop_back();
             else
                 throw std::out_of_range("meta pop_back()");
         }
         void pop_front() {
-            auto l = lock();
+            auto l = this->lock();
             if(m_Elements.empty())
                 throw std::out_of_range("meta empty");
             m_Elements.erase(m_Elements.begin());
@@ -889,7 +895,7 @@ class Meta:
             if(key.empty())
                 throw std::out_of_range("empty key");
 
-            auto l = lock();
+            auto l = this->lock();
             unsigned idx = m_Keys.at(key);
             m_Elements.erase(m_Elements.begin() + idx);
             m_Keys.erase(key);
@@ -909,7 +915,7 @@ class Meta:
             const Element& e
         ){
             // TODO: add flag to specify whether to replace callbacks?
-            auto l = lock();
+            auto l = this->lock();
             m_Elements.at(id) = e;
         }
         void replace(
@@ -917,7 +923,7 @@ class Meta:
             Element&& e
         ){
             // TODO: add flag to specify whether to replace callbacks?
-            auto l = lock();
+            auto l = this->lock();
             m_Elements.at(id) = e;
         }
 
@@ -965,7 +971,7 @@ class Meta:
          * Is meta completely serializable?
          */
         //bool is_serializable() const {
-        //    auto l = lock();
+        //    auto l = this->lock();
         //    assert(false);
         //    return false;
         //}
@@ -983,7 +989,7 @@ class Meta:
         std::string serialize(Format fmt, unsigned flags = 0) const;
         void serialize(const std::string& fn, unsigned flags = 0) const;
         void serialize(unsigned flags = 0) const {
-            auto l = lock();
+            auto l = this->lock();
             serialize(m_Filename, flags);
         }
 
@@ -1006,7 +1012,7 @@ class Meta:
         );
         
         void deserialize() {
-            auto l = lock();
+            auto l = this->lock();
             deserialize(m_Filename);
         }
         void deserialize(const std::string& fn);
@@ -1014,7 +1020,7 @@ class Meta:
         static Format filename_to_format(const std::string& fn);
 
         void clear() {
-            auto l = lock();
+            auto l = this->lock();
             kit::clear(m_Elements);
             kit::clear(m_Keys);
             //kit::clear(m_Hooks);
@@ -1030,7 +1036,7 @@ class Meta:
         std::vector<Element> elements(
             //kit::thread_safety safety = kit::thread_safety::safe
         ) const {
-            auto l = lock();
+            auto l = this->lock();
             return m_Elements;
         }
 
@@ -1058,19 +1064,19 @@ class Meta:
          * Check if meta is a pure map, array, or another static type
          */
         bool is_map() const {
-            auto l = lock();
+            auto l = this->lock();
             return m_Keys.size() == m_Elements.size();
         }
         bool is_array() const {
-            auto l = lock();
+            auto l = this->lock();
             return m_Keys.empty();
             //return m_Keys.size() != m_Elements.size();
         }
 
         std::shared_ptr<Meta> root(unsigned lock_flags = 0) {
-            auto l = lock();
+            auto l = this->lock();
 
-            std::shared_ptr<Meta> m(shared_from_this());
+            std::shared_ptr<Meta> m(this->shared_from_this());
             return m->parent(lock_flags, true);
         }
 
@@ -1156,6 +1162,8 @@ class Meta:
 
         //bool m_bQuiet = false; // don't throw on file not found
 };
+
+#include "meta.inl"
 
 #endif
 
