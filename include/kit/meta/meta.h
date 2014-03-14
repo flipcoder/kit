@@ -685,10 +685,10 @@ class Meta:
         };
         // Ensures the path exists in the tree and initializes an element `val`
         // the endpoint.
-        std::tuple<std::shared_ptr<Meta>, bool> ensure_path(
-            const std::vector<std::string>& path,
-            unsigned flags = 0
-        );
+        //std::tuple<std::shared_ptr<Meta>, bool> ensure_path(
+        //    const std::vector<std::string>& path,
+        //    unsigned flags = 0
+        //);
 
         //std::optional<
 

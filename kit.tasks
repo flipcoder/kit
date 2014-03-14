@@ -54,7 +54,7 @@
     [x] parent try() lock flags
     [?] parent(recursion_levels=0) should use the (optional) treespace lock
     * iteration
-        [ ] move each() to .cpp file
+        [-] move each() to .cpp file -- inl now
         [-] each_of_type<>() -- each() with check function isn't good enough?
         [-] any iteration -- each() is fine
     [L] input stream errors are vague and should include filename
