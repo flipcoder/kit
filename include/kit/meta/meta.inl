@@ -615,11 +615,11 @@ void Meta<Mutex> :: merge(
     unsigned flags
 ){
     if(flags & (unsigned)MergeFlags::REPLACE)
-        merge(t, [](const Meta<Mutex>::Element& a, const Meta<Mutex>::Element& b) {
+        merge(t, [](const Meta<Mutex>::Element&, const Meta<Mutex>::Element&) {
             return Which::OTHER;
         }, flags);
     else
-        merge(t, [](const Meta<Mutex>::Element& a, const Meta<Mutex>::Element& b) {
+        merge(t, [](const Meta<Mutex>::Element&, const Meta<Mutex>::Element&) {
             return Which::THIS;
         }, flags);
 }
