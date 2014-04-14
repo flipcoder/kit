@@ -25,9 +25,12 @@
 template<class Mutex=std::recursive_mutex>
 class Meta:
     public std::enable_shared_from_this<Meta<Mutex>>,
-    public kit::mutexed<Mutex>
+    public kit::mutexed<Mutex>//,
+    //public kit::freezable
 {
     public:
+        using mutex_type = Mutex;
+        //typedef Mutex mutex_type;
         
         enum Serialize {
             /*
@@ -89,7 +92,7 @@ class Meta:
             template<class T>
             Type(T val) {
 
-                if(typeid(val) == typeid(std::shared_ptr<Meta>))
+                if(typeid(val) == typeid(std::shared_ptr<Meta<Mutex>>))
                 {
                     id = ID::META;
                     //storage = Storage::SHARED;
@@ -236,9 +239,9 @@ class Meta:
             public:
                 Serializable() = default;
                 explicit Serializable(const std::string& fn):
-                    m_Cached(std::make_shared<Meta>(fn))
+                    m_Cached(std::make_shared<Meta<Mutex>>(fn))
                 {}
-                explicit Serializable(const std::shared_ptr<Meta>& m):
+                explicit Serializable(const std::shared_ptr<Meta<Mutex>>& m):
                     m_Cached(m)
                 {}
 
@@ -297,7 +300,7 @@ class Meta:
                 //std::shared_ptr<Meta> meta() const;
             private:
                 // TODO: last modified date (same timestamp type as sync())
-                std::shared_ptr<Meta> m_Cached;
+                std::shared_ptr<Meta<Mutex>> m_Cached;
         };
 
         //// Traversal visits Meta objects recursively
@@ -332,11 +335,11 @@ class Meta:
         //template<class Func>
         Loop each(
             std::function<Loop(
-                const std::shared_ptr<Meta>&, Element&, unsigned
+                const std::shared_ptr<Meta<Mutex>>&, Element&, unsigned
             )> func,
             unsigned flags = 0, // use EachFlag enum
             std::deque<std::tuple<
-                std::shared_ptr<Meta>,
+                std::shared_ptr<Meta<Mutex>>,
                 std::unique_lock<Mutex>
             >>* metastack = nullptr,
             unsigned level = 0
@@ -408,13 +411,13 @@ class Meta:
         /*
          * May throw on null
          */
-        void parent(const std::shared_ptr<Meta>& p) {
+        void parent(const std::shared_ptr<Meta<Mutex>>& p) {
             auto l = this->lock();
             m_pParent = p.get();
         }
 
         // TODO: Treespace lock is important for recursion here
-        std::shared_ptr<Meta> parent(
+        std::shared_ptr<Meta<Mutex>> parent(
             unsigned lock_flags=0,
             bool recursion=false
         ){
@@ -434,7 +437,7 @@ class Meta:
                 //auto p = m_pParent.lock();
                 //return p ? p : shared_from_this();
                 //return m_pParent.lock(); // allow null for this case
-                return m_pParent ? m_pParent->shared() : std::shared_ptr<Meta>();
+                return m_pParent ? m_pParent->shared() : std::shared_ptr<Meta<Mutex>>();
             }
             else
             {
@@ -445,10 +448,10 @@ class Meta:
             }
         }
 
-        std::shared_ptr<Meta> shared() {
+        std::shared_ptr<Meta<Mutex>> shared() {
             return this->shared_from_this();
         }
-        std::shared_ptr<const Meta> shared() const {
+        std::shared_ptr<const Meta<Mutex>> shared() const {
             return this->shared_from_this();
         }
 
@@ -491,14 +494,14 @@ class Meta:
         //    unsigned timeout = 0; // delay between tries ms (you may also block in your functor)
         //};
         // return value (bool) indicates whether to retrigger
-        typedef std::function<bool(std::shared_ptr<Meta>&)> TimeoutCallback_t;
+        typedef std::function<bool(std::shared_ptr<Meta<Mutex>>&)> TimeoutCallback_t;
 
-        typedef std::function<boost::variant<Which, Meta::Element>(
-            const Meta::Element&, const Meta::Element&
+        typedef std::function<boost::variant<Which, Meta<Mutex>::Element>(
+            const Meta<Mutex>::Element&, const Meta<Mutex>::Element&
         )> WhichCallback_t;
         
         typedef std::function<void(
-            const std::shared_ptr<Meta>, const Meta::Element&
+            const std::shared_ptr<Meta<Mutex>>, const Meta<Mutex>::Element&
         )> VisitorCallback_t;
 
         /*
@@ -510,8 +513,9 @@ class Meta:
          *
          *  For throw-on-conflict behavior, throw inside of `which`
          */
+        //template<class TMutex=Mutex>
         void merge(
-            const std::shared_ptr<Meta>& t,
+            const std::shared_ptr<Meta<Mutex>>& t,
             WhichCallback_t which,
             unsigned flags = (unsigned)MergeFlags::DEFAULTS, // MergeFlags
             TimeoutCallback_t timeout = TimeoutCallback_t(),
@@ -519,7 +523,7 @@ class Meta:
         );
 
         void merge(
-            const std::shared_ptr<Meta>& t,
+            const std::shared_ptr<Meta<Mutex>>& t,
             unsigned flags = (unsigned)MergeFlags::DEFAULTS // MergeFlags
         );
         //void merge(
@@ -593,15 +597,15 @@ class Meta:
             return boost::any_cast<T>(m_Elements.at(idx).value);
         }
 
-        std::shared_ptr<Meta> meta(const std::string& key) {
+        std::shared_ptr<Meta<Mutex>> meta(const std::string& key) {
             auto l = this->lock();
-            return boost::any_cast<std::shared_ptr<Meta>>(
+            return boost::any_cast<std::shared_ptr<Meta<Mutex>>>(
                 m_Elements.at(m_Keys.at(key)).value
             );
         }
-        std::shared_ptr<const Meta> meta(const std::string& key) const {
+        std::shared_ptr<const Meta<Mutex>> meta(const std::string& key) const {
             auto l = this->lock();
-            return boost::any_cast<std::shared_ptr<Meta>>(
+            return boost::any_cast<std::shared_ptr<Meta<Mutex>>>(
                 m_Elements.at(m_Keys.at(key)).value
             );
         }
@@ -685,7 +689,7 @@ class Meta:
         };
         // Ensures the path exists in the tree and initializes an element `val`
         // the endpoint.
-        std::tuple<std::shared_ptr<Meta>, bool> ensure_path(
+        std::tuple<std::shared_ptr<Meta<Mutex>>, bool> ensure_path(
             const std::vector<std::string>& path,
             unsigned flags = 0
         );
@@ -773,7 +777,7 @@ class Meta:
                 m_Elements[idx].type.id == Type::ID::META
                 //m_Elements[idx].type.storage == Type::Storage::SHARED
             ){
-                at<std::shared_ptr<Meta>>(idx)->parent(this->shared_from_this());
+                at<std::shared_ptr<Meta<Mutex>>>(idx)->parent(this->shared_from_this());
             }
 
             return idx;
@@ -940,7 +944,7 @@ class Meta:
             assert(r);
             auto rl = r->lock();
 
-            std::vector<std::shared_ptr<Meta>> metastack;
+            std::vector<std::shared_ptr<Meta<Mutex>>> metastack;
 
             do{
                 metastack.clear();
@@ -1073,10 +1077,10 @@ class Meta:
             //return m_Keys.size() != m_Elements.size();
         }
 
-        std::shared_ptr<Meta> root(unsigned lock_flags = 0) {
+        std::shared_ptr<Meta<Mutex>> root(unsigned lock_flags = 0) {
             auto l = this->lock();
 
-            std::shared_ptr<Meta> m(this->shared_from_this());
+            std::shared_ptr<Meta<Mutex>> m(this->shared_from_this());
             return m->parent(lock_flags, true);
         }
 
@@ -1141,7 +1145,7 @@ class Meta:
 
         //std::shared_ptr<boost::shared_mutex> m_Treespace;
 
-        //void unsafe_merge(Meta&& t, unsigned flags);
+        //void unsafe_merge(Meta<Mutex>&& t, unsigned flags);
 
         /*
          * Note: bind() a parameter yourself to get the specific object id
@@ -1155,8 +1159,8 @@ class Meta:
         // may be empty / incorrect, search parent to resolve
         //unsigned m_IndexOfSelfInParent = std::numeric_limits<unsigned>::max();
 
-        //std::weak_ptr<Meta> m_pParent;
-        Meta* m_pParent = nullptr;
+        //std::weak_ptr<Meta<Mutex>> m_pParent;
+        Meta<Mutex>* m_pParent = nullptr;
 
         bool m_bCallbacks = true;
 
