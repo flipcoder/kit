@@ -8,6 +8,7 @@
 #include <thread>
 #include <mutex>
 #include <map>
+#include <atomic>
 #include <boost/algorithm/string.hpp>
 #include <boost/bimap.hpp>
 
@@ -94,17 +95,32 @@ namespace kit
     /*
      * Lockless freezable concept
      * To enforce tread-safety on objects that start as mutable, but become
-     * immutable once they need to be thread safe
+     * effectively immutable once they need to be thread safe
+     * 
+     * This is a one-way operation
+     * Copies of frozen objects are unfrozen (maybe set behavior as policy?)
+     *
+     * Inherit as: virtual public freezable
      */
     class freezable
     {
         public:
 
+            // copy/assign should not copy frozen state
+            freezable(freezable&&) {}
+            freezable(const freezable&) {}
+            freezable& operator=(const freezable&) {
+                return *this;
+            }
+            freezable& operator=(freezable&&) {
+                return *this;
+            }
+
             /*
              * Call freeze() when object should no longer be mutable
              */
             void freeze() {
-                m_Frozen=true;
+                m_Frozen = true;
             }
 
             /*
@@ -117,7 +133,8 @@ namespace kit
             }
 
         private:
-            bool m_Frozen=false;
+            
+            std::atomic<bool> m_Frozen = ATOMIC_VAR_INIT(false);
     };
 
     /*
