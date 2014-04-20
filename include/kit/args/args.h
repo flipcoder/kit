@@ -37,6 +37,7 @@ class Args
         }
 
         Args(int argc, const char** argv):
+            m_Filename(argv[0]),
             m_Args(argv+1, argv+argc)
         {
             analyze();
@@ -142,11 +143,16 @@ class Args
             return count;
         }
 
-        void value(const std::string& key, const std::string& value) {
+        void set(const std::string& key, const std::string& value) {
             // TODO: check key and value formats (no spaces, etc.)
             m_Values[key] = value;
             m_Args.push_back((boost::format("--%s=%s") % key % value).str());
         }
+        //void value(const std::string& key, const std::string& value) {
+        //    // TODO: check key and value formats (no spaces, etc.)
+        //    m_Values[key] = value;
+        //    m_Args.push_back((boost::format("--%s=%s") % key % value).str());
+        //}
         std::string value(const std::string& key) const {
             try{
                 return m_Values.at(key);
@@ -221,6 +227,13 @@ class Args
         const_iterator cbegin() const { return m_Args.begin(); }
         const_iterator cend() const { return m_Args.end(); }
         
+        std::string filename() const {
+            return m_Filename;
+        }
+        void filename(std::string fn) {
+            m_Filename = fn;
+        }
+
     private:
 
         void analyze();
@@ -228,6 +241,7 @@ class Args
         std::vector<std::string> m_Args;
         //std::vector<std::pair<std::string, std::string>> m_Values;
         std::map<std::string, std::string> m_Values;
+        std::string m_Filename;
 };
 
 #endif
