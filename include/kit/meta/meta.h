@@ -22,6 +22,182 @@
 #include <atomic>
 #include <boost/type_traits.hpp>
 
+struct MetaType {
+
+    MetaType() = default;
+    MetaType(MetaType&&) = default;
+    MetaType(const MetaType&) = default;
+    MetaType& operator=(MetaType&&) = default;
+    MetaType& operator=(const MetaType&) = default;
+
+    template<class T>
+    MetaType(T val) {
+
+        if(kit::is_shared_ptr<T>::value) {
+            //if(typeid(val) == typeid(std::shared_ptr<Meta<Mutex>>))
+            id = ID::META;
+        }
+        else if(typeid(val) == typeid(std::string))
+            id = ID::STRING;
+        else if(boost::is_integral<T>::value)
+        {
+            id = ID::INT;
+            if(boost::is_signed<T>::value)
+                flags |= SIGN;
+        }
+        else if(boost::is_floating_point<T>::value)
+            id = ID::REAL;
+        //else if(is_pointer<char* const>::value)
+        //    type = MetaType::STRING;
+        else if(typeid(val) == typeid(std::nullptr_t))
+        {
+            id = ID::EMPTY;
+        }
+        else if(kit::is_vector<T>::value)
+            flags |= CONTAINER;
+        else if(typeid(val) == typeid(boost::any))
+        {
+            //if(val)
+            //{
+                WARNING("adding raw boost::any value");
+                id = ID::USER;
+            //}
+            //else
+            //    id = ID::EMPTY;
+        }
+        else
+        {
+            //WARNINGf("unserializable type: %s", typeid(T).name());
+            id = ID::USER;
+        }
+    }
+    
+    /*
+     * Really should hash these 3 together so we can do a O(1) call
+     * instead of branching when serializing, oh well
+     */
+    enum class ID {
+        EMPTY=0, // null
+        INT,
+        REAL,
+        STRING,
+        META,
+        USER
+    };
+
+    enum Flag {
+        SIGN = kit::bit(0),
+        CONTAINER = kit::bit(1),
+        MASK = kit::mask(2)
+    };
+
+    //enum Storage {
+    //    STACK = 0,
+    //    UNIQUE = 1,
+    //    SHARED = 2,
+    //    WEAK = 3
+    //};
+
+    ID id = ID::EMPTY;
+    unsigned flags = 0;
+    //Storage storage = Storage::STACK;
+
+    // 0 means platform-sized
+    //unsigned bytes = 0; // size hint (optional)
+};
+
+struct MetaElement
+{
+    MetaElement(MetaType type, const std::string& key, boost::any&& value):
+        type(type),
+        key(key),
+        value(value)
+    {}
+
+    MetaElement(const MetaElement& e) = default;
+    MetaElement(MetaElement&& e) = default;
+    MetaElement& operator=(const MetaElement& e) = default;
+
+    template<class Mutex>
+    Json::Value serialize_json(unsigned flags = 0) const;
+    
+    //template<class Mutex>
+    //void deserialize_json(const Json::Value&);
+
+    //MetaElement& operator=(MetaElement&& e) = default;
+
+    //template<class T>
+    //MetaElement(T&& val):
+    //    type(val),
+    //    value(boost::any(value))
+    //{}
+    // type data (reflection)
+
+    /*
+     * Deduced type id
+     */
+    MetaType type; // null
+
+    void nullify() {
+        type.id = MetaType::ID::EMPTY;
+        value = boost::any();
+    }
+
+    explicit operator bool() const {
+        return !value.empty();
+    }
+
+    void trigger() {
+        if(change)
+            (*change)();
+    }
+
+    // may throw bad_any_cast
+    template<class T>
+    T as() const {
+        return boost::any_cast<T>(value);
+    }
+
+    /*
+     * Key (if any)
+     * Do not modify the key without modifying Meta's m_Key
+     * It is stored two places
+     */
+    std::string key;
+
+    /*
+     * Value is safe to modify
+    */
+    boost::any value;
+
+    // value change listeners
+    std::shared_ptr<boost::signals2::signal<void()>> change;
+};
+
+enum MetaFormat {
+    UNKNOWN=0,
+    JSON,
+    HUMAN,
+    //BSON
+};
+
+enum class MetaLoop : unsigned {
+    STEP = 0,
+    BREAK,
+    CONTINUE, // skip subtree recursion
+    REPEAT // repeat this current iteration
+};
+
+enum class MetaSerialize {
+    /*
+     * JSON data makes a distinction between maps and arrays.
+     * Since Meta does not, we can store the kv elements as a
+     * separate map {key: value}.
+     */
+    STORE_KEY = kit::bit(0),
+    MINIMIZE = kit::bit(1) 
+}; 
+
 template<class Mutex=std::recursive_mutex>
 class Meta:
     public std::enable_shared_from_this<Meta<Mutex>>,
@@ -32,15 +208,6 @@ class Meta:
         using mutex_type = Mutex;
         //typedef Mutex mutex_type;
         
-        enum Serialize {
-            /*
-             * JSON data makes a distinction between maps and arrays.
-             * Since Meta does not, we can store the kv elements as a
-             * separate map {key: value}.
-             */
-            STORE_KEY = kit::bit(0),
-            MINIMIZE = kit::bit(1)
-        };
         //struct Iterator
         //{
         //    Iterator(Meta* m):
@@ -81,155 +248,6 @@ class Meta:
             TRY = kit::bit(0)
         };
 
-        struct Type {
-
-            Type() = default;
-            Type(Type&&) = default;
-            Type(const Type&) = default;
-            Type& operator=(Type&&) = default;
-            Type& operator=(const Type&) = default;
-
-            template<class T>
-            Type(T val) {
-
-                if(typeid(val) == typeid(std::shared_ptr<Meta<Mutex>>))
-                {
-                    id = ID::META;
-                    //storage = Storage::SHARED;
-                }
-                else if(typeid(val) == typeid(std::string))
-                    id = ID::STRING;
-                else if(boost::is_integral<T>::value)
-                {
-                    id = ID::INT;
-                    if(boost::is_signed<T>::value)
-                        flags |= SIGN;
-                }
-                else if(boost::is_floating_point<T>::value)
-                    id = ID::REAL;
-                //else if(is_pointer<char* const>::value)
-                //    type = Type::STRING;
-                else if(typeid(val) == typeid(std::nullptr_t))
-                {
-                    id = ID::EMPTY;
-                }
-                else if(kit::is_vector<T>::value)
-                    flags |= CONTAINER;
-                else if(typeid(val) == typeid(boost::any))
-                {
-                    //if(val)
-                    //{
-                        WARNING("adding raw boost::any value");
-                        id = ID::USER;
-                    //}
-                    //else
-                    //    id = ID::EMPTY;
-                }
-                else
-                {
-                    //WARNINGf("unserializable type: %s", typeid(T).name());
-                    id = ID::USER;
-                }
-            }
-            
-            /*
-             * Really should hash these 3 together so we can do a O(1) call
-             * instead of branching when serializing, oh well
-             */
-            enum class ID {
-                EMPTY=0, // null
-                INT,
-                REAL,
-                STRING,
-                META,
-                USER
-            };
-
-            enum Flag {
-                SIGN = kit::bit(0),
-                CONTAINER = kit::bit(1),
-                MASK = kit::mask(2)
-            };
-
-            //enum Storage {
-            //    STACK = 0,
-            //    UNIQUE = 1,
-            //    SHARED = 2,
-            //    WEAK = 3
-            //};
-
-            ID id = ID::EMPTY;
-            unsigned flags = 0;
-            //Storage storage = Storage::STACK;
-
-            // 0 means platform-sized
-            //unsigned bytes = 0; // size hint (optional)
-        };
-
-        struct Element {
-            Element(Type type, const std::string& key, boost::any&& value):
-                type(type),
-                key(key),
-                value(value)
-            {}
-
-            Element(const Element& e) = default;
-            Element(Element&& e) = default;
-            Element& operator=(const Element& e) = default;
-
-            Json::Value serialize_json(unsigned flags = 0) const;
-            void deserialize_json(const Json::Value&);
-
-            //Element& operator=(Element&& e) = default;
-
-            //template<class T>
-            //Element(T&& val):
-            //    type(val),
-            //    value(boost::any(value))
-            //{}
-            // type data (reflection)
-
-            /*
-             * Deduced type id
-             */
-            Type type; // null
-
-            void nullify() {
-                type.id = Type::ID::EMPTY;
-                value = boost::any();
-            }
-
-            explicit operator bool() const {
-                return !value.empty();
-            }
-
-            void trigger() {
-                if(change)
-                    (*change)();
-            }
-
-            // may throw bad_any_cast
-            template<class T>
-            T as() const {
-                return boost::any_cast<T>(value);
-            }
-
-            /*
-             * Key (if any)
-             * Do not modify the key without modifying Meta's m_Key
-             * It is stored two places
-             */
-            std::string key;
-
-            /*
-             * Value is safe to modify
-             */
-            boost::any value;
-
-            // value change listeners
-            std::shared_ptr<boost::signals2::signal<void()>> change;
-        };
-        
         /*
          * Serializable allows any class's objects to act as metas
          */
@@ -303,6 +321,15 @@ class Meta:
                 std::shared_ptr<Meta<Mutex>> m_Cached;
         };
 
+        // recursive converter between Metas of diff mutex types
+        template<class Mutex2>
+        static std::shared_ptr<Meta<Mutex>> convert(
+            std::shared_ptr<Mutex2> meta
+        ){
+            // TODO: impl
+            return std::shared_ptr<Mutex>();
+        }
+
         //// Traversal visits Meta objects recursively
         //class Traversal
         //{
@@ -326,16 +353,10 @@ class Meta:
         //        std::list<std::unique_lock<Mutex>> m_Locks;
         //};
 
-        enum class Loop : unsigned {
-            STEP = 0,
-            BREAK,
-            CONTINUE, // skip subtree recursion
-            REPEAT // repeat this current iteration
-        };
         //template<class Func>
-        Loop each(
-            std::function<Loop(
-                const std::shared_ptr<Meta<Mutex>>&, Element&, unsigned
+        MetaLoop each(
+            std::function<MetaLoop(
+                const std::shared_ptr<Meta<Mutex>>&, MetaElement&, unsigned
             )> func,
             unsigned flags = 0, // use EachFlag enum
             std::deque<std::tuple<
@@ -344,13 +365,6 @@ class Meta:
             >>* metastack = nullptr,
             unsigned level = 0
         );
-        
-        enum Format {
-            UNKNOWN=0,
-            JSON,
-            HUMAN,
-            //BSON
-        };
 
         enum Which {
             //RETURNED=0, // its a variant, won't need this
@@ -364,7 +378,7 @@ class Meta:
 
         Meta() = default;
         Meta(const std::string& fn);
-        Meta(Format fmt, const std::string& data);
+        Meta(MetaFormat fmt, const std::string& data);
 
         Meta(Meta&&)= delete;
         Meta(const Meta&)= delete;
@@ -393,7 +407,7 @@ class Meta:
         bool all_null() const {
             auto l = this->lock();
             for(auto&& e: elements_ref())
-                if(e.type.id != Type::ID::EMPTY)
+                if(e.type.id != MetaType::ID::EMPTY)
                     return false;
             return true;
         }
@@ -496,12 +510,12 @@ class Meta:
         // return value (bool) indicates whether to retrigger
         typedef std::function<bool(std::shared_ptr<Meta<Mutex>>&)> TimeoutCallback_t;
 
-        typedef std::function<boost::variant<Which, Meta<Mutex>::Element>(
-            const Meta<Mutex>::Element&, const Meta<Mutex>::Element&
+        typedef std::function<boost::variant<Which, MetaElement>(
+            const MetaElement&, const MetaElement&
         )> WhichCallback_t;
         
         typedef std::function<void(
-            const std::shared_ptr<Meta<Mutex>>, const Meta<Mutex>::Element&
+            const std::shared_ptr<Meta<Mutex>>, const MetaElement&
         )> VisitorCallback_t;
 
         /*
@@ -513,9 +527,23 @@ class Meta:
          *
          *  For throw-on-conflict behavior, throw inside of `which`
          */
-        //template<class TMutex=Mutex>
+        template<class Mutex2>
         void merge(
-            const std::shared_ptr<Meta<Mutex>>& t,
+            const std::shared_ptr<Meta<Mutex2>>& t,
+            WhichCallback_t which,
+            unsigned flags = (unsigned)MergeFlags::DEFAULTS, // MergeFlags
+            TimeoutCallback_t timeout = TimeoutCallback_t(),
+            VisitorCallback_t visit = VisitorCallback_t()
+        );
+
+        template<class Mutex2>
+        void merge(
+            const std::shared_ptr<Meta<Mutex2>>& t,
+            unsigned flags = (unsigned)MergeFlags::DEFAULTS // MergeFlags
+        );
+
+        void merge(
+            const std::string& fn,
             WhichCallback_t which,
             unsigned flags = (unsigned)MergeFlags::DEFAULTS, // MergeFlags
             TimeoutCallback_t timeout = TimeoutCallback_t(),
@@ -523,9 +551,10 @@ class Meta:
         );
 
         void merge(
-            const std::shared_ptr<Meta<Mutex>>& t,
+            const std::string& fn,
             unsigned flags = (unsigned)MergeFlags::DEFAULTS // MergeFlags
         );
+        
         //void merge(
         //    const Meta& t,
         //    unsigned flags = (unsigned)MergeFlags::DEFAULTS,
@@ -755,7 +784,7 @@ class Meta:
                 if((itr = m_Keys.find(key)) != m_Keys.end()) {
                     // TODO: if dynamic typing is off, check type compatibility
                     auto& e = m_Elements[itr->second];
-                    e.type = Type(val); // overwrite type just in case
+                    e.type = MetaType(val); // overwrite type just in case
                     e.value = val;
                     // TODO: trigger change listener?... or maybe only for sync()?
                     return itr->second;
@@ -771,11 +800,11 @@ class Meta:
             const size_t idx = m_Elements.size();
             if(!key.empty())
                 m_Keys[key] = idx;
-            m_Elements.emplace_back(Type(val), key, boost::any(val));
+            m_Elements.emplace_back(MetaType(val), key, boost::any(val));
 
             if(
-                m_Elements[idx].type.id == Type::ID::META
-                //m_Elements[idx].type.storage == Type::Storage::SHARED
+                m_Elements[idx].type.id == MetaType::ID::META
+                //m_Elements[idx].type.storage == MetaType::Storage::SHARED
             ){
                 at<std::shared_ptr<Meta<Mutex>>>(idx)->parent(this->shared_from_this());
             }
@@ -788,7 +817,7 @@ class Meta:
             //if(id >= m_Types.size())
             //    Types.resize(id+1);
 
-            //m_Types.at(id) = Type(val);
+            //m_Types.at(id) = MetaType(val);
             //m_Values.at(id) = std::move(val);
             //trigger_change(id);
             //return id;
@@ -916,7 +945,7 @@ class Meta:
         // may throw std::out_of_range
         void replace(
             unsigned id,
-            const Element& e
+            const MetaElement& e
         ){
             // TODO: add flag to specify whether to replace callbacks?
             auto l = this->lock();
@@ -924,7 +953,7 @@ class Meta:
         }
         void replace(
             unsigned id,
-            Element&& e
+            MetaElement&& e
         ){
             // TODO: add flag to specify whether to replace callbacks?
             auto l = this->lock();
@@ -990,7 +1019,7 @@ class Meta:
 
         // TODO: make a value factory (store it in typepalette?)
 
-        std::string serialize(Format fmt, unsigned flags = 0) const;
+        std::string serialize(MetaFormat fmt, unsigned flags = 0) const;
         void serialize(const std::string& fn, unsigned flags = 0) const;
         void serialize(unsigned flags = 0) const {
             auto l = this->lock();
@@ -1005,12 +1034,12 @@ class Meta:
         //    DETECT_KEYS = kit::bit(0)
         //};
         void deserialize(
-            Format fmt,
+            MetaFormat fmt,
             const std::string& data,
             const std::string& fn = std::string()
         );
         void deserialize(
-            Format fmt,
+            MetaFormat fmt,
             std::istream& data,
             const std::string& fn = std::string()
         );
@@ -1021,7 +1050,7 @@ class Meta:
         }
         void deserialize(const std::string& fn);
 
-        static Format filename_to_format(const std::string& fn);
+        static MetaFormat filename_to_format(const std::string& fn);
 
         void clear() {
             auto l = this->lock();
@@ -1037,7 +1066,7 @@ class Meta:
         //typedef unsigned offset_t;
         //typedef unsigned hook_t;
 
-        std::vector<Element> elements(
+        std::vector<MetaElement> elements(
             //kit::thread_safety safety = kit::thread_safety::safe
         ) const {
             auto l = this->lock();
@@ -1047,10 +1076,10 @@ class Meta:
         /*
          * Warning: Remember to hold lock while using this
          */
-        std::vector<Element>& elements_ref() {
+        std::vector<MetaElement>& elements_ref() {
             return m_Elements;
         }
-        const std::vector<Element>& elements_ref() const {
+        const std::vector<MetaElement>& elements_ref() const {
             return m_Elements;
         }
 
@@ -1061,8 +1090,8 @@ class Meta:
             return m_Keys;
         }
 
-        //typedef std::vector<Element>::iterator iterator;
-        //typedef std::vector<Element>::const_iterator const_iterator;
+        //typedef std::vector<MetaElement>::iterator iterator;
+        //typedef std::vector<MetaElement>::const_iterator const_iterator;
 
         /*
          * Check if meta is a pure map, array, or another static type
@@ -1078,6 +1107,7 @@ class Meta:
         }
 
         std::shared_ptr<Meta<Mutex>> root(unsigned lock_flags = 0) {
+            // TODO: lock order is bad here, should be try_lock
             auto l = this->lock();
 
             std::shared_ptr<Meta<Mutex>> m(this->shared_from_this());
@@ -1141,7 +1171,7 @@ class Meta:
         // TODO: switch to bimap?
         std::unordered_map<std::string, unsigned> m_Keys;
         //std::unordered_map<unsigned, std::shared_ptr<unsigned>> m_Hooks;
-        std::vector<Element> m_Elements; // elements also contain keys
+        std::vector<MetaElement> m_Elements; // elements also contain keys
 
         //std::shared_ptr<boost::shared_mutex> m_Treespace;
 

@@ -54,12 +54,28 @@ namespace kit
     struct is_vector<std::vector<T>> {
         static bool const value = true;
     };
+    template<class T, class _ = void>
+    struct is_shared_ptr {
+        static const bool value = false;
+    };
+    template<class T>
+    struct is_shared_ptr<std::shared_ptr<T>> {
+        static bool const value = true;
+    };
+
 
     //template<class Class=c>
     //class mutex_wrapper<>
     //{
     //}
 
+    struct dummy_mutex
+    {
+        void lock() {}
+        bool try_lock() { return true; }
+        void unlock() {}
+    };
+    
     template<class Mutex=std::mutex>
     class mutexed
     {

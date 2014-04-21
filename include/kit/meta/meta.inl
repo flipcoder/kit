@@ -2,6 +2,7 @@
 #include <sstream>
 #include "meta.h"
 #include "../log/log.h"
+#include "../kit.h"
 
 template<class Mutex>
 Meta<Mutex> :: Meta(const std::string& fn):
@@ -11,15 +12,15 @@ Meta<Mutex> :: Meta(const std::string& fn):
 }
 
 template<class Mutex>
-Meta<Mutex> :: Meta(Meta::Format fmt, const std::string& data)
+Meta<Mutex> :: Meta(MetaFormat fmt, const std::string& data)
 {
     deserialize(fmt, data);
 }
 
 template<class Mutex>
-typename Meta<Mutex>::Loop Meta<Mutex>::each(
-    std::function<Loop(
-        const std::shared_ptr<Meta<Mutex>>&, Element&, unsigned
+MetaLoop Meta<Mutex>::each(
+    std::function<MetaLoop(
+        const std::shared_ptr<Meta<Mutex>>&, MetaElement&, unsigned
     )> func,
     unsigned flags, // use EachFlag enum
     std::deque<std::tuple<
@@ -49,7 +50,7 @@ typename Meta<Mutex>::Loop Meta<Mutex>::each(
             metastack->pop_back();
     };
 
-    Loop status = Loop::STEP;
+    MetaLoop status = MetaLoop::STEP;
     bool repeat;
     bool break_outer;
 
@@ -63,24 +64,24 @@ typename Meta<Mutex>::Loop Meta<Mutex>::each(
             if(!(flags & (unsigned)EachFlag::POSTORDER))
             {
                 status = func(*spthis, e, level+1);
-                if(status == Loop::BREAK) {
+                if(status == MetaLoop::BREAK) {
                     break_outer = true;
                     break;
                 }
-                if(status == Loop::REPEAT) {
+                if(status == MetaLoop::REPEAT) {
                     repeat = true;
                     continue;
                 }
-                if(status == Loop::CONTINUE) {
+                if(status == MetaLoop::CONTINUE) {
                     // skip subtree recursion
                     continue;
                 }
             }
 
             // reset status just in case we don't enter this block (*)
-            status = Loop::STEP;
+            status = MetaLoop::STEP;
             if(flags & (unsigned)EachFlag::RECURSIVE &&
-                e.type.id == Type::ID::META
+                e.type.id == MetaType::ID::META
             ){
                 // TODO: catch flags from each() call here
                 //
@@ -105,12 +106,12 @@ typename Meta<Mutex>::Loop Meta<Mutex>::each(
                     break_outer = true;
                     break;
                 }
-                if(status == Loop::BREAK) {
+                if(status == MetaLoop::BREAK) {
                     // metastack might have been modified
                     break_outer = true;
                     break;
                 }
-                if(status == Loop::REPEAT) {
+                if(status == MetaLoop::REPEAT) {
                     repeat = true;
                     continue;
                 }
@@ -122,14 +123,14 @@ typename Meta<Mutex>::Loop Meta<Mutex>::each(
 
             // the CONTINUE check here is why we reset status above (*)
             if(flags & (unsigned)EachFlag::POSTORDER
-                && status != Loop::CONTINUE // warning: untested
+                && status != MetaLoop::CONTINUE // warning: untested
             ){
                 status = func(*spthis, e, level+1);
-                if(status == Loop::BREAK) {
+                if(status == MetaLoop::BREAK) {
                     break_outer = true;
                     break;
                 }
-                if(status == Loop::REPEAT) {
+                if(status == MetaLoop::REPEAT) {
                     repeat = true;
                     continue;
                 }
@@ -142,11 +143,11 @@ typename Meta<Mutex>::Loop Meta<Mutex>::each(
         {
             // dismiss the scope guard
             metastack = nullptr;
-            return Loop::BREAK;
+            return MetaLoop::BREAK;
         }
     }
 
-    return Loop::STEP; // EachResult flags here
+    return MetaLoop::STEP; // EachResult flags here
 }
 
 //  use type checks with typeid() before attempting conversion
@@ -159,42 +160,42 @@ typename Meta<Mutex>::Loop Meta<Mutex>::each(
  * Might throw bad_any_cast
  */
 template<class Mutex>
-Json::Value Meta<Mutex>::Element::serialize_json(
+Json::Value MetaElement::serialize_json(
     unsigned flags
 ) const {
 
     Json::Value v;
 
-    if(type.id == Type::ID::META)
+    if(type.id == MetaType::ID::META)
     {
         boost::any_cast<std::shared_ptr<Meta<Mutex>>>(value)->serialize_json(v);
     }
     // TODO: boost::any -> value (and key?)
-    else if(type.id == Type::ID::INT) {
+    else if(type.id == MetaType::ID::INT) {
         //if(type.storage == Type::Storage::STACK) {
-            if(type.flags & Type::Flag::SIGN)
+            if(type.flags & MetaType::Flag::SIGN)
                 v = Json::Int(boost::any_cast<int>(value));
             else
                 v = Json::Int(boost::any_cast<unsigned>(value));
-        //} else if(type.storage == Type::Storage::SHARED) {
+        //} else if(type.storage == MetaType::Storage::SHARED) {
         //    v = Json::Int(
         //        *kit::safe_ptr(boost::any_cast<std::shared_ptr<int>>(value))
         //    );
         //}
     }
-    else if(type.id == Type::ID::REAL)
+    else if(type.id == MetaType::ID::REAL)
     {
         //if(type.storage == Type::Storage::STACK) {
             v = Json::Value(boost::any_cast<double>(value));
         //}
     }
-    else if(type.id == Type::ID::STRING)
+    else if(type.id == MetaType::ID::STRING)
     {
-        //if(type.storage == Type::Storage::STACK) {
+        //if(type.storage == MetaType::Storage::STACK) {
             v = Json::Value(boost::any_cast<std::string>(value));
         //}
     }
-    else if(type.id == Type::ID::EMPTY)
+    else if(type.id == MetaType::ID::EMPTY)
         v = Json::Value();
 
     // if meta...
@@ -207,7 +208,7 @@ Json::Value Meta<Mutex>::Element::serialize_json(
     // This is the best way to deal with an array that contains
     // key-values but isn't purely a map
     // This allows us to preserve ordering, and merge-on-deserialize
-    if((flags & STORE_KEY) && !key.empty())
+    if((flags & (unsigned)MetaSerialize::STORE_KEY) && !key.empty())
     {
         Json::Value tup;
         //tup.append(key);
@@ -246,7 +247,7 @@ void Meta<Mutex> :: serialize_json(Json::Value& v) const
         {
             try{
                 //if(e.key.empty())
-                v.append(e.serialize_json(STORE_KEY));
+                v.append(e.serialize_json((unsigned)MetaSerialize::STORE_KEY));
                 //else
                 //    keys[e.key] = e.serialize_json();
             }catch(...){
@@ -282,7 +283,7 @@ void Meta<Mutex> :: deserialize_json(
         // TODO: move this stuff to Element::deserialize_json()
         if(e.isArray() || e.isObject())
         {
-            auto nested = std::make_shared<Meta>();
+            auto nested = std::make_shared<Meta<Mutex>>();
             nested->deserialize_json(e);
             set(k, nested);
             continue;
@@ -308,16 +309,16 @@ void Meta<Mutex> :: deserialize_json(
 }
 
 template<class Mutex>
-std::string Meta<Mutex> :: serialize(Meta::Format fmt, unsigned flags) const
+std::string Meta<Mutex> :: serialize(MetaFormat fmt, unsigned flags) const
 {
     auto l = this->lock();
 
     std::string data;
-    if(fmt == Format::JSON)
+    if(fmt == MetaFormat::JSON)
     {
         Json::Value root;
         serialize_json(root);
-        if(flags & MINIMIZE)
+        if(flags & (unsigned)MetaSerialize::MINIMIZE)
         {
             Json::FastWriter writer;
             return writer.write(root);
@@ -325,11 +326,11 @@ std::string Meta<Mutex> :: serialize(Meta::Format fmt, unsigned flags) const
         else
             return root.toStyledString();
     }
-    //else if (fmt == Format::BSON)
+    //else if (fmt == MetaFormat::BSON)
     //{
         
     //}
-    else if (fmt == Format::HUMAN)
+    else if (fmt == MetaFormat::HUMAN)
         assert(false);
     else
         assert(false);
@@ -338,18 +339,18 @@ std::string Meta<Mutex> :: serialize(Meta::Format fmt, unsigned flags) const
 }
 
 template<class Mutex>
-void Meta<Mutex> :: deserialize(Meta::Format fmt, const std::string& data, const std::string& fn)
+void Meta<Mutex> :: deserialize(MetaFormat fmt, const std::string& data, const std::string& fn)
 {
     std::istringstream iss(data);
     deserialize(fmt, iss, fn);
 }
 
 template<class Mutex>
-void Meta<Mutex> :: deserialize(Meta::Format fmt, std::istream& data, const std::string& fn)
+void Meta<Mutex> :: deserialize(MetaFormat fmt, std::istream& data, const std::string& fn)
 {
     auto l = this->lock();
 
-    if(fmt == Format::JSON)
+    if(fmt == MetaFormat::JSON)
     {
         Json::Value root;
         Json::Reader reader;
@@ -364,12 +365,12 @@ void Meta<Mutex> :: deserialize(Meta::Format fmt, std::istream& data, const std:
 
         deserialize_json(root);
     }
-    else if (fmt == Format::HUMAN)
+    else if (fmt == MetaFormat::HUMAN)
     {
         // human deserialization unsupported
         assert(false);
     }
-    //else if (fmt == Format::BSON)
+    //else if (fmt == MetaFormat::BSON)
     //{
         
     //}
@@ -460,7 +461,7 @@ std::tuple<std::shared_ptr<Meta<Mutex>>, bool> Meta<Mutex> :: ensure_path(
             base = child;
             continue;
         }catch(...){
-            auto child = std::make_shared<Meta>();
+            auto child = std::make_shared<Meta<Mutex>>();
             base->set(p, child);
             base = child;
             created = true;
@@ -473,8 +474,9 @@ std::tuple<std::shared_ptr<Meta<Mutex>>, bool> Meta<Mutex> :: ensure_path(
 }
 
 template<class Mutex>
+template<class Mutex2>
 void Meta<Mutex> :: merge(
-    const std::shared_ptr<Meta<Mutex>>& t,
+    const std::shared_ptr<Meta<Mutex2>>& t,
     WhichCallback_t which,
     unsigned flags,
     TimeoutCallback_t timeout,
@@ -483,7 +485,7 @@ void Meta<Mutex> :: merge(
     assert(t);
 
     std::unique_lock<Mutex> al(this->mutex(), std::defer_lock);
-    std::unique_lock<Mutex> bl(t->mutex(), std::defer_lock);
+    std::unique_lock<Mutex2> bl(t->mutex(), std::defer_lock);
     if(!timeout)
         std::lock(al, bl);
     else
@@ -529,16 +531,16 @@ void Meta<Mutex> :: merge(
             // already there, merge?
             unsigned this_id = m_Keys[e.key];
             auto& this_e = m_Elements[this_id];
-            if(this_e.type.id == Type::ID::META &&
-                    e.type.id == Type::ID::META// &&
-                //this_e.type.storage == Type::Storage::SHARED &&
-                //     e.type.storage == Type::Storage::SHARED
+            if(this_e.type.id == MetaType::ID::META &&
+                    e.type.id == MetaType::ID::META// &&
+                //this_e.type.storage == MetaType::Storage::SHARED &&
+                //     e.type.storage == MetaType::Storage::SHARED
             ){
                 if(flags & (unsigned)MergeFlags::RECURSIVE)
                 {
                     //try{
                         at<std::shared_ptr<Meta<Mutex>>>(this_id)->merge(
-                            t->template at<std::shared_ptr<Meta<Mutex>>>(e.key),
+                            t->template at<std::shared_ptr<Meta<Mutex2>>>(e.key),
                             which,
                             flags,
                             timeout
@@ -551,7 +553,7 @@ void Meta<Mutex> :: merge(
                     Meta::Which* w = boost::get<Meta::Which>(&r);
                     if(!w)
                     {
-                        Meta<Mutex>::Element* a = boost::get<Meta<Mutex>::Element>(&r);
+                        MetaElement* a = boost::get<MetaElement>(&r);
                         auto preserved_key = this_e.key;
                         if(flags & (unsigned)MergeFlags::INCREMENTAL)
                             this_e = std::move(*a);
@@ -610,24 +612,55 @@ void Meta<Mutex> :: merge(
 }
 
 template<class Mutex>
+template<class Mutex2>
 void Meta<Mutex> :: merge(
-    const std::shared_ptr<Meta<Mutex>>& t,
+    const std::shared_ptr<Meta<Mutex2>>& t,
     unsigned flags
 ){
     if(flags & (unsigned)MergeFlags::REPLACE)
-        merge(t, [](const Meta<Mutex>::Element&, const Meta<Mutex>::Element&) {
+        merge(t, [](const MetaElement&,
+            const MetaElement&
+        ){
             return Which::OTHER;
         }, flags);
     else
-        merge(t, [](const Meta<Mutex>::Element&, const Meta<Mutex>::Element&) {
+        merge(t,
+            [](const MetaElement&,
+            const MetaElement&
+        ){
             return Which::THIS;
         }, flags);
 }
 
 template<class Mutex>
-/*static*/ typename Meta<Mutex>::Format  Meta<Mutex> :: filename_to_format(const std::string& fn)
+void Meta<Mutex> :: merge(
+    const std::string& fn,
+    unsigned flags
+){
+    // TODO: Could use null mutex for temp meta here
+    merge(std::make_shared<Meta<kit::dummy_mutex>>(fn), flags);
+}
+
+template<class Mutex>
+void Meta<Mutex> :: merge(
+    const std::string& fn,
+    WhichCallback_t which,
+    unsigned flags,
+    TimeoutCallback_t timeout,
+    VisitorCallback_t visit
+){
+    merge(std::make_shared<Meta<kit::dummy_mutex>>(fn),
+        which,
+        flags,
+        timeout,
+        visit
+    );
+}
+
+template<class Mutex>
+/*static*/ MetaFormat Meta<Mutex> :: filename_to_format(const std::string& fn)
 {
     boost::filesystem::path p(fn);
-    return p.extension().string() == ".json" ? Format::JSON : Format::UNKNOWN;
+    return p.extension().string() == ".json" ? MetaFormat::JSON : MetaFormat::UNKNOWN;
 }
 
