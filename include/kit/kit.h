@@ -63,7 +63,6 @@ namespace kit
         static bool const value = true;
     };
 
-
     //template<class Class=c>
     //class mutex_wrapper<>
     //{
