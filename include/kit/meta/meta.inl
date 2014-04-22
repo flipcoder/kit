@@ -18,6 +18,44 @@ Meta<Mutex> :: Meta(MetaFormat fmt, const std::string& data)
 }
 
 template<class Mutex>
+void Meta<Mutex> :: from_args(std::vector<std::string> args)
+{
+    // remove whitespace args
+    kit::remove_if(args, [](const std::string& s) {
+        return (s.find_first_not_of(" \n\r\t") == std::string::npos);
+    });
+    std::map<std::string, std::string> values;
+
+    // parse key-values
+    for(const auto& arg: args)
+    {
+        if(boost::starts_with(arg, "--") && arg.length()>2)
+        {
+            kit::remove(args, arg);
+            size_t idx = arg.find('=');
+            if(idx != std::string::npos)
+            {
+                if(idx != arg.rfind('='))
+                    throw std::exception(); // more than one '='
+                std::string key = arg.substr(2, idx-2);
+                if(values.find(key) != values.end())
+                    throw std::exception(); // duplicate
+                std::string value = arg.substr(idx+1);
+                if(!value.empty())
+                    if(!values.insert({key,value}).second)
+                        throw std::exception(); // failed to insert
+            }
+        }
+    }
+    
+    // populate meta with lone elements and key-values
+    for(auto&& arg: args)
+        add(arg);
+    for(auto&& val: values) 
+        set(val.first, val.second);
+}
+
+template<class Mutex>
 MetaLoop Meta<Mutex>::each(
     std::function<MetaLoop(
         const std::shared_ptr<Meta<Mutex>>&, MetaElement&, unsigned
@@ -232,7 +270,7 @@ void Meta<Mutex> :: serialize_json(Json::Value& v) const
         for(auto&& e: m_Elements)
         {
             try{
-                v[e.key] = e.serialize_json();
+                v[e.key] = e.template serialize_json<Mutex>();
             }catch(...){
                 WARNING("Unable to serialize element");
             }
@@ -247,7 +285,7 @@ void Meta<Mutex> :: serialize_json(Json::Value& v) const
         {
             try{
                 //if(e.key.empty())
-                v.append(e.serialize_json((unsigned)MetaSerialize::STORE_KEY));
+                v.append(e.template serialize_json<Mutex>((unsigned)MetaSerialize::STORE_KEY));
                 //else
                 //    keys[e.key] = e.serialize_json();
             }catch(...){
@@ -330,8 +368,8 @@ std::string Meta<Mutex> :: serialize(MetaFormat fmt, unsigned flags) const
     //{
         
     //}
-    else if (fmt == MetaFormat::HUMAN)
-        assert(false);
+    //else if (fmt == MetaFormat::HUMAN)
+    //    assert(false);
     else
         assert(false);
 
@@ -350,7 +388,7 @@ void Meta<Mutex> :: deserialize(MetaFormat fmt, std::istream& data, const std::s
 {
     auto l = this->lock();
 
-    if(fmt == MetaFormat::JSON)
+    if(fmt == MetaFormat::JSON) 
     {
         Json::Value root;
         Json::Reader reader;
@@ -661,6 +699,8 @@ template<class Mutex>
 /*static*/ MetaFormat Meta<Mutex> :: filename_to_format(const std::string& fn)
 {
     boost::filesystem::path p(fn);
-    return p.extension().string() == ".json" ? MetaFormat::JSON : MetaFormat::UNKNOWN;
+    return p.extension().string() == ".json" ?
+        MetaFormat::JSON:
+        MetaFormat::UNKNOWN;
 }
 

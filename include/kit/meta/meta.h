@@ -174,7 +174,7 @@ struct MetaElement
     std::shared_ptr<boost::signals2::signal<void()>> change;
 };
 
-enum MetaFormat {
+enum class MetaFormat : unsigned {
     UNKNOWN=0,
     JSON,
     HUMAN,
@@ -206,6 +206,7 @@ class Meta:
 {
     public:
         using mutex_type = Mutex;
+        friend class MetaElement;
         //typedef Mutex mutex_type;
         
         //struct Iterator
@@ -320,6 +321,24 @@ class Meta:
                 // TODO: last modified date (same timestamp type as sync())
                 std::shared_ptr<Meta<Mutex>> m_Cached;
         };
+        
+        Meta() = default;
+        Meta(int argc, const char** argv){
+            from_args(std::vector<std::string>(argv+1, argv+argc));
+        }
+        Meta(const std::string& fn);
+        Meta(MetaFormat fmt, const std::string& data);
+
+        Meta(Meta&&)= delete;
+        Meta(const Meta&)= delete;
+        Meta& operator=(const Meta&) = delete;
+        Meta& operator=(Meta&&) = delete;
+
+        // TODO: add init list
+        
+        virtual ~Meta() {}
+        
+        void from_args(std::vector<std::string> args);
 
         // recursive converter between Metas of diff mutex types
         template<class Mutex2>
@@ -375,19 +394,6 @@ class Meta:
         };
 
         //struct Reserved {};
-
-        Meta() = default;
-        Meta(const std::string& fn);
-        Meta(MetaFormat fmt, const std::string& data);
-
-        Meta(Meta&&)= delete;
-        Meta(const Meta&)= delete;
-        Meta& operator=(const Meta&) = delete;
-        Meta& operator=(Meta&&) = delete;
-
-        // TODO: add init list
-        
-        virtual ~Meta() {}
 
         //using lock = kit::mutexed<Mutex>::lock;
         //std::unique_lock<Mutex> this->lock() const {
