@@ -1,6 +1,6 @@
 #include <catch.hpp>
 #include <memory>
-#include "../include/kit/schema/schema.h"
+#include "../include/kit/meta/schema.h"
 using namespace std;
 
 TEST_CASE("Schema","[schema]") {
