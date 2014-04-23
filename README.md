@@ -16,15 +16,15 @@ some math stuff to use with glm
 ## common (kit.h)
 Common stuff used by other modules, including:
 
-    - freezable: freeze objects as immutable
-    - make_unique: clone of c++14 function
-    - dummy_mutex
-    - ENTIRE() range macro
-    - bit() and mask()
-    - null_ptr_exception
-    - scoped_unlock
-    - scoped_dtor: deprecated in favor of BOOST_SCOPE_EXIT_ALL()
-    - thread-safe singleton
-    - timed function auto-retry
-    - index data structures w/ unused ID approximation
+- freezable: freeze objects as immutable
+- make_unique: clone of c++14 function
+- dummy_mutex
+- ENTIRE() range macro
+- bit() and mask()
+- null_ptr_exception
+- scoped_unlock
+- scoped_dtor: deprecated in favor of BOOST_SCOPE_EXIT_ALL()
+- thread-safe singleton
+- timed function auto-retry
+- index data structures w/ unused ID approximation
 
