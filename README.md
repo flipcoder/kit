@@ -15,6 +15,7 @@ some math stuff to use with glm
 
 ## common (kit.h)
 Common stuff used by other modules, including:
+
     - freezable: freeze objects as immutable
     - make_unique: clone of c++14 function
     - dummy_mutex
