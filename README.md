@@ -2,7 +2,7 @@
 My personal C++11 toolset
 
 ## meta
-Serializable meta-objects, property trees, and reflection
+Thread-aware serializable meta-objects, property trees, and reflection
 
 ## freq
 Timelines, alarms, animation/easing, waypoints/keyframes, interpolation
