@@ -2,7 +2,7 @@
 My personal C++11 toolset
 
 ## meta
-Classes for serializable meta-objects and property trees
+Serializable meta-objects, property trees, and reflection
 
 ## freq
 Timelines, alarms, animation/easing, waypoints/keyframes, interpolation
