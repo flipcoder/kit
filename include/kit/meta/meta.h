@@ -67,7 +67,7 @@ struct MetaType {
         }
         else
         {
-            //WARNINGf("unserializable type: %s", typeid(T).name());
+            WARNINGf("unserializable type: %s", typeid(T).name());
             id = ID::USER;
         }
     }
@@ -435,6 +435,11 @@ class Meta:
             auto l = this->lock();
             m_pParent = p.get();
         }
+        void parent(Meta<Mutex>* p) {
+            auto l = this->lock();
+            m_pParent = p;
+        }
+
 
         // TODO: Treespace lock is important for recursion here
         std::shared_ptr<Meta<Mutex>> parent(
@@ -599,7 +604,6 @@ class Meta:
             }catch(const std::out_of_range&){
                 return false;
             }
-
         }
 
         //template<class T>
@@ -812,7 +816,7 @@ class Meta:
                 m_Elements[idx].type.id == MetaType::ID::META
                 //m_Elements[idx].type.storage == MetaType::Storage::SHARED
             ){
-                at<std::shared_ptr<Meta<Mutex>>>(idx)->parent(this->shared_from_this());
+                at<std::shared_ptr<Meta<Mutex>>>(idx)->parent(this);
             }
 
             return idx;
