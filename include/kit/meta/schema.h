@@ -13,14 +13,18 @@ class Schema
         
         Schema() = default;
 
-        template<class TMutex>
-        Schema(const std::shared_ptr<Meta<TMutex>>& m);
+        //template<class TMutex>
+        Schema(const std::shared_ptr<Meta<Mutex>>& m);
+        
+        Schema(const std::string& fn):
+            Schema(std::make_shared<Meta<Mutex>>(fn))
+        {}
         
         // validate throws on error, check just returns false
         template<class TMutex>
-        void validate(const std::shared_ptr<const Meta<TMutex>>& m) const;
+        void validate(const std::shared_ptr<Meta<TMutex>>& m) const;
         template<class TMutex>
-        bool check(const std::shared_ptr<const Meta<TMutex>>& m) const {
+        bool check(const std::shared_ptr<Meta<TMutex>>& m) const {
             try{
                 Log::Silencer ls;
                 validate(m);
@@ -39,6 +43,13 @@ class Schema
         
         template<class TMutex>
         std::shared_ptr<Meta<TMutex>> make_default() const;
+
+        std::shared_ptr<Meta<Mutex>> meta() {
+            return m_pMeta;
+        }
+        std::shared_ptr<const Meta<Mutex>> meta() const {
+            return m_pMeta;
+        }
 
     private:
         std::shared_ptr<Meta<Mutex>> m_pMeta;

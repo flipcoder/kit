@@ -1,8 +1,7 @@
 #include "schema.h"
 
 template<class Mutex>
-template<class TMutex>
-Schema<Mutex> :: Schema(const std::shared_ptr<Meta<TMutex>>& m):
+Schema<Mutex> :: Schema(const std::shared_ptr<Meta<Mutex>>& m):
     m_pMeta(m)
 {
     assert(m);
@@ -10,8 +9,9 @@ Schema<Mutex> :: Schema(const std::shared_ptr<Meta<TMutex>>& m):
 
 template<class Mutex>
 template<class TMutex>
-void Schema<Mutex> :: validate(const std::shared_ptr<const Meta<TMutex>>& m) const
+void Schema<Mutex> :: validate(const std::shared_ptr<Meta<TMutex>>& m) const
 {
+    
 }
 
 template<class Mutex>
