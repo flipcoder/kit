@@ -427,6 +427,17 @@ class Meta:
             auto l = this->lock();
             return m_Keys.size();
         }
+        template<class U>
+        std::string first_key_of(U t) {
+            auto l = this->lock();
+            for(auto&& e: elements_ref()) {
+                try{
+                    if(boost::any_cast<U>(e.value) == t)
+                        return e.key;
+                }catch(const boost::bad_any_cast&){}
+            }
+            throw std::out_of_range("no such element");
+        }
 
         /*
          * May throw on null
@@ -440,6 +451,12 @@ class Meta:
             m_pParent = p;
         }
 
+        // warning: O(n)
+        std::string key_in_parent() {
+            auto l = this->lock();
+            auto par = parent();
+            return par->first_key_of(this->shared_from_this());
+        }
 
         // TODO: Treespace lock is important for recursion here
         std::shared_ptr<Meta<Mutex>> parent(
