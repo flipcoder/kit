@@ -46,7 +46,7 @@ TEST_CASE("Schema","[schema]") {
                 MetaFormat::JSON,
                 R"({
                     "foo": {
-                        "values": [
+                        ".values": [
                             "a",
                             "b",
                             "c"
