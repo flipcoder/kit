@@ -63,9 +63,11 @@ MetaLoop Meta<Mutex>::each(
     unsigned flags, // use EachFlag enum
     std::deque<std::tuple<
         std::shared_ptr<Meta<Mutex>>,
-        std::unique_lock<Mutex>
+        std::unique_lock<Mutex>,
+        std::string // key in parent
     >>* metastack,
-    unsigned level
+    unsigned level,
+    std::string key
 ){
     auto l = this->lock();
 
@@ -73,7 +75,9 @@ MetaLoop Meta<Mutex>::each(
     std::shared_ptr<Meta<Mutex>> spthis_ = this->shared_from_this();
     std::shared_ptr<Meta<Mutex>>* spthis = &spthis_;
     if(metastack) {
-        metastack->push_back(std::make_tuple(std::move(spthis_), std::move(l)));
+        metastack->push_back(std::make_tuple(
+            std::move(spthis_), std::move(l), std::move(key)
+        ));
         spthis = &std::get<0>(metastack->back());
     }
 
@@ -133,7 +137,8 @@ MetaLoop Meta<Mutex>::each(
                         func,
                         flags,
                         metastack,
-                        level+1
+                        level+1,
+                        e.key
                     );
 
                 // Allows for user to pop items off the BOTTOM of

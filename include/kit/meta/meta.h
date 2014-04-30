@@ -377,12 +377,14 @@ class Meta:
             std::function<MetaLoop(
                 const std::shared_ptr<Meta<Mutex>>&, MetaElement&, unsigned
             )> func,
-            unsigned flags = 0, // use EachFlag enum
+            unsigned flags = 0, // EachFlag enum
             std::deque<std::tuple<
                 std::shared_ptr<Meta<Mutex>>,
-                std::unique_lock<Mutex>
+                std::unique_lock<Mutex>,
+                std::string // key in parent (blank if root or empty key)
             >>* metastack = nullptr,
-            unsigned level = 0
+            unsigned level = 0,
+            std::string key = std::string()
         );
 
         enum Which {

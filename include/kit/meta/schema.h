@@ -1,5 +1,5 @@
-#ifndef KIT_CONFIG_H
-#define KIT_CONFIG_H
+#ifndef _KIT_SCHEMA_H_PQUEFVOM
+#define _KIT_SCHEMA_H_PQUEFVOM
 
 #include <memory>
 #include "../meta/meta.h"

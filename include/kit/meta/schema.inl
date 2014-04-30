@@ -1,3 +1,6 @@
+#include <memory>
+#include <deque>
+#include <tuple>
 #include "schema.h"
 
 template<class Mutex>
@@ -11,7 +14,24 @@ template<class Mutex>
 template<class TMutex>
 void Schema<Mutex> :: validate(const std::shared_ptr<Meta<TMutex>>& m) const
 {
+    // our stack for keeping track of location in tree while iterating
+    std::deque<std::tuple<
+        std::shared_ptr<Meta<TMutex>>,
+        std::unique_lock<TMutex>,
+        std::string
+    >> metastack;
     
+    m->each([this](
+        const std::shared_ptr<Meta<TMutex>>& m,
+        MetaElement& e,
+        unsigned
+    ){
+        return MetaLoop::STEP;
+    },
+        (unsigned)Meta<>::EachFlag::DEFAULTS &
+            ~(unsigned)Meta<>::EachFlag::RECURSIVE,
+        &metastack
+    );
 }
 
 template<class Mutex>
