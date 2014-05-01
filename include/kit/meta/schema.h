@@ -29,7 +29,10 @@ class Schema
                 Log::Silencer ls;
                 validate(m);
                 return true;
-            }catch(Error&){}
+            }catch(Error&){
+            }catch(std::out_of_range&){
+            }catch(boost::bad_any_cast&){
+            }
             return false;
         }
 
@@ -45,14 +48,14 @@ class Schema
         std::shared_ptr<Meta<TMutex>> make_default() const;
 
         std::shared_ptr<Meta<Mutex>> meta() {
-            return m_pMeta;
+            return m_pSchema;
         }
         std::shared_ptr<const Meta<Mutex>> meta() const {
-            return m_pMeta;
+            return m_pSchema;
         }
 
     private:
-        std::shared_ptr<Meta<Mutex>> m_pMeta;
+        std::shared_ptr<Meta<Mutex>> m_pSchema;
 };
 
 #include "schema.inl"

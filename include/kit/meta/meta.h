@@ -741,13 +741,14 @@ class Meta:
             return set(std::string(), val);
         }
 
-        enum class EnsurePathFlags : uint32_t {
+        enum class PathFlags : unsigned {
             ABSOLUTE_PATH = kit::bit(0),
-            REPLACE_ON_CONFLICT = kit::bit(1) // default behavior for now
+            REPLACE_ON_CONFLICT = kit::bit(1), // default behavior for now
+            ENSURE = kit::bit(2)
         };
         // Ensures the path exists in the tree and initializes an element `val`
         // the endpoint.
-        std::tuple<std::shared_ptr<Meta<Mutex>>, bool> ensure_path(
+        std::tuple<std::shared_ptr<Meta<Mutex>>, bool> path(
             const std::vector<std::string>& path,
             unsigned flags = 0
         );
@@ -995,39 +996,39 @@ class Meta:
          *
          * NOT YET IMPLEMENTED
          */
-        std::vector<std::string> path(
-            unsigned lock_flags = 0
-        ){ // TODO: const vers
-            auto r = root();
-            assert(r);
-            auto rl = r->lock();
+        //std::vector<std::string> path(
+        //    unsigned lock_flags = 0
+        //){ // TODO: const vers
+        //    auto r = root();
+        //    assert(r);
+        //    auto rl = r->lock();
 
-            std::vector<std::shared_ptr<Meta<Mutex>>> metastack;
+        //    std::vector<std::shared_ptr<Meta<Mutex>>> metastack;
 
-            do{
-                metastack.clear();
-                try{
-                    // hooks?
-                    // auto p = parent();
-                }catch(const kit::lock_exception& e){
-                    if(lock_flags & (unsigned)LockFlags::TRY)
-                        throw e;
-                    continue;
-                }
-                break;
-            }while(true);
+        //    do{
+        //        metastack.clear();
+        //        try{
+        //            // hooks?
+        //            // auto p = parent();
+        //        }catch(const kit::lock_exception& e){
+        //            if(lock_flags & (unsigned)LockFlags::TRY)
+        //                throw e;
+        //            continue;
+        //        }
+        //        break;
+        //    }while(true);
             
-            //std::vector<std::string> p;
-            //auto parent = parent();
-            //while(parent())
-            //{
-            //    p.push_back();
-            //}
+        //    //std::vector<std::string> p;
+        //    //auto parent = parent();
+        //    //while(parent())
+        //    //{
+        //    //    p.push_back();
+        //    //}
 
-            //std::vector<std::string> abs_path;
-            //return parent()->path();
-            return std::vector<std::string>();
-        }
+        //    //std::vector<std::string> abs_path;
+        //    //return parent()->path();
+        //    return std::vector<std::string>();
+        //}
 
         /*
          * Is meta completely serializable?

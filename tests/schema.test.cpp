@@ -64,11 +64,11 @@ TEST_CASE("Schema","[schema]") {
             })"
         );
         
-        REQUIRE(schema->check(test));
         REQUIRE_NOTHROW(schema->validate(test));
+        REQUIRE(schema->check(test));
         test->set<string>("foo", "d");
-        REQUIRE_FALSE(schema->check(test));
         REQUIRE_THROWS(schema->validate(test));
+        REQUIRE_FALSE(schema->check(test));
     }
 }
 

@@ -461,7 +461,7 @@ void Meta<Mutex> :: serialize(const std::string& fn, unsigned flags) const
 }
 
 template<class Mutex>
-std::tuple<std::shared_ptr<Meta<Mutex>>, bool> Meta<Mutex> :: ensure_path(
+std::tuple<std::shared_ptr<Meta<Mutex>>, bool> Meta<Mutex> :: path(
     const std::vector<std::string>& path,
     unsigned flags
 ){
@@ -471,7 +471,7 @@ std::tuple<std::shared_ptr<Meta<Mutex>>, bool> Meta<Mutex> :: ensure_path(
 
     {
         // TODO; redo this try locks like in parent()
-        if(flags & (unsigned)EnsurePathFlags::ABSOLUTE_PATH)
+        if(flags & (unsigned)PathFlags::ABSOLUTE_PATH)
         {
             if(!(base = root()))
                 base = this->shared_from_this();
@@ -503,15 +503,22 @@ std::tuple<std::shared_ptr<Meta<Mutex>>, bool> Meta<Mutex> :: ensure_path(
             // TODO: add flags
             base = child;
             continue;
-        }catch(...){
-            auto child = std::make_shared<Meta<Mutex>>();
-            base->set(p, child);
-            base = child;
-            created = true;
-            continue;
+        }catch(const std::exception&){
+            if(flags & (unsigned)PathFlags::ENSURE) {
+                auto child = std::make_shared<Meta<Mutex>>();
+                base->set(p, child);
+                base = child;
+                created = true;
+                continue;
+            }else{
+                throw std::out_of_range("no such path");
+                //return std::tuple<std::shared_ptr<Meta<Mutex>>,bool>(
+                //    nullptr, false
+                //);
+            }
         }
     }
-    locks.clear();
+    //locks.clear();
 
     return std::tuple<std::shared_ptr<Meta<Mutex>>,bool>(base, !created);
 }
