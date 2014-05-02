@@ -53,6 +53,10 @@ struct MetaType {
         {
             id = ID::EMPTY;
         }
+        else if(typeid(val) == typeid(bool))
+        {
+            id = ID::BOOL;
+        }
         else if(kit::is_vector<T>::value)
             flags |= CONTAINER;
         else if(typeid(val) == typeid(boost::any))
@@ -82,6 +86,7 @@ struct MetaType {
         REAL,
         STRING,
         META,
+        BOOL,
         USER
     };
 
@@ -644,15 +649,21 @@ class Meta:
         /*
          * May throw
          */
+        
+        //template<class T>
+        //T at(unsigned idx) {
+        //    auto l = this->lock();
+        //    return boost::any_cast<T>(m_Elements.at(idx).value);
+        //}
         template<class T>
         T at(unsigned idx) const {
             auto l = this->lock();
             return boost::any_cast<T>(m_Elements.at(idx).value);
         }
         template<class T>
-        T at(unsigned idx) {
+        T raw(unsigned idx) {
             auto l = this->lock();
-            return boost::any_cast<T>(m_Elements.at(idx).value);
+            return m_Elements.at(idx).value;
         }
 
         std::shared_ptr<Meta<Mutex>> meta(const std::string& key) {
@@ -682,23 +693,23 @@ class Meta:
         /*
          * May throw bad_any_cast or out_of_range
          */
-        template<class T>
-        T at(const std::string& key) {
-            auto l = this->lock();
-            return boost::any_cast<T>(
-                m_Elements.at(m_Keys.at(key)).value
-            );
-        }
+        //template<class T>
+        //T at(const std::string& key) {
+        //    auto l = this->lock();
+        //    return boost::any_cast<T>(
+        //        m_Elements.at(m_Keys.at(key)).value
+        //    );
+        //}
         
-        template<class T>
-        T at(const std::string& key, T def) {
-            try{
-                return at<T>(key);
-            }catch(const std::out_of_range&){
-            }catch(const boost::bad_any_cast&){
-            }
-            return def;
-        }
+        //template<class T>
+        //T at(const std::string& key, T def) {
+        //    try{
+        //        return at<T>(key);
+        //    }catch(const std::out_of_range&){
+        //    }catch(const boost::bad_any_cast&){
+        //    }
+        //    return def;
+        //}
         template<class T>
         T at(const std::string& key, T def) const {
             try{
@@ -1120,8 +1131,13 @@ class Meta:
             return m_Keys;
         }
 
-        //typedef std::vector<MetaElement>::iterator iterator;
-        //typedef std::vector<MetaElement>::const_iterator const_iterator;
+        // WARNING: Direct iteration requires lock if Mutex policy non-dummy
+        typedef std::vector<MetaElement>::iterator iterator;
+        typedef std::vector<MetaElement>::const_iterator const_iterator;
+        const_iterator cbegin() const { return m_Elements.cbegin(); }
+        const_iterator cend() const { return m_Elements.cend(); }
+        iterator begin() { return m_Elements.begin(); }
+        iterator end() { return m_Elements.end(); }
 
         /*
          * Check if meta is a pure map, array, or another static type

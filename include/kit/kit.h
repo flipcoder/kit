@@ -10,7 +10,10 @@
 #include <map>
 #include <atomic>
 #include <boost/algorithm/string.hpp>
+#include <boost/optional.hpp>
 #include <boost/bimap.hpp>
+#include <boost/any.hpp>
+#include <boost/logic/tribool.hpp>
 
 // lazy range for entire container
 #define ENTIRE(blah) blah.begin(), blah.end()
@@ -493,6 +496,28 @@ namespace kit
         std::vector<std::string> v;
         return boost::algorithm::split(v, s, boost::is_any_of("\r\n"));
     }
+    
+    template<class T>
+    boost::tribool any_eq_type(const boost::any& a, const boost::any& b) {
+        if (a.type() == typeid(T) && b.type() == typeid(T))
+            return boost::any_cast<T>(a) ==
+                boost::any_cast<T>(b);
+        return boost::tribool::indeterminate_value;
+    }
+
+    inline bool any_eq(const boost::any& a, const boost::any& b) {
+        if(a.type() != b.type())
+            return false;
+        {auto r = any_eq_type<std::string>(a,b); if(r||!r) return r;}
+        {auto r = any_eq_type<int>(a,b); if(r||!r) return r;}
+        {auto r = any_eq_type<unsigned>(a,b); if(r||!r) return r;}
+        {auto r = any_eq_type<float>(a,b); if(r||!r) return r;}
+        {auto r = any_eq_type<double>(a,b); if(r||!r) return r;}
+        {auto r = any_eq_type<bool>(a,b); if(r||!r) return r;}
+
+        throw std::runtime_error("unable to compare values");
+    }
+    
     //std::string lines(const std::vector<std::string>& s, std::string sep="")
     //{
     //    return boost::algorithm::join(s, "\n");

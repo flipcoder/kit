@@ -122,9 +122,10 @@ MetaLoop Meta<Mutex>::each(
 
             // reset status just in case we don't enter this block (*)
             status = MetaLoop::STEP;
-            if(flags & (unsigned)EachFlag::RECURSIVE &&
+            if((flags & (unsigned)EachFlag::RECURSIVE) &&
                 e.type.id == MetaType::ID::META
             ){
+                LOG("RECURSIVE each");
                 // TODO: catch flags from each() call here
                 //
                 // NOTE: keep the metastack pointer as the exclusive
@@ -238,6 +239,13 @@ Json::Value MetaElement::serialize_json(
             v = Json::Value(boost::any_cast<std::string>(value));
         //}
     }
+    else if(type.id == MetaType::ID::BOOL)
+    {
+        //if(type.storage == MetaType::Storage::STACK) {
+            v = Json::Value(boost::any_cast<bool>(value));
+        //}
+    }
+
     else if(type.id == MetaType::ID::EMPTY)
         v = Json::Value();
 

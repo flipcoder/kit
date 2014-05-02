@@ -25,10 +25,11 @@ void Schema<Mutex> :: validate(const std::shared_ptr<Meta<TMutex>>& m) const
     // TODO: loop thru schema, look up required fields in m
     
     m->each([this, &metastack](
-        const std::shared_ptr<Meta<TMutex>>& m,
+        const std::shared_ptr<Meta<TMutex>>& parent,
         MetaElement& e,
-        unsigned
+        unsigned level
     ){
+        LOGf("level: %s, key: %s", level % e.key);
         //if(boost::algorithm::starts_with(e.key, "."))
         //{
             
@@ -42,13 +43,32 @@ void Schema<Mutex> :: validate(const std::shared_ptr<Meta<TMutex>>& m) const
                 if(!key.empty())
                     path.push_back(std::get<2>(d));
             }
+            path.push_back(e.key);
+            if(path.empty())
+                return MetaLoop::CONTINUE;
+            
             LOGf("path element: %s", boost::algorithm::join(path,"/"));
+            
             std::tuple<std::shared_ptr<Meta<Mutex>>, bool> r;
             try{
                 r = m_pSchema->path(path);
-                std::shared_ptr<Meta<Mutex>> b = std::get<0>(r);
+                auto schema_metadata = std::get<0>(r);
+                bool valid_value = false;
+                LOGf("json: %s", schema_metadata->serialize(MetaFormat::JSON));
+                for(auto&& val: *schema_metadata->meta(".values")) {
+                    LOGf("key: %s", e.key);
+                    if(kit::any_eq(val.value, e.value)) {
+                        valid_value = true;
+                        break;
+                    }
+                }
+                if(!valid_value)
+                    ERROR(PARSE, "schema validation failed");
+                    
+            //}catch(const boost::bad_any_cast&){
             }catch(const std::out_of_range&){
             }
+            
             // metastack -> path
             // path -> schema format
             // look up path->at(".values")->have(element) in schema
