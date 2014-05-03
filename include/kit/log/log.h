@@ -19,15 +19,16 @@ class Log:
 {
 public:
 
+    // Data specific to each thread
     class LogThread {
         public:
             unsigned m_Indents = 0;
-            bool m_bSilence = false;
+            unsigned m_SilenceFlags = 0;
             bool m_bCapture = false;
             std::vector<std::string> m_Captured;
             bool empty() const {
                 return !m_Indents &&
-                    !m_bSilence &&
+                    !m_SilenceFlags &&
                     !m_bCapture &&
                     m_Captured.empty();
             }
@@ -44,13 +45,18 @@ public:
             eLevel(level) {}
     };
 
+    // Capturing output ignores silencers
     class Capturer
     {
     public:
-        Capturer(){
+        enum Flags {
+            PAUSE_CAPTURE = 0,
+            ERRORS = kit::bit(0)
+        };
+        Capturer(Flags flags = ERRORS){
             //auto l = Log::get().lock();
             m_bOldValue = Log::get().capture();
-            Log::get().capture(true);
+            Log::get().capture(flags ? true : false);
         }
         ~Capturer(){
             //auto l = Log::get().lock();
@@ -67,17 +73,24 @@ public:
 
     class Silencer {
     public:
-        Silencer() {
+        enum Flags {
+            UNSILENCE = 0,
+            INFO = kit::bit(0),
+            WARNINGS = kit::bit(1),
+            ERRORS = kit::bit(2),
+            ALL = INFO | WARNINGS | ERRORS
+        };
+        Silencer(unsigned flags = ALL) {
             auto l = Log::get().lock();
-            m_bOldValue = Log::get().silence();
-            Log::get().silence(true);
+            m_OldFlags = Log::get().silenced();
+            Log::get().silence(flags);
         }
         ~Silencer(){
-            if(!m_bOldValue)
-                Log::get().silence(false);
+            if(!m_OldFlags)
+                Log::get().silence(m_OldFlags);
         }
     private:
-        bool m_bOldValue;
+        unsigned m_OldFlags;
     };
 
     // Scoped indentation
@@ -204,15 +217,20 @@ public:
 
     //unsigned int size() const { return m_cbLog.size(); }
     //bool empty() const { return (size()==0); }
-    void silence(bool b) {
+    void silence(unsigned flags = Silencer::ALL) {
         auto l = lock();
-        this_log().m_bSilence=b;
-        if(!b)
+        this_log().m_SilenceFlags = flags;
+        if(!flags)
             optimize();
     }
-    bool silence() const {
+    unsigned silenced() const {
         auto l = lock();
-        return this_log().m_bSilence;
+        return this_log().m_SilenceFlags;
+    }
+    void unsilence() {
+        auto l = lock();
+        this_log().m_SilenceFlags = 0;
+        optimize();
     }
 
     unsigned num_threads() const {

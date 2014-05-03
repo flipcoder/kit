@@ -64,14 +64,12 @@ TEST_CASE("Schema","[schema]") {
             })"
         );
         
-        {
-            Log::Silencer ls;
-            REQUIRE_NOTHROW(schema->validate(test));
-        }
+        REQUIRE_NOTHROW(schema->validate(test));
         REQUIRE(schema->check(test));
         test->set<string>("foo", "d");
         {
-            Log::Silencer ls;
+            // don't logging the error output (will still throw)
+            Log::Silencer ls(Log::Silencer::ERRORS);
             REQUIRE_THROWS(schema->validate(test));
         }
         REQUIRE_FALSE(schema->check(test));

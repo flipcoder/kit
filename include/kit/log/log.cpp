@@ -21,7 +21,10 @@ void Log::write(std::string s, Log::Message::eLoggingLevel lev)
     auto l = lock();
     auto& th = this_log();
 
-    if(!th.m_bSilence || th.m_bCapture)
+    if(th.m_SilenceFlags == Log::Silencer::ALL)
+        return;
+    
+    if(th.m_bCapture)
     {
         ostringstream line;
         if(lev == Message::LL_ERROR)
@@ -29,13 +32,22 @@ void Log::write(std::string s, Log::Message::eLoggingLevel lev)
             for(unsigned i=0;i<th.m_Indents;++i)
                 line << "  ";
             line << "[ERROR] " << s;
-            if(!th.m_bSilence)
+            if(!(th.m_SilenceFlags & Log::Silencer::ERRORS))
                 cerr << line.str() << endl;
             if(th.m_bCapture)
                 th.m_Captured.push_back(line.str());
         }
         else
         {
+            // apparently no capturing of non-error messages yet
+            if(lev == Message::LL_WARNING &&
+                (th.m_SilenceFlags & Log::Silencer::WARNINGS))
+                return;
+            
+            if(lev == Message::LL_INFO &&
+                (th.m_SilenceFlags & Log::Silencer::INFO))
+                return;
+
             for(unsigned i=0;i<th.m_Indents;++i)
                 line << "  ";
             if(lev == Message::LL_WARNING)
