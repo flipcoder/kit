@@ -60,15 +60,18 @@ public:
         }
         ~Capturer(){
             //auto l = Log::get().lock();
-            Log::get().capture(m_bOldValue);
-            if(!m_bOldValue)
-                Log::get().emit();
+            if(!m_bDisable) {
+                Log::get().capture(m_bOldValue);
+                if(!m_bOldValue)
+                    Log::get().emit();
+            }
         }
         std::string emit() const {
             return Log::get().emit();
         }
     private:
         bool m_bOldValue;
+        bool m_bDisable = false; /// TODO: for move ctors
     };
 
     class Silencer {
@@ -86,11 +89,14 @@ public:
             Log::get().silence(flags);
         }
         ~Silencer(){
-            if(!m_OldFlags)
-                Log::get().silence(m_OldFlags);
+            if(!m_bDisable) {
+                if(!m_OldFlags)
+                    Log::get().silence(m_OldFlags);
+            }
         }
     private:
         unsigned m_OldFlags;
+        bool m_bDisable = false; // TODO; for move ctor
     };
 
     // Scoped indentation
