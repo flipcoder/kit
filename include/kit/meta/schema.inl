@@ -29,7 +29,7 @@ void Schema<Mutex> :: validate(const std::shared_ptr<Meta<TMutex>>& m) const
         MetaElement& e,
         unsigned level
     ){
-        LOGf("level: %s, key: %s", level % e.key);
+        //LOGf("level: %s, key: %s", level % e.key);
         //if(boost::algorithm::starts_with(e.key, "."))
         //{
             
@@ -47,16 +47,16 @@ void Schema<Mutex> :: validate(const std::shared_ptr<Meta<TMutex>>& m) const
             if(path.empty())
                 return MetaLoop::CONTINUE;
             
-            LOGf("path element: %s", boost::algorithm::join(path,"/"));
-            
-            std::tuple<std::shared_ptr<Meta<Mutex>>, bool> r;
-            try{
-                r = m_pSchema->path(path);
-                auto schema_metadata = std::get<0>(r);
-                bool valid_value = false;
-                LOGf("json: %s", schema_metadata->serialize(MetaFormat::JSON));
+        //LOGf("path element: %s", boost::algorithm::join(path,"/"));
+        
+        std::tuple<std::shared_ptr<Meta<Mutex>>, bool> r;
+        try{
+            r = m_pSchema->path(path);
+            auto schema_metadata = std::get<0>(r);
+            bool valid_value = false;
+            //LOGf("json: %s", schema_metadata->serialize(MetaFormat::JSON));
                 for(auto&& val: *schema_metadata->meta(".values")) {
-                    LOGf("key: %s", e.key);
+                    //LOGf("key: %s", e.key);
                     if(kit::any_eq(val.value, e.value)) {
                         valid_value = true;
                         break;
