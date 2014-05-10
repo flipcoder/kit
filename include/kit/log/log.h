@@ -81,7 +81,7 @@ public:
             INFO = kit::bit(0),
             WARNINGS = kit::bit(1),
             ERRORS = kit::bit(2),
-            ALL = INFO | WARNINGS | ERRORS
+            ALL = kit::mask(3)
         };
         Silencer(unsigned flags = ALL) {
             auto l = Log::get().lock();
@@ -90,8 +90,8 @@ public:
         }
         ~Silencer(){
             if(!m_bDisable) {
-                if(!m_OldFlags)
-                    Log::get().silence(m_OldFlags);
+                //if(!m_OldFlags)
+                Log::get().silence(m_OldFlags);
             }
         }
     private:
