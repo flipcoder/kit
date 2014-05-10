@@ -30,6 +30,13 @@ namespace Interpolation {
         const float nt = 1.0f + sin((t - 1.0f) * qtau);
         return linear(a,b,nt);
     }
+    //(1-sqrt(x))|cos(x*2*tau)|
+    template<class T, int bounces=2>
+    T bounce(const T& a, const T& b, float t) {
+        const float nt = 1.0f - (std::sqrt(1.0f-t)) *
+            std::fabs(std::cos(t * bounces * 2.0f * K_TAU));
+        return linear(a,b,nt);
+    }
 }
 
 #define INTERPOLATE(FUNC)\
