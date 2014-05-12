@@ -13,6 +13,8 @@
 #include "errors.h"
 #include "../kit.h"
 
+//#define USE_THREAD_LOCAL
+
 class Log:
     public kit::singleton<Log>,
     public kit::mutexed<std::recursive_mutex>
@@ -268,10 +270,10 @@ public:
     
     LogThread& this_log() const {
         #ifdef USE_THREAD_LOCAL
-            //thread_local LogThread th;
-            //return th;
+            thread_local LogThread th;
+            return th;
         #else
-            auto l = lock();
+            //auto l = lock();
             return m_Threads[std::this_thread::get_id()];
         #endif
     }

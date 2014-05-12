@@ -336,6 +336,18 @@ namespace kit
                 while(m_Group.find(m_Unused++) != m_Group.end()) {}
                 return m_Unused-1;
             }
+            
+            typedef typename std::map<unsigned, std::shared_ptr<T>>::const_iterator
+                const_iterator;
+            typedef typename std::map<unsigned, std::shared_ptr<T>>::iterator
+                iterator;
+            iterator begin() { return m_Group.begin(); }
+            iterator end() { return m_Group.end(); }
+            const_iterator begin() const { return m_Group.begin(); }
+            const_iterator end() const { return m_Group.end(); }
+            const_iterator cbegin() const { return m_Group.begin(); }
+            const_iterator cend() const { return m_Group.end(); }
+
         private:
             unsigned m_Unused=0;
             std::map<unsigned, std::shared_ptr<T>> m_Group;

@@ -34,7 +34,7 @@ namespace Interpolation {
     template<class T, int bounces=2>
     T bounce(const T& a, const T& b, float t) {
         const float nt = 1.0f - (std::sqrt(1.0f-t)) *
-            std::fabs(std::cos(t * bounces * 2.0f * K_TAU));
+            std::fabs(std::cos(t * bounces * K_PI));
         return linear(a,b,nt);
     }
 }

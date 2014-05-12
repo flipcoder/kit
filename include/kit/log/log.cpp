@@ -16,15 +16,13 @@ Log::Log()
 
 void Log::write(std::string s, Log::Message::eLoggingLevel lev)
 {
-    //m_cbLog.push_back(Message(s,lev));
-
     auto l = lock();
     auto& th = this_log();
 
     if(th.m_SilenceFlags == Log::Silencer::ALL)
         return;
     
-    if(th.m_bCapture)
+    if(!th.m_bCapture)
     {
         ostringstream line;
         if(lev == Message::LL_ERROR)
