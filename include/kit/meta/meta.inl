@@ -125,7 +125,6 @@ MetaLoop Meta<Mutex>::each(
             if((flags & (unsigned)EachFlag::RECURSIVE) &&
                 e.type.id == MetaType::ID::META
             ){
-                LOG("RECURSIVE each");
                 // TODO: catch flags from each() call here
                 //
                 // NOTE: keep the metastack pointer as the exclusive
