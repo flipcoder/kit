@@ -31,9 +31,9 @@ namespace Interpolation {
         return linear(a,b,nt);
     }
     //(1-sqrt(x))|cos(x*2*tau)|
-    template<class T, int bounces=2>
+    template<class T, int bounces=2, int depth=3>
     T bounce(const T& a, const T& b, float t) {
-        const float nt = 1.0f - (std::sqrt(1.0f-t)) *
+        const float nt = 1.0f - (std::pow(1.0f-t, depth)) *
             std::fabs(std::cos(t * bounces * K_PI));
         return linear(a,b,nt);
     }

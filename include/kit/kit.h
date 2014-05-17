@@ -14,6 +14,7 @@
 #include <boost/bimap.hpp>
 #include <boost/any.hpp>
 #include <boost/logic/tribool.hpp>
+#include <boost/signals2.hpp>
 
 // lazy range for entire container
 #define ENTIRE(blah) blah.begin(), blah.end()
@@ -569,6 +570,58 @@ namespace kit
             throw null_ptr_exception();
         return ptr;
     }
+
+    template<class T>
+    class reactive
+    {
+        public:
+
+            reactive() = default;
+            reactive(const T& t):
+                m_Data(t)
+            {
+                on_change(m_Data);
+            }
+            reactive(T&& t):
+                m_Data(t)
+            {
+                on_change(m_Data);
+            }
+
+            T& operator=(const T& t)
+            {
+                m_Data = t;
+                on_change(t);
+                return m_Data;
+            }
+            T& operator=(T&& t)
+            {
+                m_Data = t;
+                on_change(m_Data);
+                return m_Data;
+            }
+
+            T& get() {
+                return m_Data;
+            }
+            const T& get() const {
+                return m_Data;
+            }
+
+            void clear()
+            {
+                on_destroy();
+                on_change.disconnect_all_slots();
+                on_destroy.disconnect_all_slots();
+            }
+            
+            boost::signals2::signal<void(const T&)> on_change;
+            boost::signals2::signal<void()> on_destroy;
+            
+        private:
+            
+            T m_Data = T();
+    };
 
     // Be stupidly careful with this class
     // The mutex is only stored as a pointer, so make sure

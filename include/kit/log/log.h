@@ -9,6 +9,8 @@
 #include <boost/format.hpp>
 #include <boost/utility.hpp>
 #include <boost/current_function.hpp>
+#include <functional>
+#include <boost/signals2.hpp>
 #include <unordered_map>
 #include "errors.h"
 #include "../kit.h"
@@ -21,9 +23,35 @@ class Log:
 {
 public:
 
+    class Message
+    {
+    public:
+        std::string sMessage;
+        enum eLoggingLevel { LL_BLANK, LL_INFO, LL_WARNING, LL_ERROR } eLevel;
+
+        Message(std::string message, eLoggingLevel level):
+            sMessage(message),
+            eLevel(level) {}
+    };
+    
     // Data specific to each thread
+    class LogForwarder {
+        public:
+            LogForwarder(std::function<void(
+                std::string, Log::Message::eLoggingLevel
+            )> cb) {
+                auto& th = Log::get().this_log();
+                con = th.on_log.connect(move(cb));
+            }
+            
+            boost::signals2::scoped_connection con;
+    };
+    
     class LogThread {
         public:
+            boost::signals2::signal<
+                void(std::string, Log::Message::eLoggingLevel)
+            > on_log;
             unsigned m_Indents = 0;
             unsigned m_SilenceFlags = 0;
             bool m_bCapture = false;
@@ -34,17 +62,6 @@ public:
                     !m_bCapture &&
                     m_Captured.empty();
             }
-    };
-    
-    class Message
-    {
-    public:
-        std::string sMessage;
-        enum eLoggingLevel { LL_BLANK, LL_INFO, LL_WARNING, LL_ERROR } eLevel;
-
-        Message(std::string message, eLoggingLevel level):
-            sMessage(message),
-            eLevel(level) {}
     };
 
     // Capturing output ignores silencers

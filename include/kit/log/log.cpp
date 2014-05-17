@@ -34,6 +34,7 @@ void Log::write(std::string s, Log::Message::eLoggingLevel lev)
                 cerr << line.str() << endl;
             if(th.m_bCapture)
                 th.m_Captured.push_back(line.str());
+            th.on_log(s, lev);
         }
         else
         {
@@ -52,6 +53,7 @@ void Log::write(std::string s, Log::Message::eLoggingLevel lev)
                 line << "[WARNING] ";
             line << s;
             cout << line.str() << endl;
+            th.on_log(s, lev);
         }
     }
     //else if(lev == Message::LL_DEBUG)
