@@ -383,16 +383,16 @@ private:
     throw Error(ErrorCode::CODE, msg);\
 }
 
-#ifdef DEBUG
-    #define _()\
-        Log::Indent _li(\
-            std::string(BOOST_CURRENT_FUNCTION)+" {",\
-            "}"\
-        );\
-        Log::Indent _li2;
-#else
-    #define _()
-#endif
+//#ifdef DEBUG
+//    #define _()\
+//        Log::Indent _li(\
+//            std::string(BOOST_CURRENT_FUNCTION)+" {",\
+//            "}"\
+//        );\
+//        Log::Indent _li2;
+//#else
+//    #define _()
+//#endif
 
 #endif
 
