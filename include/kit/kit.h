@@ -126,6 +126,7 @@ namespace kit
         public:
 
             // copy/assign should not copy frozen state
+            freezable() = default;
             freezable(freezable&&) {}
             freezable(const freezable&) {}
             freezable& operator=(const freezable&) {
@@ -134,6 +135,7 @@ namespace kit
             freezable& operator=(freezable&&) {
                 return *this;
             }
+            virtual ~freezable() {}
 
             /*
              * Call freeze() when object should no longer be mutable
