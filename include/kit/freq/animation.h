@@ -37,6 +37,12 @@ namespace Interpolation {
             std::fabs(std::cos(t * bounces * K_PI));
         return linear(a,b,nt);
     }
+    //f(x) = sin(2pi*(.75x-0.25))+1.0
+    template<class T>
+    T exaggerate(const T& a, const T& b, float t) {
+        float nt = std::sin(K_TAU*(0.75*t + 0.25)) + 1.0f;
+        return linear(a,b,nt);
+    }
 }
 
 #define INTERPOLATE(FUNC)\
@@ -110,7 +116,7 @@ class Frame
         //}
 
         virtual ~Frame() {}
-        void go() {
+        void reset() {
             m_Alarm.set(m_Time);
         }
 
@@ -180,7 +186,7 @@ class Animation:
             if(m_Frames.empty())
                 return;
 
-            m_Frames.front().go();
+            m_Frames.front().reset();
             m_Frames.front().alarm() += excess;
         }
 
@@ -312,6 +318,8 @@ class Animation:
             std::function<T (const T&, const T&, float)> easing,
             std::function<bool (const T&, const T&)> equality_cmp
         ){
+            process();
+
             if(equality_cmp(m_Current, position))
             {
                 // TODO: if t < current frame time left
@@ -319,7 +327,6 @@ class Animation:
                 return;
             }
 
-            process();
             if(m_Frames.empty()) {
                 stop(position,t,easing);
                 return;

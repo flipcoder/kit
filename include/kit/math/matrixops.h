@@ -5,6 +5,7 @@
 #include <string>
 #include <sstream>
 #include <glm/glm.hpp>
+#include <glm/gtx/orthonormalize.hpp>
 
 // extra Matrix functions that aren't easily provided by glm
 
