@@ -19,6 +19,7 @@ class Channel:
             join();
         }
         void operator()() {
+            auto l = lock();
             join();
             
             auto self(this->shared_from_this());
@@ -114,6 +115,18 @@ class Channel:
                 boost::this_thread::interruption_point();
                 boost::this_thread::yield();
             }
+        }
+        size_t buffered() const {
+            auto l = lock();
+            return m_Buffered;
+        }
+        void unbuffer() {
+            auto l = lock();
+            m_Buffered = 0;
+        }
+        void buffer(size_t sz) {
+            auto l = lock();
+            m_Buffered = sz;
         }
     private:
         
