@@ -69,7 +69,7 @@ solution("kit")
         language("C++")
         links {
             "pthread",
-            --"boost_thread",
+            "boost_thread",
             "SDL2",
             "SDL2main",
             "boost_system",
