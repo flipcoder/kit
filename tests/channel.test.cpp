@@ -22,13 +22,13 @@ TEST_CASE("Channel","[channel]") {
         
         REQUIRE(chan.size() == 2);
         
-        REQUIRE(fut0.wait_for(std::chrono::milliseconds(100)) == 
+        REQUIRE(fut0.wait_for(std::chrono::seconds(0)) == 
             std::future_status::timeout);
 
         chan.run_once();
         
         REQUIRE(fut0.get() == 0);
-        REQUIRE(fut1.wait_for(std::chrono::milliseconds(100)) == 
+        REQUIRE(fut1.wait_for(std::chrono::seconds(0)) == 
             std::future_status::timeout);
         REQUIRE(!chan.empty());
         REQUIRE(chan.size() == 1);
