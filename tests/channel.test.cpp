@@ -4,23 +4,21 @@ using namespace std;
 
 TEST_CASE("Channel","[channel]") {
 
-    SECTION("single-channel multiplexer") {
-        Multiplexer<void> plex;
-        REQUIRE(plex.size() == 1);
-        plex([]{});
+    SECTION("basic channel") {
+        Channel<void> chan;
+        chan([]{});
     }
         
-    SECTION("multiplexer futures") {
-        Multiplexer<int> plex(2);
-        auto fut0 = plex(0, []{
+    SECTION("futures") {
+        Channel<int> chan;
+        auto fut0 = chan([]{
             return 0;
         });
-        auto fut1 = plex(1, []{
+        auto fut1 = chan([]{
             return 1;
         });
         REQUIRE(fut0.get() == 0);
         REQUIRE(fut1.get() == 1);
-        REQUIRE(plex.size() == 2);
     }
 
 }
