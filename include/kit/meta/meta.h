@@ -473,7 +473,7 @@ class Meta:
             auto l = this->lock(std::defer_lock);
             if(lock_flags & (unsigned)LockFlags::TRY)
             {
-                if(l.try_lock() >= 0)
+                if(!l.try_lock())
                     throw kit::lock_exception();
             }
             else

@@ -603,6 +603,12 @@ namespace kit
                 return m_Data;
             }
 
+            T& operator*() {
+                return m_Data;
+            }
+            const T& operator*() const {
+                return m_Data;
+            }
             T& get() {
                 return m_Data;
             }

@@ -1,57 +1,71 @@
 #include <catch.hpp>
+#include "../include/kit/channel/taskqueue.h"
 #include "../include/kit/channel/channel.h"
 using namespace std;
 
 TEST_CASE("Channel","[channel]") {
+    SECTION("basic usage"){
+        Channel<int> chan;
+        REQUIRE(chan.size() == 0);
+        chan << 42;
+        REQUIRE(chan.size() == 1);
+        int num = 0;
+        bool b = (chan >> num);
+        REQUIRE(b);
+        REQUIRE(num == 42);
+    }
+}
 
-    SECTION("basic channel") {
-        Channel<void> chan;
-        REQUIRE(chan.empty());
-        chan([]{});
-        REQUIRE(!chan.empty());
+TEST_CASE("TaskQueue","[taskqueue]") {
+
+    SECTION("basic task queue") {
+        TaskQueue<void> tasks;
+        REQUIRE(tasks.empty());
+        tasks([]{});
+        REQUIRE(!tasks.empty());
     }
         
     SECTION("run_once w/ futures") {
-        Channel<int> chan;
-        auto fut0 = chan([]{
+        TaskQueue<int> tasks;
+        auto fut0 = tasks([]{
             return 0;
         });
-        auto fut1 = chan([]{
+        auto fut1 = tasks([]{
             return 1;
         });
         
-        REQUIRE(chan.size() == 2);
+        REQUIRE(tasks.size() == 2);
         
         REQUIRE(fut0.wait_for(std::chrono::seconds(0)) == 
             std::future_status::timeout);
 
-        chan.run_once();
+        tasks.run_once();
         
         REQUIRE(fut0.get() == 0);
         REQUIRE(fut1.wait_for(std::chrono::seconds(0)) == 
             std::future_status::timeout);
-        REQUIRE(!chan.empty());
-        REQUIRE(chan.size() == 1);
+        REQUIRE(!tasks.empty());
+        REQUIRE(tasks.size() == 1);
         
-        chan.run_once();
+        tasks.run_once();
         
         REQUIRE(fut1.get() == 1);
-        REQUIRE(chan.empty());
-        REQUIRE(chan.size() == 0);
+        REQUIRE(tasks.empty());
+        REQUIRE(tasks.size() == 0);
     }
 
     SECTION("run_all"){
-        Channel<void> chan;
+        TaskQueue<void> tasks;
         
-        chan([]{});
-        chan([]{});
-        chan([]{});
+        tasks([]{});
+        tasks([]{});
+        tasks([]{});
         
-        REQUIRE(chan.size() == 3);
+        REQUIRE(tasks.size() == 3);
         
-        chan.run_all();
+        tasks.run_all();
         
-        REQUIRE(chan.size() == 0);
+        REQUIRE(tasks.size() == 0);
     }
 }
 

@@ -8,6 +8,7 @@ TEST_CASE("Reactive","[reactive]") {
     SECTION("as a value") {
 
         reactive<int> num;
+        REQUIRE(num.get() == *num); // default init
         REQUIRE(num.get() == 0); // default init
         
         // set from integer rvalue

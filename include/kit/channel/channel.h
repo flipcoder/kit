@@ -11,110 +11,47 @@
 
 template<class T>
 class Channel:
-    public kit::mutexed<std::mutex>,
-    public std::enable_shared_from_this<Channel<T>>
+    public kit::mutexed<std::mutex>
+    //public std::enable_shared_from_this<Channel<T>>
 {
     public:
-        ~Channel() {
-            join();
-        }
-        void operator()() {
-            auto l = lock();
-            join();
-            
-            auto self(this->shared_from_this());
-            m_Thread = boost::thread([self]{
-                self->run();
-            });
-        }
-        void run_once() {
-            while(true){
-                auto l = this->lock();
-                if(!m_Cmds.empty()){
-                    auto task = std::move(m_Cmds.front());
-                    m_Cmds.pop();
-                    task();
-                    return;
+
+        //Channel& operator<<(const T& val) {
+        //    return *this;
+        //}
+
+        // WRITE
+        Channel& operator<<(T&& val) {
+            do{
+                auto l = lock(std::defer_lock);
+                if(l.try_lock())
+                {
+                    if(m_Buffered && m_Vals.size() >= m_Buffered)
+                        continue;
+                    
+                    m_Vals.emplace(val);
+                    break;
                 }
                 boost::this_thread::interruption_point();
                 boost::this_thread::yield();
-            }
+            }while(true);
+            return *this;
         }
-        bool try_run_once() {
-            auto l = this->lock(std::defer_lock);
-            if(l.try_lock() == -1 && !m_Cmds.empty())
-            {
-                auto task = std::move(m_Cmds.front());
-                m_Cmds.pop();
-                task();
+        
+        // READ
+        bool operator>>(T& val) {
+            auto l = lock();
+            if(!m_Vals.empty()) {
+                val = std::move(m_Vals.front());
+                m_Vals.pop();
                 return true;
             }
             return false;
         }
-        void run_all() {
-            while(true)
-            {
-                {
-                    auto l = this->lock();
-                    if(!m_Cmds.empty())
-                    {
-                        auto task = std::move(m_Cmds.front());
-                        m_Cmds.pop();
-                        task();
-                    }
-                    else
-                        return; // task queue is empty
-                        
-                }
-                boost::this_thread::interruption_point();
-                boost::this_thread::yield();
-            }
-        }
-        void run() {
-            while(true)
-            {
-                {
-                    auto l = this->lock();
-                    if(!m_Cmds.empty())
-                    {
-                        auto task = std::move(m_Cmds.front());
-                        m_Cmds.pop();
-                        task();
-                    }
-                }
-                boost::this_thread::interruption_point();
-                boost::this_thread::yield();
-            }
-        }
-        bool empty() const {
-            auto l = this->lock();
-            return m_Cmds.empty();
-        }
+        
         size_t size() const {
             auto l = this->lock();
-            return m_Cmds.size();
-        }
-        size_t select() const {
-            auto l = this->lock(std::defer_lock);
-            if(l.try_lock() == -1)
-                return m_Cmds.size();
-            return 0;
-        }
-        std::future<T> operator()(std::function<T()> f) {
-            std::packaged_task<T()> func(std::move(f));
-            while(true)
-            {
-                {
-                    auto l = this->lock();
-                    if(!m_Buffered || m_Buffered < m_Cmds.size()){
-                        auto fut = func.get_future();
-                        m_Cmds.emplace(std::move(func));
-                        return fut;
-                    }
-                }
-                boost::this_thread::interruption_point();
-                boost::this_thread::yield();
-            }
+            return m_Vals.size();
         }
         size_t buffered() const {
             auto l = lock();
@@ -128,18 +65,11 @@ class Channel:
             auto l = lock();
             m_Buffered = sz;
         }
+
     private:
         
-        void join() {
-            if(m_Thread.joinable()) {
-                m_Thread.interrupt();
-                m_Thread.join();
-            }
-        }
-        
         size_t m_Buffered = 0;
-        boost::thread m_Thread;
-        std::queue<std::packaged_task<T()>> m_Cmds;
+        std::queue<T> m_Vals;
 };
 
 #endif
