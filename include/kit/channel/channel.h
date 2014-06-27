@@ -16,11 +16,7 @@ class Channel:
 {
     public:
 
-        //Channel& operator<<(const T& val) {
-        //    return *this;
-        //}
-
-        // WRITE
+        // Put into stream
         Channel& operator<<(T&& val) {
             do{
                 auto l = lock(std::defer_lock);
@@ -38,7 +34,7 @@ class Channel:
             return *this;
         }
         
-        // READ
+        // Get from stream
         bool operator>>(T& val) {
             auto l = lock();
             if(!m_Vals.empty()) {
@@ -48,7 +44,7 @@ class Channel:
             }
             return false;
         }
-        
+
         size_t size() const {
             auto l = this->lock();
             return m_Vals.size();
