@@ -69,6 +69,20 @@ TEST_CASE("TaskQueue","[taskqueue]") {
         
         REQUIRE(tasks.size() == 0);
     }
+
+    SECTION("nested task enqueue"){
+        TaskQueue<void> tasks;
+        auto sum = make_shared<int>(0);
+        tasks([&tasks, sum]{
+            (*sum) += 1;
+            tasks([&tasks, sum]{
+                (*sum) += 10;
+            });
+        });
+        tasks.run();
+        REQUIRE(*sum == 11);
+        REQUIRE(sum.use_count() == 1);
+    }
 }
 
 //TEST_CASE("Multiplexer","[multiplexer]") {

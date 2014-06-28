@@ -34,7 +34,7 @@ class TaskQueue:
                 auto l = this->lock();
                 if(!m_Cmds.empty()){
                     auto task = std::move(m_Cmds.front());
-                    m_Cmds.pop();
+                    m_Cmds.pop_front();
                     l.unlock();
                     task();
                     return;
@@ -48,7 +48,7 @@ class TaskQueue:
             if(l.try_lock() && !m_Cmds.empty())
             {
                 auto task = std::move(m_Cmds.front());
-                m_Cmds.pop();
+                m_Cmds.pop_front();
                 l.unlock();
                 task();
                 return true;
@@ -63,7 +63,7 @@ class TaskQueue:
                     if(l.try_lock() && !m_Cmds.empty())
                     {
                         auto task = std::move(m_Cmds.front());
-                        m_Cmds.pop();
+                        m_Cmds.pop_front();
                         l.unlock();
                         task();
                     }
@@ -84,7 +84,7 @@ class TaskQueue:
                     if(!m_Cmds.empty())
                     {
                         auto task = std::move(m_Cmds.front());
-                        m_Cmds.pop();
+                        m_Cmds.pop_front();
                         l.unlock();
                         task();
                     }
@@ -104,7 +104,7 @@ class TaskQueue:
                     if(!m_Cmds.empty())
                     {
                         auto task = std::move(m_Cmds.front());
-                        m_Cmds.pop();
+                        m_Cmds.pop_front();
                         l.unlock();
                         task();
                     }
@@ -141,7 +141,7 @@ class TaskQueue:
                         continue;
 
                     auto fut = func.get_future();
-                    m_Cmds.emplace(std::move(func));
+                    m_Cmds.emplace_back(std::move(func));
                     return fut;
                 }
                 boost::this_thread::interruption_point();
@@ -172,7 +172,7 @@ class TaskQueue:
         
         size_t m_Buffered = 0;
         boost::thread m_Thread;
-        std::queue<std::packaged_task<T()>> m_Cmds;
+        std::deque<std::packaged_task<T()>> m_Cmds;
 };
 
 #endif
