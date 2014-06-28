@@ -1,6 +1,7 @@
 #include <catch.hpp>
 #include "../include/kit/channel/taskqueue.h"
 #include "../include/kit/channel/channel.h"
+#include "../include/kit/channel/multiplexer.h"
 using namespace std;
 
 TEST_CASE("Channel","[channel]") {
@@ -20,6 +21,7 @@ TEST_CASE("TaskQueue","[taskqueue]") {
 
     SECTION("basic task queue") {
         TaskQueue<void> tasks;
+        REQUIRE(!tasks);
         REQUIRE(tasks.empty());
         tasks([]{});
         REQUIRE(!tasks.empty());
@@ -35,6 +37,7 @@ TEST_CASE("TaskQueue","[taskqueue]") {
         });
         
         REQUIRE(tasks.size() == 2);
+        REQUIRE(tasks);
         
         REQUIRE(fut0.wait_for(std::chrono::seconds(0)) == 
             std::future_status::timeout);
@@ -63,9 +66,25 @@ TEST_CASE("TaskQueue","[taskqueue]") {
         
         REQUIRE(tasks.size() == 3);
         
-        tasks.run_all();
+        tasks.run();
         
         REQUIRE(tasks.size() == 0);
+    }
+}
+
+TEST_CASE("Multiplexer","[multiplexer]") {
+    SECTION("task queue"){
+        TaskQueue<void> tasks;
+        tasks([]{});
+        tasks([]{});
+        Multiplexer plexer;
+        plexer.poll.connect([&tasks]{
+            tasks.poll();
+        });
+        REQUIRE(tasks);
+        while(tasks)
+            plexer.poll();
+        REQUIRE(!tasks);
     }
 }
 

@@ -15,7 +15,7 @@ class TaskQueue:
     public std::enable_shared_from_this<TaskQueue<T>>
 {
     public:
-        ~TaskQueue() {
+        virtual ~TaskQueue() {
             join();
         }
         void operator()() {
@@ -33,6 +33,7 @@ class TaskQueue:
                 if(!m_Cmds.empty()){
                     auto task = std::move(m_Cmds.front());
                     m_Cmds.pop();
+                    l.unlock();
                     task();
                     return;
                 }
@@ -40,26 +41,28 @@ class TaskQueue:
                 boost::this_thread::yield();
             }
         }
-        bool try_run_once() {
+        bool poll_once() {
             auto l = this->lock(std::defer_lock);
             if(l.try_lock() && !m_Cmds.empty())
             {
                 auto task = std::move(m_Cmds.front());
                 m_Cmds.pop();
+                l.unlock();
                 task();
                 return true;
             }
             return false;
         }
-        void run_all() {
+        void poll() {
             while(true)
             {
                 {
-                    auto l = this->lock();
-                    if(!m_Cmds.empty())
+                    auto l = this->lock(std::defer_lock);
+                    if(l.try_lock() && !m_Cmds.empty())
                     {
                         auto task = std::move(m_Cmds.front());
                         m_Cmds.pop();
+                        l.unlock();
                         task();
                     }
                     else
@@ -70,6 +73,7 @@ class TaskQueue:
                 boost::this_thread::yield();
             }
         }
+
         void run() {
             while(true)
             {
@@ -79,6 +83,27 @@ class TaskQueue:
                     {
                         auto task = std::move(m_Cmds.front());
                         m_Cmds.pop();
+                        l.unlock();
+                        task();
+                    }
+                    else
+                        return; // task queue is empty
+                        
+                }
+                boost::this_thread::interruption_point();
+                boost::this_thread::yield();
+            }
+        }
+        void forever() {
+            while(true)
+            {
+                {
+                    auto l = this->lock();
+                    if(!m_Cmds.empty())
+                    {
+                        auto task = std::move(m_Cmds.front());
+                        m_Cmds.pop();
+                        l.unlock();
                         task();
                     }
                 }
@@ -90,16 +115,20 @@ class TaskQueue:
             auto l = this->lock();
             return m_Cmds.empty();
         }
+        operator bool() const {
+            auto l = this->lock();
+            return !m_Cmds.empty();
+        }
         size_t size() const {
             auto l = this->lock();
             return m_Cmds.size();
         }
-        size_t select() const {
-            auto l = this->lock(std::defer_lock);
-            if(l.try_lock())
-                return m_Cmds.size();
-            return 0;
-        }
+        //size_t select() const {
+        //    auto l = this->lock(std::defer_lock);
+        //    if(l.try_lock())
+        //        return m_Cmds.size();
+        //    return 0;
+        //}
         std::future<T> operator()(std::function<T()> f) {
             std::packaged_task<T()> func(std::move(f));
             while(true)
@@ -129,6 +158,7 @@ class TaskQueue:
             auto l = lock();
             m_Buffered = sz;
         }
+        
     private:
         
         void join() {

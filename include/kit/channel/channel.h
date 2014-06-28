@@ -45,6 +45,10 @@ class Channel:
             return false;
         }
 
+        operator bool() const {
+            auto l = this->lock();
+            return !m_Vals.empty();
+        }
         size_t size() const {
             auto l = this->lock();
             return m_Vals.size();
