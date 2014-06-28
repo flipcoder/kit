@@ -7,12 +7,14 @@
 #include <queue>
 #include <future>
 #include <memory>
+#include "async.h"
 #include "../kit.h"
 
 template<class T>
 class TaskQueue:
     public kit::mutexed<std::mutex>,
-    public std::enable_shared_from_this<TaskQueue<T>>
+    public std::enable_shared_from_this<TaskQueue<T>>,
+    public IAsync
 {
     public:
         virtual ~TaskQueue() {

@@ -16,6 +16,7 @@ class Channel:
 {
     public:
 
+        virtual ~Channel() {}
         // Put into stream
         Channel& operator<<(T&& val) {
             do{
