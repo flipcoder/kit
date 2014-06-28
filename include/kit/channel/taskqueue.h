@@ -51,7 +51,7 @@ class TaskQueue:
                 task();
                 return true;
             }
-            return false;
+            return false; // task queue is empty or locked
         }
         void poll() {
             while(true)
@@ -66,7 +66,7 @@ class TaskQueue:
                         task();
                     }
                     else
-                        return; // task queue is empty
+                        return; // task queue empty is or locked
                         
                 }
                 boost::this_thread::interruption_point();
