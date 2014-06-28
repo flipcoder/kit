@@ -1,7 +1,6 @@
 #include <catch.hpp>
 #include "../include/kit/channel/taskqueue.h"
 #include "../include/kit/channel/channel.h"
-#include "../include/kit/channel/multiplexer.h"
 using namespace std;
 
 TEST_CASE("Channel","[channel]") {
@@ -72,19 +71,19 @@ TEST_CASE("TaskQueue","[taskqueue]") {
     }
 }
 
-TEST_CASE("Multiplexer","[multiplexer]") {
-    SECTION("task queue"){
-        TaskQueue<void> tasks;
-        tasks([]{});
-        tasks([]{});
-        Multiplexer plexer;
-        plexer.poll.connect([&tasks]{
-            tasks.poll();
-        });
-        REQUIRE(tasks);
-        while(tasks)
-            plexer.poll();
-        REQUIRE(!tasks);
-    }
-}
+//TEST_CASE("Multiplexer","[multiplexer]") {
+//    SECTION("task queue"){
+//        TaskQueue<void> tasks;
+//        tasks([]{});
+//        tasks([]{});
+//        //Multiplexer plexer;
+//        plexer.poll.connect([&tasks]{
+//            tasks.poll();
+//        });
+//        REQUIRE(tasks);
+//        while(tasks)
+//            plexer.poll();
+//        REQUIRE(!tasks);
+//    }
+//}
 
