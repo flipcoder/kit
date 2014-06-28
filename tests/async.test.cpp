@@ -1,6 +1,6 @@
 #include <catch.hpp>
-#include "../include/kit/channel/taskqueue.h"
-#include "../include/kit/channel/channel.h"
+#include "../include/kit/async/taskqueue.h"
+#include "../include/kit/async/channel.h"
 using namespace std;
 
 TEST_CASE("Channel","[channel]") {
