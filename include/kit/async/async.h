@@ -10,6 +10,7 @@ class IAsync
         virtual bool poll_once() { assert(false); }
         virtual void run() { assert(false); }
         virtual void run_once() { assert(false); }
+        virtual void forever() { assert(false); }
 };
 
 IAsync :: ~IAsync() {}

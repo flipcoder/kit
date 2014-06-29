@@ -1,6 +1,8 @@
 #include <catch.hpp>
 #include "../include/kit/async/taskqueue.h"
 #include "../include/kit/async/channel.h"
+#include "../include/kit/async/multiplexer.h"
+#include <atomic>
 using namespace std;
 
 TEST_CASE("Channel","[channel]") {
@@ -83,21 +85,23 @@ TEST_CASE("TaskQueue","[taskqueue]") {
         REQUIRE(*sum == 11);
         REQUIRE(sum.use_count() == 1);
     }
+
 }
 
-//TEST_CASE("Multiplexer","[multiplexer]") {
-//    SECTION("task queue"){
-//        TaskQueue<void> tasks;
-//        tasks([]{});
-//        tasks([]{});
-//        //Multiplexer plexer;
-//        plexer.poll.connect([&tasks]{
-//            tasks.poll();
-//        });
-//        REQUIRE(tasks);
-//        while(tasks)
-//            plexer.poll();
-//        REQUIRE(!tasks);
-//    }
-//}
+TEST_CASE("Multiplexer","[multiplexer]") {
+    SECTION("task queue"){
+        Multiplexer mx;
+        std::atomic<int> num = ATOMIC_VAR_INIT(0);
+        mx.strand(0).task([&num]{
+            num = 42;
+        });
+        mx.strand(1).when(
+            [&num]{return num == 42;},
+            [&num]{num = 100;}
+        );
+        mx.finish();
+        //while(num != 100){}
+        REQUIRE(num == 100);
+    }
+}
 
