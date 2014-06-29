@@ -46,13 +46,21 @@ class Multiplexer:
                 m_Units.emplace_back(cond, cb);
             }
 
-            template<class T>
-            void then(std::future<T> fut, std::function<void()> cb) {
-                when([fut]{
-                    return fut.wait_for(std::chrono::seconds(0)) ==
-                        std::future_status::ready;
-                }, cb);
-            }
+            //template<class T, class U>
+            //std::future<U> then(std::future<T> fut, std::function<U(T)> cb) {
+            //template<class T>
+            //void then(std::future<T>& fut, std::function<void(T)> cb) {
+            //    //auto task = std::packaged_task<U(T)>(cb);
+            //    //auto r = task.get_future();
+            //    task(std::bind([cb](std::future<T> fut){
+            //        if(fut.wait_for(std::chrono::seconds(0)) ==
+            //            std::future_status::ready)
+            //            cb(fut.get());
+            //        else
+            //            throw;
+            //    }, std::move(fut)));
+            //    //return r;
+            //}
             
             virtual void poll() override {
                 while(true)
@@ -149,7 +157,7 @@ class Multiplexer:
     private:
         
         const unsigned m_Concurrency;
-        ;std::vector<std::unique_ptr<Strand>> m_Strands;
+        std::vector<std::unique_ptr<Strand>> m_Strands;
 };
 
 #endif

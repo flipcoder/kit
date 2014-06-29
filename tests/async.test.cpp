@@ -89,7 +89,7 @@ TEST_CASE("TaskQueue","[taskqueue]") {
 }
 
 TEST_CASE("Multiplexer","[multiplexer]") {
-    SECTION("task queue"){
+    SECTION("thread wait on condition"){
         Multiplexer mx;
         std::atomic<int> num = ATOMIC_VAR_INIT(0);
         mx.strand(0).task([&num]{
@@ -103,5 +103,18 @@ TEST_CASE("Multiplexer","[multiplexer]") {
         //while(num != 100){}
         REQUIRE(num == 100);
     }
+    //SECTION("thread wait on future"){
+    //    Multiplexer mx;
+    //    TaskQueue<int> numbers;
+    //    auto fut = numbers([]{
+    //        return 42;
+    //    });
+    //    bool done = false;
+    //    mx.strand(0).then<int>(fut, [&done](int num){
+    //        done = (num == 42);
+    //    });
+    //    numbers.run();
+    //    REQUIRE(done);
+    //}
 }
 
