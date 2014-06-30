@@ -72,6 +72,30 @@ namespace kit
     //{
     //}
 
+    template<class T>
+    struct move_on_copy
+    {
+        public:
+            move_on_copy(T&& rhs):
+                m_Data(std::forward<T>(rhs)) {}
+            
+            move_on_copy(move_on_copy&& rhs):
+                m_Data(std::forward<T>(rhs.m_Data)) {}
+            
+            move_on_copy(move_on_copy& rhs):
+                m_Data(std::move(rhs.m_Data)) {}
+
+            //T& get() {
+            //    return m_Data;
+            //}
+            T& get() const {
+                return m_Data;
+            }
+
+        private:
+            mutable T m_Data;
+    };
+    
     struct dummy_mutex
     {
         void lock() {}

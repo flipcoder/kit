@@ -103,18 +103,22 @@ TEST_CASE("Multiplexer","[multiplexer]") {
         //while(num != 100){}
         REQUIRE(num == 100);
     }
-    //SECTION("thread wait on future"){
-    //    Multiplexer mx;
-    //    TaskQueue<int> numbers;
-    //    auto fut = numbers([]{
-    //        return 42;
-    //    });
-    //    bool done = false;
-    //    mx.strand(0).then<int>(fut, [&done](int num){
-    //        done = (num == 42);
-    //    });
-    //    numbers.run();
-    //    REQUIRE(done);
-    //}
+    SECTION("thread wait on future"){
+        Multiplexer mx;
+        TaskQueue<int> numbers;
+        auto fut = numbers([]{
+            return 42;
+        });
+        bool done = false;
+        //numbers.run();
+        //REQUIRE(fut.get() == 42);
+        mx.strand(0).when<int>(fut, [&done](int num){
+            //done = true;
+            done = (num == 42);
+        });
+        numbers.run();
+        mx.finish();
+        REQUIRE(done);
+    }
 }
 
