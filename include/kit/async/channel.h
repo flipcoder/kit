@@ -66,11 +66,19 @@ class Channel:
             auto l = lock();
             m_Buffered = sz;
         }
+        
+        void close() {
+            m_bClosed = true;
+        }
+        bool closed() const {
+            return m_bClosed;
+        }
 
     private:
         
         size_t m_Buffered = 0;
         std::queue<T> m_Vals;
+        std::atomic<bool> m_bClosed = ATOMIC_VAR_INIT(false);
 };
 
 #endif

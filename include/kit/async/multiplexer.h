@@ -19,7 +19,8 @@ class Multiplexer:
         {
             Unit(
                 std::function<bool()> rdy,
-                std::function<void()> func
+                std::function<void()> func,
+                bool autoremove = true
             ):
                 m_Ready(rdy),
                 m_Func(func)
@@ -38,6 +39,7 @@ class Multiplexer:
             Strand() {
                 run();
             }
+            virtual ~Strand() {}
             
             //template<class T = void>
             /*std::future<T>*/ void task(std::function<void()> cb) {
@@ -55,6 +57,17 @@ class Multiplexer:
                 auto l = lock();
                 m_Units.emplace_back(cond, cb);
             }
+
+            // TODO: handle single-direction channels that may block
+            //template<class T>
+            //std::shared_ptr<Channel<T>> channel(
+            //    std::function<void(std::shared_ptr<Channel<T>>)> worker
+            //) {
+            //    auto chan = std::make_shared<Channel<>>();
+            //    // ... inside lambda if(chan->closed()) remove?
+            //}
+            
+            // TODO: handle multi-direction channels that may block
 
             //template<class R(T)>
             //std::future<R> then(std::future<T>& fut, std::function<R(T)> cb) {
