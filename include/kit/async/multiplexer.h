@@ -26,6 +26,7 @@ class Multiplexer:
             {}
             std::function<bool()> m_Ready; // only a hint
             std::function<void()> m_Func;
+            //std::packaged_task<void()> m_Func;
             // TODO: timestamp of last use / avg time idle?
             //unsigned m_Strand = nullptr;
         };
@@ -37,9 +38,17 @@ class Multiplexer:
             Strand() {
                 run();
             }
-            void task(std::function<void()> cb) {
+            
+            //template<class T = void>
+            /*std::future<T>*/ void task(std::function<void()> cb) {
+                //std::packaged_task<T()> task(std::move(cb));
+                //auto r = task.get_future();
                 auto l = lock();
                 m_Units.emplace_back(std::function<bool()>(), cb);
+                //m_Units.emplace_back([]{
+                //    return
+                //}, cb);
+                //return r;
             }
             
             void when(std::function<bool()> cond, std::function<void()> cb) {
@@ -47,16 +56,17 @@ class Multiplexer:
                 m_Units.emplace_back(cond, cb);
             }
 
-            //template<class T, class U>
-            //std::future<U> then(std::future<T> fut, std::function<U(T)> cb) {
+            //template<class R(T)>
+            //std::future<R> then(std::future<T>& fut, std::function<R(T)> cb) {
             template<class T>
             void when(std::future<T>& fut, std::function<void(T)> cb) {
-                //auto task = std::packaged_task<U(T)>(cb);
+                //auto task = std::packaged_task<R(T)>(cb);
                 //auto r = task.get_future();
                 //auto futc = kit::move_on_copy<std::future<T>>(std::move(fut));
                 kit::move_on_copy<std::future<T>> futc(std::move(fut));
                 //task(std::function<void()>([cb,futc]{}));
-                task([cb, futc]() {
+                //std::future<T>* ref = nullptr;
+                /*return */task([cb, futc]() {
                     if(futc.get().wait_for(std::chrono::seconds(0)) ==
                         std::future_status::ready)
                         cb(futc.get().get());
