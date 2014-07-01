@@ -25,7 +25,9 @@ class Multiplexer:
                 m_Ready(rdy),
                 m_Func(func)
             {}
-            std::function<bool()> m_Ready; // only a hint
+            
+            // only a hint, assume ready if functor is 'empty'
+            std::function<bool()> m_Ready; 
             std::function<void()> m_Func;
             //std::packaged_task<void()> m_Func;
             // TODO: timestamp of last use / avg time idle?

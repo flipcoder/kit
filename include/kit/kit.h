@@ -7,6 +7,7 @@
 #include <string>
 #include <thread>
 #include <mutex>
+#include <utility>
 #include <map>
 #include <atomic>
 #include <boost/algorithm/string.hpp>
@@ -262,11 +263,53 @@ namespace kit
             //xstd::optional<T> m_Data;
     };
 
+    template<
+        class T,
+        class Mutex=std::mutex
+    >
+    struct mutex_wrap:
+        kit::mutexed<Mutex>
+    {
+        T data;
+
+        mutex_wrap(T&& v):
+            data(v)
+        {}
+        mutex_wrap(const T& v):
+            data(std::forward(v))
+        {}
+
+        friend bool operator==(const mutex_wrap& rhs, const T& lhs){
+            auto l = rhs.lock();
+            return rhs.data == lhs;
+        }
+        friend bool operator==(const T& rhs, const mutex_wrap& lhs){
+            auto l = lhs.lock();
+            return lhs.data == rhs;
+        }
+        
+        template<class R>
+        R with(std::function<R(T&)> cb) {
+            auto l = this->lock();
+            return cb(data);
+        }
+        template<class R>
+        R with(std::function<R(const T&)> cb) const {
+            auto l = this->lock();
+            return cb(data);
+        }
+    };
+
     /*
      * A generic map with unused key approximation
      */
-    template<class T>
-    class index {
+    template<
+        class T,
+        class Mutex=kit::dummy_mutex
+    >
+    class index:
+        public kit::mutexed<Mutex>
+    {
         public:
 
             unsigned add(T&& data) {
@@ -320,11 +363,17 @@ namespace kit
      * Values are wrapped in shared_ptrs to allow discarding unshared data
      *   by calling optimize()
      */
-    template<class T>
-    class shared_index {
+    template<
+        class T,
+        class Mutex=kit::dummy_mutex
+    >
+    class shared_index:
+        public kit::mutexed<Mutex>
+    {
         public:
             template<class... Args>
             unsigned emplace_hint(unsigned hint, Args&&... args) {
+                auto l = this->lock();
                 m_Group[hint] = std::make_shared<T>(
                     std::forward<Args>(args)...
                 );
@@ -332,6 +381,7 @@ namespace kit
             }
             template<class... Args>
             unsigned emplace(Args&&... args) {
+                auto l = this->lock();
                 unsigned id = reserve();
                 m_Group[id] = std::make_shared<T>(
                     std::forward<Args>(args)...
@@ -339,31 +389,38 @@ namespace kit
                 return id;
             }
             bool erase(unsigned id) {
+                auto l = this->lock();
                 bool e = m_Group.erase(id);
                 m_Unused = std::min(id, m_Unused);
                 return e;
             }
             void clear() {
+                auto l = this->lock();
                 m_Unused=0;
                 m_Group.clear();
             }
             std::shared_ptr<T>& at(unsigned idx) {
+                auto l = this->lock();
                 return m_Group.at(idx);
             }
             const std::shared_ptr<T>& at(unsigned idx) const {
+                auto l = this->lock();
                 return m_Group.at(idx);
             }
 
             void optimize() {
+                auto l = this->lock();
                 remove_if(m_Group, [](const std::shared_ptr<T>& i){
                     return !i || i.unique();
                 });
             }
             unsigned reserve() {
+                auto l = this->lock();
                 while(m_Group.find(m_Unused++) != m_Group.end()) {}
                 return m_Unused-1;
             }
             
+            // WARNING: obtain lock before iterating
             typedef typename std::map<unsigned, std::shared_ptr<T>>::const_iterator
                 const_iterator;
             typedef typename std::map<unsigned, std::shared_ptr<T>>::iterator
