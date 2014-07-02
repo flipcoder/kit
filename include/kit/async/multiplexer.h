@@ -8,19 +8,19 @@
 #include <algorithm>
 #include <atomic>
 #include "../kit.h"
+#include "task.h"
 
 class Multiplexer:
     public IAsync
     //virtual public kit::freezable
 {
     public:
-        
+
         struct Unit
         {
             Unit(
                 std::function<bool()> rdy,
-                std::function<void()> func,
-                bool autoremove = true
+                std::function<void()> func
             ):
                 m_Ready(rdy),
                 m_Func(func)
@@ -28,7 +28,7 @@ class Multiplexer:
             
             // only a hint, assume ready if functor is 'empty'
             std::function<bool()> m_Ready; 
-            std::function<void()> m_Func;
+            Task<void()> m_Func;
             //std::packaged_task<void()> m_Func;
             // TODO: timestamp of last use / avg time idle?
             //unsigned m_Strand = nullptr;
@@ -47,8 +47,13 @@ class Multiplexer:
             /*std::future<T>*/ void task(std::function<void()> cb) {
                 //std::packaged_task<T()> task(std::move(cb));
                 //auto r = task.get_future();
-                auto l = lock();
-                m_Units.emplace_back(std::function<bool()>(), cb);
+                while(true) {
+                    auto l = lock();
+                    if(m_Buffered && m_Units.size() >= m_Buffered)
+                        continue;
+                    m_Units.emplace_back(std::function<bool()>(), cb);
+                    break;
+                }
                 //m_Units.emplace_back([]{
                 //    return
                 //}, cb);
@@ -56,8 +61,13 @@ class Multiplexer:
             }
             
             void when(std::function<bool()> cond, std::function<void()> cb) {
-                auto l = lock();
-                m_Units.emplace_back(cond, cb);
+                while(true) {
+                    auto l = lock();
+                    if(m_Buffered && m_Units.size() >= m_Buffered)
+                        continue;
+                    m_Units.emplace_back(cond, cb);
+                    break;
+                }
             }
 
             // TODO: handle single-direction channels that may block
@@ -152,12 +162,25 @@ class Multiplexer:
                 auto l = lock();
                 return m_Units.empty();
             }
+            size_t buffered() const {
+                auto l = lock();
+                return m_Buffered;
+            }
+            void unbuffer() {
+                auto l = lock();
+                m_Buffered = 0;
+            }
+            void buffer(size_t sz) {
+                auto l = lock();
+                m_Buffered = sz;
+            }
             //virtual bool poll_once() override { assert(false); }
             //virtual void run() override { assert(false); }
             //virtual void run_once() override { assert(false); }
             
             std::list<Unit> m_Units;
             boost::thread m_Thread;
+            size_t m_Buffered = 0;
             std::atomic<bool> m_Finish = ATOMIC_VAR_INIT(false);
         };
         
