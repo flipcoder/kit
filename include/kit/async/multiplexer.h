@@ -43,16 +43,23 @@ class Multiplexer:
             }
             virtual ~Strand() {}
             
-            //template<class T = void>
-            /*std::future<T>*/ void task(std::function<void()> cb) {
+            template<class T = void>
+            std::future<T> when(std::function<bool()> cond, std::function<T()> cb) {
                 //std::packaged_task<T()> task(std::move(cb));
                 //auto r = task.get_future();
                 while(true) {
                     auto l = lock();
                     if(m_Buffered && m_Units.size() >= m_Buffered)
                         continue;
-                    m_Units.emplace_back(std::function<bool()>(), cb);
-                    break;
+                    auto cbt = Task<T()>(std::move(cb));
+                    auto fut = cbt.get_future();
+                    auto cbc = kit::move_on_copy<Task<T()>>(std::move(cbt));
+                    m_Units.emplace_back(cond, [cbc]{
+                        cbc.get()();
+                    });
+                    return fut;
+                    //return std::future<T>();
+                    //break;
                 }
                 //m_Units.emplace_back([]{
                 //    return
@@ -60,15 +67,26 @@ class Multiplexer:
                 //return r;
             }
             
-            void when(std::function<bool()> cond, std::function<void()> cb) {
-                while(true) {
-                    auto l = lock();
-                    if(m_Buffered && m_Units.size() >= m_Buffered)
-                        continue;
-                    m_Units.emplace_back(cond, cb);
-                    break;
-                }
+            template<class T = void>
+            std::future<T> task(std::function<T()> cb) {
+                return when(std::function<bool()>(), cb);
             }
+            
+            //template<class R>
+            //std::future<R> when(std::function<bool()> cond, std::function<R()> cb) {
+            //    while(true) {
+            //        auto l = lock();
+            //        if(m_Buffered && m_Units.size() >= m_Buffered)
+            //            continue;
+            //        auto cbt = Task<T()>(std::move(cb));
+            //        auto fut = cbt.get_future();
+            //        auto cbc = kit::move_on_copy<Task<T()>>(std::move(cbt));
+            //        m_Units.emplace_back(cond, []{
+                        
+            //        });
+            //        break;
+            //    }
+            //}
 
             // TODO: handle single-direction channels that may block
             //template<class T>
@@ -83,15 +101,15 @@ class Multiplexer:
 
             //template<class R(T)>
             //std::future<R> then(std::future<T>& fut, std::function<R(T)> cb) {
-            template<class T>
-            void when(std::future<T>& fut, std::function<void(T)> cb) {
+            template<class R, class T>
+            std::future<R> when(std::future<T>& fut, std::function<R(T)> cb) {
                 //auto task = std::packaged_task<R(T)>(cb);
                 //auto r = task.get_future();
                 //auto futc = kit::move_on_copy<std::future<T>>(std::move(fut));
                 kit::move_on_copy<std::future<T>> futc(std::move(fut));
                 //task(std::function<void()>([cb,futc]{}));
                 //std::future<T>* ref = nullptr;
-                /*return */task([cb, futc]() {
+                return task<void>([cb, futc]() {
                     if(futc.get().wait_for(std::chrono::seconds(0)) ==
                         std::future_status::ready)
                         cb(futc.get().get());

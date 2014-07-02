@@ -119,10 +119,10 @@ TEST_CASE("Multiplexer","[multiplexer]") {
     SECTION("thread wait on condition"){
         Multiplexer mx;
         std::atomic<int> num = ATOMIC_VAR_INIT(0);
-        mx.strand(0).task([&num]{
+        mx.strand(0).task<void>([&num]{
             num = 42;
         });
-        mx.strand(1).when(
+        mx.strand(1).when<void>(
             [&num]{return num == 42;},
             [&num]{num = 100;}
         );
@@ -139,7 +139,7 @@ TEST_CASE("Multiplexer","[multiplexer]") {
         bool done = false;
         //numbers.run();
         //REQUIRE(fut.get() == 42);
-        mx.strand(0).when<int>(fut, [&done](int num){
+        mx.strand(0).when<void, int>(fut, [&done](int num){
             //done = true;
             done = (num == 42);
         });
