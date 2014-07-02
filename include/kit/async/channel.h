@@ -18,8 +18,8 @@ class Channel:
     public:
 
         virtual ~Channel() {}
+
         // Put into stream
-        
         Channel& operator<<(T val) {
             do{
                 boost::this_thread::interruption_point();
@@ -48,7 +48,6 @@ class Channel:
         }
 
         //operator bool() const {
-        //    auto l = this->lock();
         //    return m_bClosed;
         //}
         bool empty() const {

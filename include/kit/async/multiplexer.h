@@ -48,16 +48,21 @@ class Multiplexer:
                 //std::packaged_task<T()> task(std::move(cb));
                 //auto r = task.get_future();
                 while(true) {
-                    auto l = lock();
-                    if(!m_Buffered || m_Units.size() < m_Buffered) {
-                        auto cbt = Task<T()>(std::move(cb));
-                        auto fut = cbt.get_future();
-                        auto cbc = kit::move_on_copy<Task<T()>>(std::move(cbt));
-                        m_Units.emplace_back(cond, [cbc]{
-                            cbc.get()();
-                        });
-                        return fut;
+                    boost::this_thread::interruption_point();
+                    {
+                        auto l = lock();
+                        if(!m_Buffered || m_Units.size() < m_Buffered) {
+                            auto cbt = Task<T()>(std::move(cb));
+                            auto fut = cbt.get_future();
+                            auto cbc = kit::move_on_copy<Task<T()>>(std::move(cbt));
+                            m_Units.emplace_back(cond, [cbc]{
+                                cbc.get()();
+                            });
+                            return fut;
+                        }
                     }
+                    boost::this_thread::yield();
+
                     //return std::future<T>();
                     //break;
                 }
@@ -102,7 +107,7 @@ class Multiplexer:
             //template<class R(T)>
             //std::future<R> then(std::future<T>& fut, std::function<R(T)> cb) {
             template<class R, class T>
-            std::future<R> when(std::future<T>& fut, std::function<R(T)> cb) {
+            std::future<R> when(std::future<T>& fut, std::function<R(std::future<T>&)> cb) {
                 //auto task = std::packaged_task<R(T)>(cb);
                 //auto r = task.get_future();
                 //auto futc = kit::move_on_copy<std::future<T>>(std::move(fut));
@@ -112,7 +117,9 @@ class Multiplexer:
                 return task<void>([cb, futc]() {
                     if(futc.get().wait_for(std::chrono::seconds(0)) ==
                         std::future_status::ready)
-                        cb(futc.get().get());
+                    {
+                        cb(futc.get());
+                    }
                     else
                         throw;
                 });

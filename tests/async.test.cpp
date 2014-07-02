@@ -53,6 +53,7 @@ TEST_CASE("Channel","[channel]") {
         mx.strand(0).task<void>([&count, &chan]{
             //chan << 1; // TODO: segfault
             //throw RetryTask();
+            //throw std::exception();
         });
         //mx.strand(1).task<void>([&sum, &chan]{
         //    if(chan.empty())
@@ -164,9 +165,9 @@ TEST_CASE("Multiplexer","[multiplexer]") {
         bool done = false;
         //numbers.run();
         //REQUIRE(fut.get() == 42);
-        mx.strand(0).when<void, int>(fut, [&done](int num){
+        mx.strand(0).when<void, int>(fut, [&done](std::future<int>& num){
             //done = true;
-            done = (num == 42);
+            done = (num.get() == 42);
         });
         numbers();
         mx.finish();
