@@ -1,6 +1,5 @@
 #include <catch.hpp>
 #include "../include/kit/async/task.h"
-#include "../include/kit/async/taskqueue.h"
 #include "../include/kit/async/channel.h"
 #include "../include/kit/async/multiplexer.h"
 #include <atomic>
@@ -133,10 +132,10 @@ TEST_CASE("Multiplexer","[multiplexer]") {
     }
     SECTION("thread wait on future"){
         Multiplexer mx;
-        TaskQueue<int> numbers;
-        auto fut = numbers([]{
+        Task<int()> numbers([]{
             return 42;
         });
+        auto fut = numbers.get_future();
         bool done = false;
         //numbers.run();
         //REQUIRE(fut.get() == 42);
@@ -144,7 +143,7 @@ TEST_CASE("Multiplexer","[multiplexer]") {
             //done = true;
             done = (num == 42);
         });
-        numbers.run();
+        numbers();
         mx.finish();
         REQUIRE(done);
     }
