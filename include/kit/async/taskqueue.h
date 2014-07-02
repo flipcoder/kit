@@ -31,6 +31,7 @@ class TaskQueue:
         }
         void run_once() {
             while(true){
+                boost::this_thread::interruption_point();
                 auto l = this->lock();
                 if(!m_Cmds.empty()){
                     auto task = std::move(m_Cmds.front());
@@ -39,7 +40,6 @@ class TaskQueue:
                     task();
                     return;
                 }
-                boost::this_thread::interruption_point();
                 boost::this_thread::yield();
             }
         }
@@ -58,6 +58,7 @@ class TaskQueue:
         void poll() {
             while(true)
             {
+                boost::this_thread::interruption_point();
                 {
                     auto l = this->lock(std::defer_lock);
                     if(l.try_lock() && !m_Cmds.empty())
@@ -71,7 +72,6 @@ class TaskQueue:
                         return; // task queue empty is or locked
                         
                 }
-                boost::this_thread::interruption_point();
                 boost::this_thread::yield();
             }
         }
@@ -79,6 +79,7 @@ class TaskQueue:
         void run() {
             while(true)
             {
+                boost::this_thread::interruption_point();
                 {
                     auto l = this->lock();
                     if(!m_Cmds.empty())
@@ -92,13 +93,13 @@ class TaskQueue:
                         return; // task queue is empty
                         
                 }
-                boost::this_thread::interruption_point();
                 boost::this_thread::yield();
             }
         }
         void forever() {
             while(true)
             {
+                boost::this_thread::interruption_point();
                 {
                     auto l = this->lock();
                     if(!m_Cmds.empty())
@@ -109,7 +110,6 @@ class TaskQueue:
                         task();
                     }
                 }
-                boost::this_thread::interruption_point();
                 boost::this_thread::yield();
             }
         }
@@ -135,6 +135,7 @@ class TaskQueue:
             std::packaged_task<T()> func(std::move(f));
             while(true)
             {
+                boost::this_thread::interruption_point();
                 {
                     auto l = this->lock();
                     if(m_Buffered && m_Cmds.size() >= m_Buffered)
@@ -144,7 +145,6 @@ class TaskQueue:
                     m_Cmds.emplace_back(std::move(func));
                     return fut;
                 }
-                boost::this_thread::interruption_point();
                 boost::this_thread::yield();
             }
         }

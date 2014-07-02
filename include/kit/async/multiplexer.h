@@ -128,10 +128,10 @@ class Multiplexer:
             void run() {
                 m_Thread = boost::thread([this]{
                     while(true) {
+                        boost::this_thread::interruption_point();
                         poll();
                         if(m_Finish && empty())
                             return;
-                        boost::this_thread::interruption_point();
                         boost::this_thread::yield();
                     }
                 });

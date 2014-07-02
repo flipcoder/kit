@@ -7,6 +7,7 @@
 #include <queue>
 #include <future>
 #include <memory>
+#include <utility>
 #include "../kit.h"
 
 template<class T>
@@ -18,18 +19,19 @@ class Channel:
 
         virtual ~Channel() {}
         // Put into stream
-        Channel& operator<<(T&& val) {
+        
+        Channel& operator<<(T val) {
             do{
+                boost::this_thread::interruption_point();
                 auto l = lock(std::defer_lock);
                 if(l.try_lock())
                 {
                     if(m_Buffered && m_Vals.size() >= m_Buffered)
                         continue;
                     
-                    m_Vals.emplace(val);
+                    m_Vals.push(std::move(val));
                     break;
                 }
-                boost::this_thread::interruption_point();
                 boost::this_thread::yield();
             }while(true);
             return *this;
