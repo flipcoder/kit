@@ -5,11 +5,11 @@
 #include <future>
 #include <stdexcept>
 
-class RetryTaskException:
+class RetryTask:
     public std::exception
 {
     public:
-        RetryTaskException() {}
+        RetryTask() {}
 };
 
 template<class R, class ...Args>
@@ -35,7 +35,7 @@ class Task<R (Args...)>
         void operator()(T&&... t) {
             try{
                 m_Promise.set_value(m_Func(std::forward<T>(t)...));
-            }catch(RetryTaskException e){
+            }catch(RetryTask e){
                 throw e;
             }catch(const std::exception& e){
                 m_Promise.set_exception(std::make_exception_ptr(e));
@@ -73,7 +73,7 @@ class Task<void(Args...)>
             try{
                 m_Func(std::forward<T>(t)...);
                 m_Promise.set_value();
-            }catch(RetryTaskException e){
+            }catch(RetryTask e){
                 throw e;
             }catch(const std::exception& e){
                 m_Promise.set_exception(std::make_exception_ptr(e));

@@ -49,15 +49,15 @@ class Multiplexer:
                 //auto r = task.get_future();
                 while(true) {
                     auto l = lock();
-                    if(m_Buffered && m_Units.size() >= m_Buffered)
-                        continue;
-                    auto cbt = Task<T()>(std::move(cb));
-                    auto fut = cbt.get_future();
-                    auto cbc = kit::move_on_copy<Task<T()>>(std::move(cbt));
-                    m_Units.emplace_back(cond, [cbc]{
-                        cbc.get()();
-                    });
-                    return fut;
+                    if(!m_Buffered || m_Units.size() < m_Buffered) {
+                        auto cbt = Task<T()>(std::move(cb));
+                        auto fut = cbt.get_future();
+                        auto cbc = kit::move_on_copy<Task<T()>>(std::move(cbt));
+                        m_Units.emplace_back(cond, [cbc]{
+                            cbc.get()();
+                        });
+                        return fut;
+                    }
                     //return std::future<T>();
                     //break;
                 }

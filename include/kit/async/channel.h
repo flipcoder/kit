@@ -26,11 +26,10 @@ class Channel:
                 auto l = lock(std::defer_lock);
                 if(l.try_lock())
                 {
-                    if(m_Buffered && m_Vals.size() >= m_Buffered)
-                        continue;
-                    
-                    m_Vals.push(std::move(val));
-                    break;
+                    if(!m_Buffered || m_Vals.size() < m_Buffered) {
+                        m_Vals.push(std::move(val));
+                        break;
+                    }
                 }
                 boost::this_thread::yield();
             }while(true);
@@ -48,12 +47,16 @@ class Channel:
             return false;
         }
 
-        operator bool() const {
-            auto l = this->lock();
-            return !m_Vals.empty();
+        //operator bool() const {
+        //    auto l = this->lock();
+        //    return m_bClosed;
+        //}
+        bool empty() const {
+            auto l = lock();
+            return m_Vals.empty();
         }
         size_t size() const {
-            auto l = this->lock();
+            auto l = lock();
             return m_Vals.size();
         }
         size_t buffered() const {
@@ -68,11 +71,12 @@ class Channel:
             auto l = lock();
             m_Buffered = sz;
         }
-        
         void close() {
+            // atomic
             m_bClosed = true;
         }
         bool closed() const {
+            // atomic
             return m_bClosed;
         }
 

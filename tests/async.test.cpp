@@ -18,7 +18,7 @@ TEST_CASE("Task","[task]") {
     SECTION("retrying tasks"){
         Task<void(bool)> task([](bool err){
             if(err)
-                throw RetryTaskException();
+                throw RetryTask();
         });
         auto fut = task.get_future();
         
@@ -42,6 +42,31 @@ TEST_CASE("Channel","[channel]") {
         bool b = (chan >> num);
         REQUIRE(b);
         REQUIRE(num == 42);
+    }
+    SECTION("retrying"){
+        Multiplexer mx;
+        Channel<int> chan;
+        
+        int sum = 0;
+        int count = 0;
+        //mx.strand(0).buffer(1);
+        mx.strand(0).task<void>([&count, &chan]{
+            //chan << 1; // TODO: segfault
+            //throw RetryTask();
+        });
+        //mx.strand(1).task<void>([&sum, &chan]{
+        //    if(chan.empty())
+        //        throw RetryTask();
+            
+        //    int num;
+        //    chan >> num;
+        //    sum += num;
+            
+        //    if(sum >= 5)
+        //        throw RetryTask();
+        //});
+        //mx.strand(1).finish();
+        //REQUIRE(sum == count);
     }
 }
 
