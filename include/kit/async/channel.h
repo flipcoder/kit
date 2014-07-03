@@ -21,33 +21,33 @@ class Channel:
         virtual ~Channel() {}
 
         // Put into stream
-        bool operator<<(T val) {
-            do{
-                boost::this_thread::interruption_point();
-                auto l = this->lock(std::defer_lock);
-                if(l.try_lock())
-                {
-                    if(m_bClosed)
-                        throw std::runtime_error("channel closed");
-                    if(!m_Buffered || m_Vals.size() < m_Buffered) {
-                        m_Vals.push(std::move(val));
-                        break;
-                    }
-                }
-                boost::this_thread::yield();
-            }while(true);
-            return true;
+        void operator<<(T val) {
+            auto l = this->lock(std::defer_lock);
+            if(!l.try_lock())
+                throw RetryTask();
+
+            if(m_bClosed)
+                throw std::runtime_error("channel closed");
+            if(!m_Buffered || m_Vals.size() < m_Buffered) {
+                m_Vals.push(std::move(val));
+                return;
+            }
+            throw RetryTask();
         }
         
         // Get from stream
-        bool operator>>(T& val) {
-            auto l = this->lock();
+        void operator>>(T& val) {
+            auto l = this->lock(std::defer_lock);
+            if(!l.try_lock())
+                throw RetryTask();
+            if(m_bClosed)
+                throw std::runtime_error("channel closed");
             if(!m_Vals.empty()) {
                 val = std::move(m_Vals.front());
                 m_Vals.pop();
-                return true;
+                return;
             }
-            return false;
+            throw RetryTask();
         }
 
         T get() {
@@ -60,9 +60,8 @@ class Channel:
                 auto r = std::move(m_Vals.front());
                 m_Vals.pop();
                 return r;
-            }else{
-                throw RetryTask();
             }
+            throw RetryTask();
         }
 
         //operator bool() const {

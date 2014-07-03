@@ -210,7 +210,7 @@ class Multiplexer:
         };
         
         Multiplexer():
-            m_Concurrency(std::min<unsigned>(1U,boost::thread::hardware_concurrency()))
+            m_Concurrency(std::max<unsigned>(1U,boost::thread::hardware_concurrency()))
         {
             for(unsigned i=0;i<m_Concurrency;++i)
                 m_Strands.emplace_back(kit::make_unique<Strand>());
@@ -231,6 +231,10 @@ class Multiplexer:
         //}
         Strand& strand(unsigned idx) {
             return *(m_Strands[idx % m_Strands.size()]);
+        }
+
+        size_t size() const {
+            return m_Concurrency;
         }
 
         void finish() {

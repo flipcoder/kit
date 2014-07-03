@@ -36,11 +36,20 @@ TEST_CASE("Channel","[channel]") {
     SECTION("basic usage"){
         Channel<int> chan;
         REQUIRE(chan.size() == 0);
-        chan << 42;
+        while(true){
+            try{
+                chan << 42;
+                break;
+            }catch(const RetryTask& rt){}
+        };
         REQUIRE(chan.size() == 1);
         int num = 0;
-        bool b = (chan >> num);
-        REQUIRE(b);
+        while(true){
+            try{
+                chan >> num;
+                break;
+            }catch(const RetryTask& rt){}
+        };
         REQUIRE(num == 42);
     }
     SECTION("retrying"){
@@ -48,23 +57,22 @@ TEST_CASE("Channel","[channel]") {
         Channel<int> chan;
         
         int sum = 0;
-        int count = 0;
-        mx.strand(0).buffer(1);
-        mx.strand(0).task<void>([&count, &chan]{
-            chan << 1;
-            throw RetryTask();
+        mx.strand(0).buffer(256);
+        mx.strand(0).task<void>([&chan]{
+            // only way to stop this event is closing the channel
+            
+            chan << 1; // retries task if this blocks
+            
+            throw RetryTask(); // keep this event going until chan is closed
         });
         mx.strand(1).task<void>([&sum, &chan]{
-            int num = chan.get(); // will throw RetryTask() instead of blocking
+            int num;
+            chan >> num; // retries task if this blocks
             sum += num;
-            if(sum <= 5)
-                throw RetryTask();
             chan.close();
         });
-        //mx.strand(1).finish();
-        //mx.strand(0).stop();
         mx.finish();
-        REQUIRE(sum == count);
+        REQUIRE(sum == 1);
     }
 }
 
