@@ -10,9 +10,9 @@
 #include <utility>
 #include "../kit.h"
 
-template<class T>
+template<class T, class Mutex=std::mutex>
 class Channel:
-    public kit::mutexed<std::mutex>
+    public kit::mutexed<Mutex>
     //public std::enable_shared_from_this<Channel<T>>
 {
     public:
@@ -23,7 +23,7 @@ class Channel:
         Channel& operator<<(T val) {
             do{
                 boost::this_thread::interruption_point();
-                auto l = lock(std::defer_lock);
+                auto l = this->lock(std::defer_lock);
                 if(l.try_lock())
                 {
                     if(!m_Buffered || m_Vals.size() < m_Buffered) {
@@ -38,7 +38,7 @@ class Channel:
         
         // Get from stream
         bool operator>>(T& val) {
-            auto l = lock();
+            auto l = this->lock();
             if(!m_Vals.empty()) {
                 val = std::move(m_Vals.front());
                 m_Vals.pop();
@@ -51,23 +51,23 @@ class Channel:
         //    return m_bClosed;
         //}
         bool empty() const {
-            auto l = lock();
+            auto l = this->lock();
             return m_Vals.empty();
         }
         size_t size() const {
-            auto l = lock();
+            auto l = this->lock();
             return m_Vals.size();
         }
         size_t buffered() const {
-            auto l = lock();
+            auto l = this->lock();
             return m_Buffered;
         }
         void unbuffer() {
-            auto l = lock();
+            auto l = this->lock();
             m_Buffered = 0;
         }
         void buffer(size_t sz) {
-            auto l = lock();
+            auto l = this->lock();
             m_Buffered = sz;
         }
         void close() {
