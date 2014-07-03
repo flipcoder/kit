@@ -45,7 +45,5 @@
 * async
     * multiplexer
         [ ] only front of list is checked
-        [?] recallable variation of std::packaged_task that will not package
-            not_ready exceptions into std::future
-        [ ] scoped connections/units
+        [ ] task() and when() return scoped connections instead of future?
 

@@ -9,6 +9,7 @@
 #include <memory>
 #include <utility>
 #include "../kit.h"
+#include "task.h"
 
 template<class T, class Mutex=std::mutex>
 class Channel:
@@ -20,12 +21,14 @@ class Channel:
         virtual ~Channel() {}
 
         // Put into stream
-        Channel& operator<<(T val) {
+        bool operator<<(T val) {
             do{
                 boost::this_thread::interruption_point();
                 auto l = this->lock(std::defer_lock);
                 if(l.try_lock())
                 {
+                    if(m_bClosed)
+                        throw std::runtime_error("channel closed");
                     if(!m_Buffered || m_Vals.size() < m_Buffered) {
                         m_Vals.push(std::move(val));
                         break;
@@ -33,7 +36,7 @@ class Channel:
                 }
                 boost::this_thread::yield();
             }while(true);
-            return *this;
+            return true;
         }
         
         // Get from stream
@@ -45,6 +48,21 @@ class Channel:
                 return true;
             }
             return false;
+        }
+
+        T get() {
+            auto l = this->lock(std::defer_lock);
+            if(!l.try_lock())
+                throw RetryTask();
+            if(m_bClosed)
+                throw std::runtime_error("channel closed");
+            if(!m_Vals.empty()) {
+                auto r = std::move(m_Vals.front());
+                m_Vals.pop();
+                return r;
+            }else{
+                throw RetryTask();
+            }
         }
 
         //operator bool() const {

@@ -49,25 +49,22 @@ TEST_CASE("Channel","[channel]") {
         
         int sum = 0;
         int count = 0;
-        //mx.strand(0).buffer(1);
+        mx.strand(0).buffer(1);
         mx.strand(0).task<void>([&count, &chan]{
-            //chan << 1; // TODO: segfault
-            //throw RetryTask();
-            //throw std::exception();
+            chan << 1;
+            throw RetryTask();
         });
-        //mx.strand(1).task<void>([&sum, &chan]{
-        //    if(chan.empty())
-        //        throw RetryTask();
-            
-        //    int num;
-        //    chan >> num;
-        //    sum += num;
-            
-        //    if(sum >= 5)
-        //        throw RetryTask();
-        //});
+        mx.strand(1).task<void>([&sum, &chan]{
+            int num = chan.get(); // will throw RetryTask() instead of blocking
+            sum += num;
+            if(sum <= 5)
+                throw RetryTask();
+            chan.close();
+        });
         //mx.strand(1).finish();
-        //REQUIRE(sum == count);
+        //mx.strand(0).stop();
+        mx.finish();
+        REQUIRE(sum == count);
     }
 }
 
@@ -142,6 +139,7 @@ TEST_CASE("Channel","[channel]") {
 //}
 
 TEST_CASE("Multiplexer","[multiplexer]") {
+
     SECTION("thread wait on condition"){
         Multiplexer mx;
         std::atomic<int> num = ATOMIC_VAR_INIT(0);
