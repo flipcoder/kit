@@ -1,17 +1,18 @@
 #ifndef MULTIPLEXER_H_DY7UUXOY
 #define MULTIPLEXER_H_DY7UUXOY
 
-#include "async.h"
+//#include "async.h"
 #include "../kit.h"
 #include <boost/thread.hpp>
 #include <boost/noncopyable.hpp>
 #include <algorithm>
 #include <atomic>
+#include <deque>
 #include "../kit.h"
 #include "task.h"
 
-class Multiplexer:
-    public IAsync
+class Multiplexer//:
+    //public IAsync
     //virtual public kit::freezable
 {
     public:
@@ -34,10 +35,12 @@ class Multiplexer:
             //unsigned m_Strand = nullptr;
         };
 
-        struct Strand:
-            public IAsync,
+        class Strand:
+            //public IAsync,
             public kit::mutexed<std::mutex>
         {
+        public:
+            
             Strand() {
                 run();
             }
@@ -132,39 +135,13 @@ class Multiplexer:
                 //}, std::move(fut)));
                 //return r;
             }
-            
-            virtual void poll() override {
-                while(true)
-                {
-                    auto l = this->lock(std::defer_lock);
-                    if(l.try_lock() && !m_Units.empty())
-                    {
-                        auto& task = m_Units.front();
-                        if(!task.m_Ready || task.m_Ready()) {
-                            l.unlock();
-                            try{
-                                task.m_Func();
-                            }catch(...){
-                                continue;
-                            }
-                            l.lock();
-                            m_Units.pop_front();
-                        }
-                        //auto task = std::move(m_Units.front());
-                        //m_Units.pop_front();
-                        //l.unlock();
-                        //task();
-                    }
-                    else
-                        return; // task queue empty is or locked
-                }
-            }
 
             void run() {
                 m_Thread = boost::thread([this]{
+                    unsigned idx = 0;
                     while(true) {
                         boost::this_thread::interruption_point();
-                        poll();
+                        next(idx); // poll iterates once index each call
                         if(m_Finish && empty())
                             return;
                         boost::this_thread::yield();
@@ -203,7 +180,43 @@ class Multiplexer:
             //virtual void run() override { assert(false); }
             //virtual void run_once() override { assert(false); }
             
-            std::list<Unit> m_Units;
+        private:
+
+            virtual void next(unsigned& idx) {
+                while(true)
+                {
+                    auto l = this->lock(std::defer_lock);
+                    if(l.try_lock())
+                    {
+                        if(m_Units.empty() || idx >= m_Units.size())
+                        {
+                            idx = 0;
+                            return;
+                        }
+                        
+                        auto& task = m_Units[idx];
+                        if(!task.m_Ready || task.m_Ready()) {
+                            l.unlock();
+                            try{
+                                task.m_Func();
+                            }catch(...){
+                                idx = std::min<unsigned>(idx+1, m_Units.size());
+                                continue;
+                            }
+                            l.lock();
+                            m_Units.erase(m_Units.begin() + idx);
+                        }
+                        //auto task = std::move(m_Units.front());
+                        //m_Units.pop_front();
+                        //l.unlock();
+                        //task();
+                    }
+                    else
+                        return; // task queue empty is or locked
+                }
+            }
+            
+            std::deque<Unit> m_Units;
             boost::thread m_Thread;
             size_t m_Buffered = 0;
             std::atomic<bool> m_Finish = ATOMIC_VAR_INIT(false);

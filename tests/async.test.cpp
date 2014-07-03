@@ -1,8 +1,9 @@
 #include <catch.hpp>
 #include "../include/kit/kit.h"
-#include "../include/kit/async/task.h"
-#include "../include/kit/async/channel.h"
-#include "../include/kit/async/multiplexer.h"
+#include "../include/kit/async/async.h"
+//#include "../include/kit/async/task.h"
+//#include "../include/kit/async/channel.h"
+//#include "../include/kit/async/multiplexer.h"
 #include <atomic>
 using namespace std;
 
@@ -78,7 +79,6 @@ TEST_CASE("Channel","[channel]") {
         REQUIRE(sum == 5);
     }
     SECTION("nested tasks"){
-
         Multiplexer mx;
 
         bool done = false;

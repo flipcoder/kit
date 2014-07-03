@@ -1,19 +1,23 @@
 #ifndef ASYNC_H_TIBVELUE
 #define ASYNC_H_TIBVELUE
 
-class IAsync
-{
-    public:
+#include "task.h"
+#include "multiplexer.h"
+#include "channel.h"
 
-        virtual ~IAsync() = 0;
-        virtual void poll() { assert(false); }
-        virtual bool poll_once() { assert(false); }
-        virtual void run() { assert(false); }
-        virtual void run_once() { assert(false); }
-        virtual void forever() { assert(false); }
-};
+//class IAsync
+//{
+//    public:
 
-IAsync :: ~IAsync() {}
+//        virtual ~IAsync() = 0;
+//        virtual void poll() { assert(false); }
+//        virtual bool poll_once() { assert(false); }
+//        virtual void run() { assert(false); }
+//        virtual void run_once() { assert(false); }
+//        virtual void forever() { assert(false); }
+//};
+
+//IAsync :: ~IAsync() {}
 
 #endif
 

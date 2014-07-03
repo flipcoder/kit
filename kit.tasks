@@ -44,6 +44,5 @@
 
 * async
     * multiplexer
-        [ ] only front of list is checked
         [ ] task() and when() return scoped connections instead of future?
 
