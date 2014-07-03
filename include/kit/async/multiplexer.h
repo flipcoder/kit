@@ -200,6 +200,7 @@ class Multiplexer//:
                             try{
                                 task.m_Func();
                             }catch(...){
+                                l.lock();
                                 idx = std::min<unsigned>(idx+1, m_Units.size());
                                 continue;
                             }
