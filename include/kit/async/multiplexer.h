@@ -30,9 +30,7 @@ class Multiplexer//:
             // only a hint, assume ready if functor is 'empty'
             std::function<bool()> m_Ready; 
             Task<void()> m_Func;
-            //std::packaged_task<void()> m_Func;
-            // TODO: timestamp of last use / avg time idle?
-            //unsigned m_Strand = nullptr;
+            // TODO: idletime hints for load balancing?
         };
 
         class Strand:
@@ -48,8 +46,6 @@ class Multiplexer//:
             
             template<class T = void>
             std::future<T> when(std::function<bool()> cond, std::function<T()> cb) {
-                //std::packaged_task<T()> task(std::move(cb));
-                //auto r = task.get_future();
                 while(true) {
                     boost::this_thread::interruption_point();
                     {
@@ -65,14 +61,7 @@ class Multiplexer//:
                         }
                     }
                     boost::this_thread::yield();
-
-                    //return std::future<T>();
-                    //break;
                 }
-                //m_Units.emplace_back([]{
-                //    return
-                //}, cb);
-                //return r;
             }
             
             template<class T = void>
@@ -80,22 +69,6 @@ class Multiplexer//:
                 return when(std::function<bool()>(), cb);
             }
             
-            //template<class R>
-            //std::future<R> when(std::function<bool()> cond, std::function<R()> cb) {
-            //    while(true) {
-            //        auto l = lock();
-            //        if(m_Buffered && m_Units.size() >= m_Buffered)
-            //            continue;
-            //        auto cbt = Task<T()>(std::move(cb));
-            //        auto fut = cbt.get_future();
-            //        auto cbc = kit::move_on_copy<Task<T()>>(std::move(cbt));
-            //        m_Units.emplace_back(cond, []{
-                        
-            //        });
-            //        break;
-            //    }
-            //}
-
             // TODO: handle single-direction channels that may block
             //template<class T>
             //std::shared_ptr<Channel<T>> channel(
@@ -107,16 +80,10 @@ class Multiplexer//:
             
             // TODO: handle multi-direction channels that may block
 
-            //template<class R(T)>
-            //std::future<R> then(std::future<T>& fut, std::function<R(T)> cb) {
             template<class R, class T>
             std::future<R> when(std::future<T>& fut, std::function<R(std::future<T>&)> cb) {
-                //auto task = std::packaged_task<R(T)>(cb);
-                //auto r = task.get_future();
-                //auto futc = kit::move_on_copy<std::future<T>>(std::move(fut));
                 kit::move_on_copy<std::future<T>> futc(std::move(fut));
-                //task(std::function<void()>([cb,futc]{}));
-                //std::future<T>* ref = nullptr;
+                
                 return task<void>([cb, futc]() {
                     if(futc.get().wait_for(std::chrono::seconds(0)) ==
                         std::future_status::ready)
@@ -126,14 +93,6 @@ class Multiplexer//:
                     else
                         throw;
                 });
-                //task(std::bind([cb](std::future<T> fut){
-                //    if(fut.wait_for(std::chrono::seconds(0)) ==
-                //        std::future_status::ready)
-                //        cb(fut.get());
-                //    else
-                //        throw;
-                //}, std::move(fut)));
-                //return r;
             }
 
             void run() {
@@ -141,7 +100,7 @@ class Multiplexer//:
                     unsigned idx = 0;
                     while(true) {
                         boost::this_thread::interruption_point();
-                        next(idx); // poll iterates once index each call
+                        next(idx); // poll iterates one index each call
                         if(m_Finish && empty())
                             return;
                         boost::this_thread::yield();
@@ -176,6 +135,7 @@ class Multiplexer//:
                 auto l = lock();
                 m_Buffered = sz;
             }
+
             //virtual bool poll_once() override { assert(false); }
             //virtual void run() override { assert(false); }
             //virtual void run_once() override { assert(false); }
@@ -232,10 +192,9 @@ class Multiplexer//:
                 s->stop();
         }
 
-        //Strand& this_strand() {
-        //}
+        //Strand& this_strand()
         Strand& strand(unsigned idx) {
-            return *(m_Strands[idx % m_Strands.size()]);
+            return *(m_Strands[idx % m_Concurrency]);
         }
 
         size_t size() const {
@@ -248,7 +207,7 @@ class Multiplexer//:
         }
 
     private:
-        
+
         const unsigned m_Concurrency;
         std::vector<std::unique_ptr<Strand>> m_Strands;
 };
