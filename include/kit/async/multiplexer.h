@@ -183,37 +183,28 @@ class Multiplexer//:
         private:
 
             virtual void next(unsigned& idx) {
-                while(true)
+                auto l = this->lock(std::defer_lock);
+                if(l.try_lock())
                 {
-                    auto l = this->lock(std::defer_lock);
-                    if(l.try_lock())
+                    if(m_Units.empty() || idx >= m_Units.size())
                     {
-                        if(m_Units.empty() || idx >= m_Units.size())
-                        {
-                            idx = 0;
+                        idx = 0;
+                        return;
+                    }
+                    
+                    auto& task = m_Units[idx];
+                    if(!task.m_Ready || task.m_Ready()) {
+                        l.unlock();
+                        try{
+                            task.m_Func();
+                        }catch(...){
+                            l.lock();
+                            idx = std::min<unsigned>(idx+1, m_Units.size());
                             return;
                         }
-                        
-                        auto& task = m_Units[idx];
-                        if(!task.m_Ready || task.m_Ready()) {
-                            l.unlock();
-                            try{
-                                task.m_Func();
-                            }catch(...){
-                                l.lock();
-                                idx = std::min<unsigned>(idx+1, m_Units.size());
-                                continue;
-                            }
-                            l.lock();
-                            m_Units.erase(m_Units.begin() + idx);
-                        }
-                        //auto task = std::move(m_Units.front());
-                        //m_Units.pop_front();
-                        //l.unlock();
-                        //task();
+                        l.lock();
+                        m_Units.erase(m_Units.begin() + idx);
                     }
-                    else
-                        return; // task queue empty is or locked
                 }
             }
             
