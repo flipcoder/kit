@@ -1,4 +1,5 @@
 #include <catch.hpp>
+#include "../include/kit/kit.h"
 #include "../include/kit/async/task.h"
 #include "../include/kit/async/channel.h"
 #include "../include/kit/async/multiplexer.h"
@@ -59,7 +60,7 @@ TEST_CASE("Channel","[channel]") {
         int sum = 0;
         mx.strand(0).buffer(256);
         mx.strand(0).task<void>([&chan]{
-            // only way to stop this event is closing the channel
+            // only way to stop this event is closing the channel from the outside
             
             chan << 1; // retries task if this blocks
             
@@ -67,12 +68,42 @@ TEST_CASE("Channel","[channel]") {
         });
         mx.strand(1).task<void>([&sum, &chan]{
             int num;
-            chan >> num; // retries task if this blocks
+            chan >> num; // if this blocks, task is retried later
             sum += num;
-            chan.close();
+            if(sum < 5)
+                throw RetryTask();
+            chan.close(); // done, triggers the other strand to throw
         });
         mx.finish();
-        REQUIRE(sum == 1);
+        REQUIRE(sum == 5);
+    }
+    SECTION("nested tasks"){
+
+        Multiplexer mx;
+
+        bool done = false;
+        {
+            auto chan = make_shared<Channel<string>>();
+            mx.strand(0).task<void>([&mx, chan, &done]{
+                auto ping = mx.strand(0).task<void>([chan]{
+                    *chan << "ping";
+                    //cout << "ping" << endl;
+                });
+                auto pong = mx.strand(0).task<string>([chan]{
+                    auto r = chan->get();
+                    r[1] = 'o';
+                    //cout << "pong" << endl;
+                    return r;
+                });
+                mx.strand(0).when<void, string>(pong,[&done](future<string>& pong){
+                    auto str = pong.get();
+                    done = (str == "pong");
+                    //cout << "done" << endl;
+                });
+            });
+        }
+        mx.finish();
+        REQUIRE(done);
     }
 }
 

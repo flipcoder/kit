@@ -10,6 +10,8 @@
 #include <utility>
 #include <map>
 #include <atomic>
+#include <future>
+#include <chrono>
 #include <boost/algorithm/string.hpp>
 #include <boost/optional.hpp>
 #include <boost/bimap.hpp>
@@ -552,6 +554,13 @@ namespace kit
     //    return (int)( (r > 0.0f) ? floor(r + 0.5f) : ceil(r - 0.5f) );
     //}
 
+    template<class T>
+    bool ready(std::future<T>& fut)
+    {
+        return fut.wait_for(std::chrono::seconds(0)) ==
+            std::future_status::ready;
+    }
+    
     template<class Container, class Object>
     bool has(const Container& c, const Object& o)
     {
