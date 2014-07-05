@@ -11,6 +11,10 @@
 #include "../kit.h"
 #include "task.h"
 
+#ifndef CACHE_LINE_SIZE
+#define CACHE_LINE_SIZE 64
+#endif
+
 class Multiplexer//:
     //public IAsync
     //virtual public kit::freezable
@@ -179,7 +183,9 @@ class Multiplexer//:
             m_Concurrency(std::max<unsigned>(1U,boost::thread::hardware_concurrency()))
         {
             for(unsigned i=0;i<m_Concurrency;++i)
-                m_Strands.emplace_back(kit::make_unique<Strand>());
+                m_Strands.emplace_back(make_tuple(
+                    kit::make_unique<Strand>(), CacheLinePadding()
+                ));
         }
         virtual ~Multiplexer() {
             finish();
@@ -190,12 +196,12 @@ class Multiplexer//:
         //}
         void stop() {
             for(auto& s: m_Strands)
-                s->stop();
+                std::get<0>(s)->stop();
         }
 
         //Strand& this_strand()
         Strand& strand(unsigned idx) {
-            return *(m_Strands[idx % m_Concurrency]);
+            return *std::get<0>((m_Strands[idx % m_Concurrency]));
         }
 
         size_t size() const {
@@ -204,13 +210,18 @@ class Multiplexer//:
 
         void finish() {
             for(auto& s: m_Strands)
-                s->finish();
+                std::get<0>(s)->finish();
         }
 
     private:
 
+        struct CacheLinePadding
+        {
+            volatile char pad[CACHE_LINE_SIZE];
+        };
+
         const unsigned m_Concurrency;
-        std::vector<std::unique_ptr<Strand>> m_Strands;
+        std::vector<std::tuple<std::unique_ptr<Strand>, CacheLinePadding>> m_Strands;
 };
 
 #endif
