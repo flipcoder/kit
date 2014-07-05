@@ -94,6 +94,14 @@ namespace kit
             T& get() const {
                 return m_Data;
             }
+            
+            T&& move() {
+                return std::move(m_Data);
+            }
+
+            operator T() const {
+                return m_Data;
+            }
 
         private:
             mutable T m_Data;
