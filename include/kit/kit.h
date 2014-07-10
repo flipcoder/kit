@@ -548,19 +548,18 @@ namespace kit
         return (1<<x) - 1;
     }
 
-    // use c++11 rounding functions
-    //inline int round_int(double r) {
-    //    return (int)( (r > 0.0) ? floor(r + 0.5) : ceil(r - 0.5) );
-    //}
-    //inline int round_int(float r){
-    //    return (int)( (r > 0.0f) ? floor(r + 0.5f) : ceil(r - 0.5f) );
-    //}
-    //inline unsigned int round_uint(double r){
-    //    return (int)( (r > 0.0f) ? floor(r + 0.5f) : ceil(r - 0.5f) );
-    //}
-    //inline unsigned int round_uint(float r){
-    //    return (int)( (r > 0.0f) ? floor(r + 0.5f) : ceil(r - 0.5f) );
-    //}
+    inline int round_int(double r) {
+        return (int)( (r > 0.0) ? floor(r + 0.5) : ceil(r - 0.5) );
+    }
+    inline int round_int(float r){
+        return (int)( (r > 0.0f) ? floor(r + 0.5f) : ceil(r - 0.5f) );
+    }
+    inline unsigned int round_uint(double r){
+        return (int)( (r > 0.0f) ? floor(r + 0.5f) : ceil(r - 0.5f) );
+    }
+    inline unsigned int round_uint(float r){
+        return (int)( (r > 0.0f) ? floor(r + 0.5f) : ceil(r - 0.5f) );
+    }
 
     template<class T>
     bool ready(std::future<T>& fut)

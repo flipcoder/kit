@@ -4,6 +4,7 @@
 #include <iostream>
 #include "../math/common.h"
 #include "../kit.h"
+#include "../log/log.h"
 
 class Freq
 {
@@ -18,9 +19,11 @@ public:
         explicit Time(unsigned int ms) {
             value = ms;
         }
-        Time(const Time& t) {
-            value = t.internal();
-        }
+        Time(const Time& t) = default;
+        Time& operator=(const Time& t) = default;
+        Time(Time&& t) = default;
+        Time& operator=(Time&& t) = default;
+
         unsigned int internal() const { return value; }
         //static Time seconds(unsigned int s) { return Time(s * 1000);}
         static Time seconds(float s) { return Time((unsigned int)(s * 1000.0f)); }
@@ -61,9 +64,13 @@ public:
             
             /*virtual */Freq::Time logic(Freq::Time t) { // ms
                 float advance = t.ms() * m_fSpeed;
-                //m_uiLastAdvance = round_int(advance);
-                m_ulPassedTime += std::rint(advance);
-                return Freq::Time::ms(std::rint(advance));
+                unsigned adv = kit::round_int(advance);
+                //auto adv = std::rint(advance);
+                //return Freq::Time::ms((unsigned long)(advance));
+                //LOGf("passed time: %s", m_ulPassedTime);
+                //LOGf("passed time += : %s", t.ms());
+                m_ulPassedTime += adv;
+                return t;
             }
             //float logic(float a) { // seconds
             //    float advance = a * m_fSpeed;
@@ -316,7 +323,7 @@ public:
 
     Freq():
         m_ulStartTime(get_ticks()),
-        m_uiMinTick(0)
+        m_uiMinTick(1)
     {}
     
     unsigned long get_ticks() const {
@@ -337,9 +344,15 @@ public:
     // returns # of ms to advance
     Freq::Time tick() {
         unsigned long ticks = get_ticks() - m_ulStartTime;
+        LOGf("start time: %s", m_ulStartTime);
+        LOGf("get_ticks(): %s", get_ticks());
+        LOGf("ticks: %s", ticks);
+        LOGf("global timeline: %s", m_globalTimeline.ms());
         unsigned int advance = (unsigned int)(ticks - m_globalTimeline.ms());
+        LOGf("advance: %s", advance);
         if(advance >= m_uiMinTick) {
             m_globalTimeline.logic(Freq::Time::ms(advance));
+            LOGf("advance post-logic: %s", advance);
             return Freq::Time::ms(advance);
         }
         return Freq::Time::ms(0);

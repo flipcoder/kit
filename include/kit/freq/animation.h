@@ -180,7 +180,8 @@ class Animation:
         mutable T m_Current = T();
 
         //float m_fSpeed = 1.0f;
-        Freq::Timeline* m_pTimeline = nullptr;
+        //Freq::Timeline* m_pTimeline = nullptr;
+        Freq::Timeline m_Timeline;
 
         void reset(Freq::Time excess = Freq::Time(0)) const {
             if(m_Frames.empty())
@@ -207,9 +208,6 @@ class Animation:
     public:
     
         Animation() = default;
-        Animation(Freq::Timeline* tl):
-            m_pTimeline(tl)
-        {}
         //Animation(T&& current):
         //    m_Current(current)
         //{}
@@ -238,7 +236,7 @@ class Animation:
         //    //m_fSpeed(1.0f)
         //{
         //    //initial.nav(this);
-        //    initial.timeline(m_pTimeline);
+        //    initial.timeline(&m_Timeline);
         //    m_Frames.push_back(initial);
         //    reset();
         //}
@@ -258,21 +256,21 @@ class Animation:
         }
 
         virtual void logic(Freq::Time t) {
-            m_pTimeline->logic(t);
+            m_Timeline.logic(t);
         }
 
         void pause() {
-            m_pTimeline->pause();
+            m_Timeline.pause();
         }
         void resume() {
-            m_pTimeline->resume();
+            m_Timeline.resume();
         }
 
         /*
          * Append a frame to the end of the cycle
          */
         void frame(Frame<T> frame) {
-            frame.timeline(m_pTimeline);
+            frame.timeline(&m_Timeline);
             m_Frames.push_back(frame);
             reset();
         }
@@ -307,7 +305,7 @@ class Animation:
 
             if(t)
             {
-                m_Frames.push_back(Frame<T>(position, t, easing, m_pTimeline));
+                m_Frames.push_back(Frame<T>(position, t, easing, &m_Timeline));
                 reset();
             }
         }
@@ -366,10 +364,10 @@ class Animation:
         //    return m_fSpeed;
         //}
 
-        void timeline(Freq::Timeline* tl) {
-            m_pTimeline = tl;
-        }
-        Freq::Timeline* timeline() { return m_pTimeline; }
+        //void timeline(Freq::Timeline* tl) {
+        //    m_pTimeline = tl;
+        //}
+        Freq::Timeline* timeline() { return &m_Timeline; }
 };
 
 #endif
