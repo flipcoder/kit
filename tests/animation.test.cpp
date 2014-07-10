@@ -15,9 +15,9 @@ TEST_CASE("Animation","[animation]") {
         auto callback_counter = [&callbacks] {
             ++callbacks;
         };
-        Freq::Timeline timeline;
+        //Freq::Timeline timeline;
         Animation<float> anim;
-        anim.timeline(&timeline);
+        //anim.timeline(&timeline);
         REQUIRE(floatcmp(anim.get(), 0.0f));
         
         // add callback before adding to anim
@@ -44,14 +44,14 @@ TEST_CASE("Animation","[animation]") {
         
         REQUIRE(anim.size() == 2);
         REQUIRE(floatcmp(anim.get(), 0.0f));
-        timeline.logic(Freq::Time::seconds(1));
+        anim.logic(Freq::Time::seconds(1));
         REQUIRE(!anim.elapsed());
         REQUIRE(anim.size() == 1);
         REQUIRE(callbacks == 1); // only 1 callback should be triggered at this point
         REQUIRE(floatcmp(anim.get(), 1.0f));
-        timeline.logic(Freq::Time::ms(500));
+        anim.logic(Freq::Time::ms(500));
         REQUIRE(floatcmp(anim.get(), 5.5f));
-        timeline.logic(Freq::Time::ms(500));
+        anim.logic(Freq::Time::ms(500));
         REQUIRE(floatcmp(anim.get(), 10.0f));
         REQUIRE(anim.elapsed());
         

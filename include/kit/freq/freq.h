@@ -344,15 +344,15 @@ public:
     // returns # of ms to advance
     Freq::Time tick() {
         unsigned long ticks = get_ticks() - m_ulStartTime;
-        LOGf("start time: %s", m_ulStartTime);
-        LOGf("get_ticks(): %s", get_ticks());
-        LOGf("ticks: %s", ticks);
-        LOGf("global timeline: %s", m_globalTimeline.ms());
+        //LOGf("start time: %s", m_ulStartTime);
+        //LOGf("get_ticks(): %s", get_ticks());
+        //LOGf("ticks: %s", ticks);
+        //LOGf("global timeline: %s", m_globalTimeline.ms());
         unsigned int advance = (unsigned int)(ticks - m_globalTimeline.ms());
-        LOGf("advance: %s", advance);
+        //LOGf("advance: %s", advance);
         if(advance >= m_uiMinTick) {
             m_globalTimeline.logic(Freq::Time::ms(advance));
-            LOGf("advance post-logic: %s", advance);
+            //LOGf("advance post-logic: %s", advance);
             return Freq::Time::ms(advance);
         }
         return Freq::Time::ms(0);
