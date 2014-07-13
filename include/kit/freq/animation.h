@@ -48,9 +48,9 @@ namespace Interpolation {
 #define INTERPOLATE(FUNC)\
     std::bind(\
         &Interpolation::FUNC,\
-        placeholders::_1,\
-        placeholders::_2,\
-        placeholders::_3\
+        std::placeholders::_1,\
+        std::placeholders::_2,\
+        std::placeholders::_3\
     )\
 
 /*
