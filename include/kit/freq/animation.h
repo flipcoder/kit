@@ -284,7 +284,7 @@ class Animation:
             m_Current = get();
             m_Frames.clear();
         }
-        void stop(){
+        void finish(){
             process();
             if(!m_Frames.empty()) {
                 m_Current = m_Frames.back().value();

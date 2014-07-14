@@ -99,6 +99,13 @@ namespace kit
                 return std::move(m_Data);
             }
 
+            const T& operator*() const {
+                return m_Data;
+            }
+            T& operator*() {
+                return m_Data;
+            }
+
             operator T() const {
                 return m_Data;
             }

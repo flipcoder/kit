@@ -53,8 +53,17 @@ public:
             Timeline():
                 m_ulPassedTime(0L),
                 m_fSpeed(1.0f)
-            {}
+            {
+                assert(m_ulPassedTime == 0L);
+                assert(m_fSpeed == 1.0f);
+            }
             virtual ~Timeline() {}
+
+            Timeline(const Timeline&) = default;
+            Timeline(Timeline&&) = default;
+            Timeline& operator=(const Timeline&) = default;
+            Timeline& operator=(Timeline&&) = default;
+            
             virtual unsigned long ms() const {
                 return m_ulPassedTime;
             }
@@ -70,7 +79,7 @@ public:
                 //LOGf("passed time: %s", m_ulPassedTime);
                 //LOGf("passed time += : %s", t.ms());
                 m_ulPassedTime += adv;
-                return t;
+                return Freq::Time::ms(adv);
             }
             //float logic(float a) { // seconds
             //    float advance = a * m_fSpeed;
@@ -120,6 +129,8 @@ public:
         //    assert(m_pTimer);
         //}
 
+        Alarm() {}
+        
         explicit Alarm(Timeline* timer):
             m_pTimer(timer),
             m_ulAlarmTime(0L),
@@ -127,6 +138,11 @@ public:
         {
             //assert(m_pTimer);
         }
+
+        Alarm(const Alarm&) = default;
+        Alarm(Alarm&&) = default;
+        Alarm& operator=(const Alarm&) = default;
+        Alarm& operator=(Alarm&&) = default;
 
         explicit Alarm(Time t, Timeline* timer):
             m_pTimer(timer)
@@ -259,6 +275,12 @@ public:
             Alarm(timer),
             m_Length(Time(0))
         {}
+
+        Timed(const Timed&) = default;
+        Timed(Timed&&) = default;
+        Timed& operator=(const Timed&) = default;
+        Timed& operator=(Timed&&) = default;
+
         //Timed(const Timed<T>& t) {
         //    m_Start = t.start();
         //    m_End = t.end();
