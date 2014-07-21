@@ -122,7 +122,7 @@ namespace Matrix {
     inline bool is_identity(const glm::mat4& m)
     {
         // glm takes care of floatcmp and epsilon value
-        return m == glm::mat4();
+        return m == glm::mat4(1.0f);
     }
     
     inline bool is_zero(const glm::mat4& m)

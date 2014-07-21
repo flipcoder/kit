@@ -5,7 +5,7 @@
 #include "schema.h"
 
 template<class Mutex>
-Schema<Mutex> :: Schema(const std::shared_ptr<Meta<Mutex>>& m):
+SchemaBase<Mutex> :: SchemaBase(const std::shared_ptr<MetaBase<Mutex>>& m):
     m_pSchema(m)
 {
     assert(m);
@@ -13,11 +13,11 @@ Schema<Mutex> :: Schema(const std::shared_ptr<Meta<Mutex>>& m):
 
 template<class Mutex>
 template<class TMutex>
-void Schema<Mutex> :: validate(const std::shared_ptr<Meta<TMutex>>& m) const
+void SchemaBase<Mutex> :: validate(const std::shared_ptr<MetaBase<TMutex>>& m) const
 {
     // our stack for keeping track of location in tree while iterating
     std::deque<std::tuple<
-        std::shared_ptr<Meta<TMutex>>,
+        std::shared_ptr<MetaBase<TMutex>>,
         std::unique_lock<TMutex>,
         std::string
     >> metastack;
@@ -25,7 +25,7 @@ void Schema<Mutex> :: validate(const std::shared_ptr<Meta<TMutex>>& m) const
     // TODO: loop thru schema, look up required fields in m
     
     m->each([this, &metastack](
-        const std::shared_ptr<Meta<TMutex>>& parent,
+        const std::shared_ptr<MetaBase<TMutex>>& parent,
         MetaElement& e,
         unsigned level
     ){
@@ -49,7 +49,7 @@ void Schema<Mutex> :: validate(const std::shared_ptr<Meta<TMutex>>& m) const
             
         //LOGf("path element: %s", boost::algorithm::join(path,"/"));
         
-        std::tuple<std::shared_ptr<Meta<Mutex>>, bool> r;
+        std::tuple<std::shared_ptr<MetaBase<Mutex>>, bool> r;
         try{
             r = m_pSchema->path(path);
             auto schema_metadata = std::get<0>(r);
@@ -98,28 +98,28 @@ void Schema<Mutex> :: validate(const std::shared_ptr<Meta<TMutex>>& m) const
         
         return MetaLoop::STEP;
     },
-        (unsigned)Meta<>::EachFlag::DEFAULTS |
-            (unsigned)Meta<>::EachFlag::RECURSIVE,
+        (unsigned)MetaBase<>::EachFlag::DEFAULTS |
+            (unsigned)MetaBase<>::EachFlag::RECURSIVE,
         &metastack
     );
 }
 
 template<class Mutex>
 template<class TMutex>
-void Schema<Mutex> :: add_missing_fields(std::shared_ptr<Meta<TMutex>>& m) const
+void SchemaBase<Mutex> :: add_missing_fields(std::shared_ptr<MetaBase<TMutex>>& m) const
 {
 }
 
 template<class Mutex>
 template<class TMutex>
-void Schema<Mutex> :: add_required_fields(std::shared_ptr<Meta<TMutex>>& m) const
+void SchemaBase<Mutex> :: add_required_fields(std::shared_ptr<MetaBase<TMutex>>& m) const
 {
 }
 
 template<class Mutex>
 template<class TMutex>
-std::shared_ptr<Meta<TMutex>> Schema<Mutex> :: make_default() const
+std::shared_ptr<MetaBase<TMutex>> SchemaBase<Mutex> :: make_default() const
 {
-    return std::shared_ptr<Meta<TMutex>>();
+    return std::shared_ptr<MetaBase<TMutex>>();
 }
 

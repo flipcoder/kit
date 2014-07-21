@@ -5,20 +5,20 @@
 #include "../kit.h"
 
 template<class Mutex>
-Meta<Mutex> :: Meta(const std::string& fn):
+MetaBase<Mutex> :: MetaBase(const std::string& fn):
     m_Filename(fn)
 {
     deserialize();
 }
 
 template<class Mutex>
-Meta<Mutex> :: Meta(MetaFormat fmt, const std::string& data)
+MetaBase<Mutex> :: MetaBase(MetaFormat fmt, const std::string& data)
 {
     deserialize(fmt, data);
 }
 
 template<class Mutex>
-void Meta<Mutex> :: from_args(std::vector<std::string> args)
+void MetaBase<Mutex> :: from_args(std::vector<std::string> args)
 {
     // remove whitespace args
     kit::remove_if(args, [](const std::string& s) {
@@ -56,13 +56,13 @@ void Meta<Mutex> :: from_args(std::vector<std::string> args)
 }
 
 template<class Mutex>
-MetaLoop Meta<Mutex>::each(
+MetaLoop MetaBase<Mutex>::each(
     std::function<MetaLoop(
-        const std::shared_ptr<Meta<Mutex>>&, MetaElement&, unsigned
+        const std::shared_ptr<MetaBase<Mutex>>&, MetaElement&, unsigned
     )> func,
     unsigned flags, // use EachFlag enum
     std::deque<std::tuple<
-        std::shared_ptr<Meta<Mutex>>,
+        std::shared_ptr<MetaBase<Mutex>>,
         std::unique_lock<Mutex>,
         std::string // key in parent
     >>* metastack,
@@ -72,8 +72,8 @@ MetaLoop Meta<Mutex>::each(
     auto l = this->lock();
 
     // only keep one instance of this, will be null if metastack isn't
-    std::shared_ptr<Meta<Mutex>> spthis_ = this->shared_from_this();
-    std::shared_ptr<Meta<Mutex>>* spthis = &spthis_;
+    std::shared_ptr<MetaBase<Mutex>> spthis_ = this->shared_from_this();
+    std::shared_ptr<MetaBase<Mutex>>* spthis = &spthis_;
     if(metastack) {
         metastack->push_back(std::make_tuple(
             std::move(spthis_), std::move(l), std::move(key)
@@ -131,7 +131,7 @@ MetaLoop Meta<Mutex>::each(
                 // std::shared_ptr during the each() call
                 // so dumping the stack allows other threads
                 // to erase the pointer)
-                Meta* mp = boost::any_cast<std::shared_ptr<Meta<Mutex>>>(e.value).get();
+                MetaBase* mp = boost::any_cast<std::shared_ptr<MetaBase<Mutex>>>(e.value).get();
                 status =
                     mp->each(
                         func,
@@ -199,7 +199,7 @@ MetaLoop Meta<Mutex>::each(
 //  only std::shared_ptr's to other trees should serialize (not weak)
 
 /*
- * Will recurse into nested Metas
+ * Will recurse into nested MetaBases
  * Might throw bad_any_cast
  */
 template<class Mutex>
@@ -211,7 +211,7 @@ Json::Value MetaElement::serialize_json(
 
     if(type.id == MetaType::ID::META)
     {
-        boost::any_cast<std::shared_ptr<Meta<Mutex>>>(value)->serialize_json(v);
+        boost::any_cast<std::shared_ptr<MetaBase<Mutex>>>(value)->serialize_json(v);
     }
     // TODO: boost::any -> value (and key?)
     else if(type.id == MetaType::ID::INT) {
@@ -273,7 +273,7 @@ Json::Value MetaElement::serialize_json(
  * Private method JSON serialization
  */
 template<class Mutex>
-void Meta<Mutex> :: serialize_json(Json::Value& v) const
+void MetaBase<Mutex> :: serialize_json(Json::Value& v) const
 {
     if(is_map())
     {
@@ -314,7 +314,7 @@ void Meta<Mutex> :: serialize_json(Json::Value& v) const
  * Private method JSON deserialization
  */
 template<class Mutex>
-void Meta<Mutex> :: deserialize_json(
+void MetaBase<Mutex> :: deserialize_json(
     const Json::Value& v
 ){
     //unsigned flags = empty() ? 0 : AddFlag::UNIQUE;
@@ -333,7 +333,7 @@ void Meta<Mutex> :: deserialize_json(
         // TODO: move this stuff to Element::deserialize_json()
         if(e.isArray() || e.isObject())
         {
-            auto nested = std::make_shared<Meta<Mutex>>();
+            auto nested = std::make_shared<MetaBase<Mutex>>();
             nested->deserialize_json(e);
             set(k, nested);
             continue;
@@ -359,7 +359,7 @@ void Meta<Mutex> :: deserialize_json(
 }
 
 template<class Mutex>
-std::string Meta<Mutex> :: serialize(MetaFormat fmt, unsigned flags) const
+std::string MetaBase<Mutex> :: serialize(MetaFormat fmt, unsigned flags) const
 {
     auto l = this->lock();
 
@@ -389,14 +389,14 @@ std::string Meta<Mutex> :: serialize(MetaFormat fmt, unsigned flags) const
 }
 
 template<class Mutex>
-void Meta<Mutex> :: deserialize(MetaFormat fmt, const std::string& data, const std::string& fn)
+void MetaBase<Mutex> :: deserialize(MetaFormat fmt, const std::string& data, const std::string& fn)
 {
     std::istringstream iss(data);
     deserialize(fmt, iss, fn);
 }
 
 template<class Mutex>
-void Meta<Mutex> :: deserialize(MetaFormat fmt, std::istream& data, const std::string& fn)
+void MetaBase<Mutex> :: deserialize(MetaFormat fmt, std::istream& data, const std::string& fn)
 {
     auto l = this->lock();
 
@@ -407,7 +407,7 @@ void Meta<Mutex> :: deserialize(MetaFormat fmt, std::istream& data, const std::s
 
         if(!reader.parse(data, root)) {
             if(fn.empty()) {
-                ERROR(PARSE, "Meta input stream data")
+                ERROR(PARSE, "MetaBase input stream data")
             } else {
                 ERROR(PARSE, fn);
             }
@@ -431,7 +431,7 @@ void Meta<Mutex> :: deserialize(MetaFormat fmt, std::istream& data, const std::s
 }
 
 template<class Mutex>
-void Meta<Mutex> :: deserialize(const std::string& fn)
+void MetaBase<Mutex> :: deserialize(const std::string& fn)
 {
     auto l = this->lock();
     //assert(!frozen());
@@ -449,7 +449,7 @@ void Meta<Mutex> :: deserialize(const std::string& fn)
 }
 
 template<class Mutex>
-void Meta<Mutex> :: serialize(const std::string& fn, unsigned flags) const
+void MetaBase<Mutex> :: serialize(const std::string& fn, unsigned flags) const
 {
     auto l = this->lock();
 
@@ -468,13 +468,13 @@ void Meta<Mutex> :: serialize(const std::string& fn, unsigned flags) const
 }
 
 template<class Mutex>
-std::tuple<std::shared_ptr<Meta<Mutex>>, bool> Meta<Mutex> :: path(
+std::tuple<std::shared_ptr<MetaBase<Mutex>>, bool> MetaBase<Mutex> :: path(
     const std::vector<std::string>& path,
     unsigned flags
 ){
     // don't this->lock until you have the root
 
-    std::shared_ptr<Meta<Mutex>> base;
+    std::shared_ptr<MetaBase<Mutex>> base;
 
     {
         // TODO; redo this try locks like in parent()
@@ -506,20 +506,20 @@ std::tuple<std::shared_ptr<Meta<Mutex>>, bool> Meta<Mutex> :: path(
     {
         locks.push_back(base->lock());
         try{
-            auto child = base->template at<std::shared_ptr<Meta<Mutex>>>(p);
+            auto child = base->template at<std::shared_ptr<MetaBase<Mutex>>>(p);
             // TODO: add flags
             base = child;
             continue;
         }catch(const std::exception&){
             if(flags & (unsigned)PathFlags::ENSURE) {
-                auto child = std::make_shared<Meta<Mutex>>();
+                auto child = std::make_shared<MetaBase<Mutex>>();
                 base->set(p, child);
                 base = child;
                 created = true;
                 continue;
             }else{
                 throw std::out_of_range("no such path");
-                //return std::tuple<std::shared_ptr<Meta<Mutex>>,bool>(
+                //return std::tuple<std::shared_ptr<MetaBase<Mutex>>,bool>(
                 //    nullptr, false
                 //);
             }
@@ -527,13 +527,13 @@ std::tuple<std::shared_ptr<Meta<Mutex>>, bool> Meta<Mutex> :: path(
     }
     //locks.clear();
 
-    return std::tuple<std::shared_ptr<Meta<Mutex>>,bool>(base, !created);
+    return std::tuple<std::shared_ptr<MetaBase<Mutex>>,bool>(base, !created);
 }
 
 template<class Mutex>
 template<class Mutex2>
-void Meta<Mutex> :: merge(
-    const std::shared_ptr<Meta<Mutex2>>& t,
+void MetaBase<Mutex> :: merge(
+    const std::shared_ptr<MetaBase<Mutex2>>& t,
     WhichCallback_t which,
     unsigned flags,
     TimeoutCallback_t timeout,
@@ -596,8 +596,8 @@ void Meta<Mutex> :: merge(
                 if(flags & (unsigned)MergeFlags::RECURSIVE)
                 {
                     //try{
-                        at<std::shared_ptr<Meta<Mutex>>>(this_id)->merge(
-                            t->template at<std::shared_ptr<Meta<Mutex2>>>(e.key),
+                        at<std::shared_ptr<MetaBase<Mutex>>>(this_id)->merge(
+                            t->template at<std::shared_ptr<MetaBase<Mutex2>>>(e.key),
                             which,
                             flags,
                             timeout
@@ -607,7 +607,7 @@ void Meta<Mutex> :: merge(
                 else
                 {
                     auto r = which(this_e, e);
-                    Meta::Which* w = boost::get<Meta::Which>(&r);
+                    MetaBase::Which* w = boost::get<MetaBase::Which>(&r);
                     if(!w)
                     {
                         MetaElement* a = boost::get<MetaElement>(&r);
@@ -620,10 +620,10 @@ void Meta<Mutex> :: merge(
                     }
                     else if(*w == Which::RECURSE)
                     {
-                        auto m = at<std::shared_ptr<Meta<Mutex>>>(this_id);
+                        auto m = at<std::shared_ptr<MetaBase<Mutex>>>(this_id);
                         assert(m);
                         m->merge(
-                            t->template at<std::shared_ptr<Meta<Mutex>>>(e.key),
+                            t->template at<std::shared_ptr<MetaBase<Mutex>>>(e.key),
                             which,
                             flags,
                             timeout
@@ -651,9 +651,9 @@ void Meta<Mutex> :: merge(
                             e.nullify();
                     }
 
-                    // TODO: other Meta::Which values (except Which::THIS,
+                    // TODO: other MetaBase::Which values (except Which::THIS,
                     //  that can be treated simply by continue; below)
-                    // Meta::Which values have preference over flags below
+                    // MetaBase::Which values have preference over flags below
                     // so we continue; here
 
                     continue;
@@ -670,8 +670,8 @@ void Meta<Mutex> :: merge(
 
 template<class Mutex>
 template<class Mutex2>
-void Meta<Mutex> :: merge(
-    const std::shared_ptr<Meta<Mutex2>>& t,
+void MetaBase<Mutex> :: merge(
+    const std::shared_ptr<MetaBase<Mutex2>>& t,
     unsigned flags
 ){
     if(flags & (unsigned)MergeFlags::REPLACE)
@@ -690,23 +690,23 @@ void Meta<Mutex> :: merge(
 }
 
 template<class Mutex>
-void Meta<Mutex> :: merge(
+void MetaBase<Mutex> :: merge(
     const std::string& fn,
     unsigned flags
 ){
     // TODO: Could use null mutex for temp meta here
-    merge(std::make_shared<Meta<kit::dummy_mutex>>(fn), flags);
+    merge(std::make_shared<MetaBase<kit::dummy_mutex>>(fn), flags);
 }
 
 template<class Mutex>
-void Meta<Mutex> :: merge(
+void MetaBase<Mutex> :: merge(
     const std::string& fn,
     WhichCallback_t which,
     unsigned flags,
     TimeoutCallback_t timeout,
     VisitorCallback_t visit
 ){
-    merge(std::make_shared<Meta<kit::dummy_mutex>>(fn),
+    merge(std::make_shared<MetaBase<kit::dummy_mutex>>(fn),
         which,
         flags,
         timeout,
@@ -715,7 +715,7 @@ void Meta<Mutex> :: merge(
 }
 
 template<class Mutex>
-/*static*/ MetaFormat Meta<Mutex> :: filename_to_format(const std::string& fn)
+/*static*/ MetaFormat MetaBase<Mutex> :: filename_to_format(const std::string& fn)
 {
     boost::filesystem::path p(fn);
     return p.extension().string() == ".json" ?

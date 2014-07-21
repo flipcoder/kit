@@ -70,6 +70,12 @@ namespace kit
         static bool const value = true;
     };
 
+    template<class T>
+    T mod(T a, T b)
+    {
+        return (a%b+b)%b;
+    }
+
     //template<class Class=c>
     //class mutex_wrapper<>
     //{

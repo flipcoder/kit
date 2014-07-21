@@ -7,8 +7,8 @@ TEST_CASE("Schema","[schema]") {
 
     SECTION("load from string") {
         
-        auto schema = make_shared<Schema<>>(
-            make_shared<Meta<kit::dummy_mutex>>(
+        auto schema = make_shared<Schema>(
+            make_shared<Meta>(
                 MetaFormat::JSON,
                 R"({})"
             )
@@ -17,8 +17,8 @@ TEST_CASE("Schema","[schema]") {
         REQUIRE(schema->meta().get());
         REQUIRE(schema->meta()->empty());
         
-        schema = make_shared<Schema<>>(
-            make_shared<Meta<kit::dummy_mutex>>(
+        schema = make_shared<Schema>(
+            make_shared<Meta>(
                 MetaFormat::JSON,
                 R"({
                     "foo": "bar",
@@ -41,8 +41,8 @@ TEST_CASE("Schema","[schema]") {
     
     SECTION("validate") {
     
-        auto schema = make_shared<Schema<>>(
-            make_shared<Meta<kit::dummy_mutex>>(
+        auto schema = make_shared<Schema>(
+            make_shared<Meta>(
                 MetaFormat::JSON,
                 R"({
                     "foo": {
@@ -57,7 +57,7 @@ TEST_CASE("Schema","[schema]") {
         );
 
         // diff mutex type, for variety
-        auto test = make_shared<Meta<std::recursive_mutex>>(
+        auto test = make_shared<MetaMT>(
             MetaFormat::JSON,
             R"({
                 "foo": "a"

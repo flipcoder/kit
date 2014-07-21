@@ -6,25 +6,25 @@
 #include "../log/log.h"
 
 template<class Mutex=kit::dummy_mutex>
-class Schema
+class SchemaBase
 {
     public:
         using mutex_type = Mutex;
         
-        Schema() = default;
+        SchemaBase() = default;
 
         //template<class TMutex>
-        Schema(const std::shared_ptr<Meta<Mutex>>& m);
+        SchemaBase(const std::shared_ptr<MetaBase<Mutex>>& m);
         
-        Schema(const std::string& fn):
-            Schema(std::make_shared<Meta<Mutex>>(fn))
+        SchemaBase(const std::string& fn):
+            SchemaBase(std::make_shared<MetaBase<Mutex>>(fn))
         {}
         
         // validate throws on error, check just returns false
         template<class TMutex>
-        void validate(const std::shared_ptr<Meta<TMutex>>& m) const;
+        void validate(const std::shared_ptr<MetaBase<TMutex>>& m) const;
         template<class TMutex>
-        bool check(const std::shared_ptr<Meta<TMutex>>& m) const {
+        bool check(const std::shared_ptr<MetaBase<TMutex>>& m) const {
             try{
                 Log::Silencer ls;
                 validate(m);
@@ -38,25 +38,28 @@ class Schema
 
         // adds all schema fields with default values
         template<class TMutex>
-        void add_missing_fields(std::shared_ptr<Meta<TMutex>>& m) const;
+        void add_missing_fields(std::shared_ptr<MetaBase<TMutex>>& m) const;
 
         // ignores fields marked as optional
         template<class TMutex>
-        void add_required_fields(std::shared_ptr<Meta<TMutex>>& m) const;
+        void add_required_fields(std::shared_ptr<MetaBase<TMutex>>& m) const;
         
         template<class TMutex>
-        std::shared_ptr<Meta<TMutex>> make_default() const;
+        std::shared_ptr<MetaBase<TMutex>> make_default() const;
 
-        std::shared_ptr<Meta<Mutex>> meta() {
+        std::shared_ptr<MetaBase<Mutex>> meta() {
             return m_pSchema;
         }
-        std::shared_ptr<const Meta<Mutex>> meta() const {
+        std::shared_ptr<const MetaBase<Mutex>> meta() const {
             return m_pSchema;
         }
 
     private:
-        std::shared_ptr<Meta<Mutex>> m_pSchema;
+        std::shared_ptr<MetaBase<Mutex>> m_pSchema;
 };
+
+using Schema = SchemaBase<kit::dummy_mutex>;
+using SchemaMT = SchemaBase<std::recursive_mutex>;
 
 #include "schema.inl"
 

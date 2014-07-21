@@ -203,9 +203,9 @@ enum class MetaSerialize {
     MINIMIZE = kit::bit(1) 
 }; 
 
-template<class Mutex=std::recursive_mutex>
-class Meta:
-    public std::enable_shared_from_this<Meta<Mutex>>,
+template<class Mutex=kit::dummy_mutex>
+class MetaBase:
+    public std::enable_shared_from_this<MetaBase<Mutex>>,
     public kit::mutexed<Mutex>//,
     //public kit::freezable
 {
@@ -216,8 +216,8 @@ class Meta:
         
         //struct Iterator
         //{
-        //    Iterator(Meta* m):
-        //        m_Meta(m),
+        //    Iterator(MetaBase* m):
+        //        m_MetaBase(m),
         //        m_Value(0)
         //    {}
         //    Iterator& operator++() {
@@ -231,7 +231,7 @@ class Meta:
         //    }
 
         //    private:
-        //        Meta* m_Meta = nullptr;
+        //        MetaBase* m_MetaBase = nullptr;
         //        unsigned m_Value=0;
         //};
 
@@ -263,37 +263,37 @@ class Meta:
             public:
                 Serializable() = default;
                 explicit Serializable(const std::string& fn):
-                    m_Cached(std::make_shared<Meta<Mutex>>(fn))
+                    m_Cached(std::make_shared<MetaBase<Mutex>>(fn))
                 {}
-                explicit Serializable(const std::shared_ptr<Meta<Mutex>>& m):
+                explicit Serializable(const std::shared_ptr<MetaBase<Mutex>>& m):
                     m_Cached(m)
                 {}
 
-                //Serializable(const std::shared_ptr<Meta>& meta) {
+                //Serializable(const std::shared_ptr<MetaBase>& meta) {
                 //    deserialize(meta);
                 //}
                 virtual ~Serializable() {}
 
                 /*
-                 * Return shared_ptr<Meta> representation of object
+                 * Return shared_ptr<MetaBase> representation of object
                  *
                  * Set up necessary change listeners at each level of the meta
                  * if necessary
                  */
-                virtual void serialize(std::shared_ptr<Meta<Mutex>>& meta) const = 0;
+                virtual void serialize(std::shared_ptr<MetaBase<Mutex>>& meta) const = 0;
 
                 /*
-                 * Return shared_ptr<Meta> with placeholder values representing
+                 * Return shared_ptr<MetaBase> with placeholder values representing
                  *  the meta's schema
                  */
-                //virtual std::shared_ptr<Meta> schema() const = 0;
+                //virtual std::shared_ptr<MetaBase> schema() const = 0;
 
                 //enum class SyncFlags : unsigned {
                 //    NONE = 0
                 //};
                 void sync() {
                     try{
-                        // TODO: add flags to Meta::deserialize() to auto-create
+                        // TODO: add flags to MetaBase::deserialize() to auto-create
                         m_Cached->deserialize();
                     }catch(const Error&){
                         m_Cached->serialize();
@@ -303,16 +303,16 @@ class Meta:
                     deserialize(m_Cached);
                 }
                 virtual void deserialize(
-                    const std::shared_ptr<Meta<Mutex>>& meta
+                    const std::shared_ptr<MetaBase<Mutex>>& meta
                 ) = 0;
 
                 /*
                  * Check file modification dates
-                 * Use Meta's change listeners when syncing
+                 * Use MetaBase's change listeners when syncing
                  *
                  * returns false if the meta's format is no longer compatible
                  */
-                //virtual void sync(std::shared_ptr<Meta>& cached) {
+                //virtual void sync(std::shared_ptr<MetaBase>& cached) {
                 //}
 
                 //virtual bool needs_sync() const {
@@ -321,45 +321,45 @@ class Meta:
 
                 // TODO: methods to move file (to another path)?
 
-                //std::shared_ptr<Meta> meta() const;
+                //std::shared_ptr<MetaBase> meta() const;
             private:
                 // TODO: last modified date (same timestamp type as sync())
-                std::shared_ptr<Meta<Mutex>> m_Cached;
+                std::shared_ptr<MetaBase<Mutex>> m_Cached;
         };
         
-        Meta() = default;
-        Meta(int argc, const char** argv){
+        MetaBase() = default;
+        MetaBase(int argc, const char** argv){
             from_args(std::vector<std::string>(argv+1, argv+argc));
         }
-        Meta(const std::string& fn);
-        Meta(MetaFormat fmt, const std::string& data);
+        MetaBase(const std::string& fn);
+        MetaBase(MetaFormat fmt, const std::string& data);
 
-        Meta(Meta&&)= delete;
-        Meta(const Meta&)= delete;
-        Meta& operator=(const Meta&) = delete;
-        Meta& operator=(Meta&&) = delete;
+        MetaBase(MetaBase&&)= delete;
+        MetaBase(const MetaBase&)= delete;
+        MetaBase& operator=(const MetaBase&) = delete;
+        MetaBase& operator=(MetaBase&&) = delete;
 
         // TODO: add init list
         
-        virtual ~Meta() {}
+        virtual ~MetaBase() {}
         
         void from_args(std::vector<std::string> args);
 
-        // recursive converter between Metas of diff mutex types
+        // recursive converter between MetaBases of diff mutex types
         template<class Mutex2>
-        static std::shared_ptr<Meta<Mutex>> convert(
+        static std::shared_ptr<MetaBase<Mutex>> convert(
             std::shared_ptr<Mutex2> meta
         ){
             // TODO: impl
             return std::shared_ptr<Mutex>();
         }
 
-        //// Traversal visits Meta objects recursively
+        //// Traversal visits MetaBase objects recursively
         //class Traversal
         //{
         //    public:
 
-        //        Traversal(std::shared_ptr<Meta>& m) {
+        //        Traversal(std::shared_ptr<MetaBase>& m) {
         //            //m_Locks.push_back(m->lock());
         //        }
 
@@ -380,11 +380,11 @@ class Meta:
         //template<class Func>
         MetaLoop each(
             std::function<MetaLoop(
-                const std::shared_ptr<Meta<Mutex>>&, MetaElement&, unsigned
+                const std::shared_ptr<MetaBase<Mutex>>&, MetaElement&, unsigned
             )> func,
             unsigned flags = 0, // EachFlag enum
             std::deque<std::tuple<
-                std::shared_ptr<Meta<Mutex>>,
+                std::shared_ptr<MetaBase<Mutex>>,
                 std::unique_lock<Mutex>,
                 std::string // key in parent (blank if root or empty key)
             >>* metastack = nullptr,
@@ -449,11 +449,11 @@ class Meta:
         /*
          * May throw on null
          */
-        void parent(const std::shared_ptr<Meta<Mutex>>& p) {
+        void parent(const std::shared_ptr<MetaBase<Mutex>>& p) {
             auto l = this->lock();
             m_pParent = p.get();
         }
-        void parent(Meta<Mutex>* p) {
+        void parent(MetaBase<Mutex>* p) {
             auto l = this->lock();
             m_pParent = p;
         }
@@ -466,7 +466,7 @@ class Meta:
         }
 
         // TODO: Treespace lock is important for recursion here
-        std::shared_ptr<Meta<Mutex>> parent(
+        std::shared_ptr<MetaBase<Mutex>> parent(
             unsigned lock_flags=0,
             bool recursion=false
         ){
@@ -486,7 +486,7 @@ class Meta:
                 //auto p = m_pParent.lock();
                 //return p ? p : shared_from_this();
                 //return m_pParent.lock(); // allow null for this case
-                return m_pParent ? m_pParent->shared() : std::shared_ptr<Meta<Mutex>>();
+                return m_pParent ? m_pParent->shared() : std::shared_ptr<MetaBase<Mutex>>();
             }
             else
             {
@@ -497,10 +497,10 @@ class Meta:
             }
         }
 
-        std::shared_ptr<Meta<Mutex>> shared() {
+        std::shared_ptr<MetaBase<Mutex>> shared() {
             return this->shared_from_this();
         }
-        std::shared_ptr<const Meta<Mutex>> shared() const {
+        std::shared_ptr<const MetaBase<Mutex>> shared() const {
             return this->shared_from_this();
         }
 
@@ -543,14 +543,14 @@ class Meta:
         //    unsigned timeout = 0; // delay between tries ms (you may also block in your functor)
         //};
         // return value (bool) indicates whether to retrigger
-        typedef std::function<bool(std::shared_ptr<Meta<Mutex>>&)> TimeoutCallback_t;
+        typedef std::function<bool(std::shared_ptr<MetaBase<Mutex>>&)> TimeoutCallback_t;
 
         typedef std::function<boost::variant<Which, MetaElement>(
             const MetaElement&, const MetaElement&
         )> WhichCallback_t;
         
         typedef std::function<void(
-            const std::shared_ptr<Meta<Mutex>>, const MetaElement&
+            const std::shared_ptr<MetaBase<Mutex>>, const MetaElement&
         )> VisitorCallback_t;
 
         /*
@@ -564,7 +564,7 @@ class Meta:
          */
         template<class Mutex2>
         void merge(
-            const std::shared_ptr<Meta<Mutex2>>& t,
+            const std::shared_ptr<MetaBase<Mutex2>>& t,
             WhichCallback_t which,
             unsigned flags = (unsigned)MergeFlags::DEFAULTS, // MergeFlags
             TimeoutCallback_t timeout = TimeoutCallback_t(),
@@ -573,7 +573,7 @@ class Meta:
 
         template<class Mutex2>
         void merge(
-            const std::shared_ptr<Meta<Mutex2>>& t,
+            const std::shared_ptr<MetaBase<Mutex2>>& t,
             unsigned flags = (unsigned)MergeFlags::DEFAULTS // MergeFlags
         );
 
@@ -591,7 +591,7 @@ class Meta:
         );
         
         //void merge(
-        //    const Meta& t,
+        //    const MetaBase& t,
         //    unsigned flags = (unsigned)MergeFlags::DEFAULTS,
         //    std::function<
         //        boost::any(const boost::any&, const boost::any&)
@@ -666,15 +666,15 @@ class Meta:
             return m_Elements.at(idx).value;
         }
 
-        std::shared_ptr<Meta<Mutex>> meta(const std::string& key) {
+        std::shared_ptr<MetaBase<Mutex>> meta(const std::string& key) {
             auto l = this->lock();
-            return boost::any_cast<std::shared_ptr<Meta<Mutex>>>(
+            return boost::any_cast<std::shared_ptr<MetaBase<Mutex>>>(
                 m_Elements.at(m_Keys.at(key)).value
             );
         }
-        std::shared_ptr<const Meta<Mutex>> meta(const std::string& key) const {
+        std::shared_ptr<const MetaBase<Mutex>> meta(const std::string& key) const {
             auto l = this->lock();
-            return boost::any_cast<std::shared_ptr<Meta<Mutex>>>(
+            return boost::any_cast<std::shared_ptr<MetaBase<Mutex>>>(
                 m_Elements.at(m_Keys.at(key)).value
             );
         }
@@ -759,7 +759,7 @@ class Meta:
         };
         // Ensures the path exists in the tree and initializes an element `val`
         // the endpoint.
-        std::tuple<std::shared_ptr<Meta<Mutex>>, bool> path(
+        std::tuple<std::shared_ptr<MetaBase<Mutex>>, bool> path(
             const std::vector<std::string>& path,
             unsigned flags = 0
         );
@@ -847,7 +847,7 @@ class Meta:
                 m_Elements[idx].type.id == MetaType::ID::META
                 //m_Elements[idx].type.storage == MetaType::Storage::SHARED
             ){
-                at<std::shared_ptr<Meta<Mutex>>>(idx)->parent(this);
+                at<std::shared_ptr<MetaBase<Mutex>>>(idx)->parent(this);
             }
 
             return idx;
@@ -982,7 +982,7 @@ class Meta:
             //});
         }
 
-        // Copying internal Meta::Element into an existing element of type key
+        // Copying internal MetaBase::Element into an existing element of type key
         // may throw std::out_of_range
         void replace(
             unsigned id,
@@ -1014,7 +1014,7 @@ class Meta:
         //    assert(r);
         //    auto rl = r->lock();
 
-        //    std::vector<std::shared_ptr<Meta<Mutex>>> metastack;
+        //    std::vector<std::shared_ptr<MetaBase<Mutex>>> metastack;
 
         //    do{
         //        metastack.clear();
@@ -1152,11 +1152,11 @@ class Meta:
             //return m_Keys.size() != m_Elements.size();
         }
 
-        std::shared_ptr<Meta<Mutex>> root(unsigned lock_flags = 0) {
+        std::shared_ptr<MetaBase<Mutex>> root(unsigned lock_flags = 0) {
             // TODO: lock order is bad here, should be try_lock
             auto l = this->lock();
 
-            std::shared_ptr<Meta<Mutex>> m(this->shared_from_this());
+            std::shared_ptr<MetaBase<Mutex>> m(this->shared_from_this());
             return m->parent(lock_flags, true);
         }
 
@@ -1204,8 +1204,8 @@ class Meta:
 
         //kit::string_index m_Keys;
 
-        // boost::any allows Values to be OTHER Metas (in the form of
-        //  shared_ptr<Meta> for shared or weak_ptr<Meta> for links)
+        // boost::any allows Values to be OTHER MetaBases (in the form of
+        //  shared_ptr<MetaBase> for shared or weak_ptr<MetaBase> for links)
         //  so we can nest these to form a property tree
 
         // hooks (for non-locked indexing into data) (see notes)
@@ -1221,7 +1221,7 @@ class Meta:
 
         //std::shared_ptr<boost::shared_mutex> m_Treespace;
 
-        //void unsafe_merge(Meta<Mutex>&& t, unsigned flags);
+        //void unsafe_merge(MetaBase<Mutex>&& t, unsigned flags);
 
         /*
          * Note: bind() a parameter yourself to get the specific object id
@@ -1235,13 +1235,16 @@ class Meta:
         // may be empty / incorrect, search parent to resolve
         //unsigned m_IndexOfSelfInParent = std::numeric_limits<unsigned>::max();
 
-        //std::weak_ptr<Meta<Mutex>> m_pParent;
-        Meta<Mutex>* m_pParent = nullptr;
+        //std::weak_ptr<MetaBase<Mutex>> m_pParent;
+        MetaBase<Mutex>* m_pParent = nullptr;
 
         bool m_bCallbacks = true;
 
         //bool m_bQuiet = false; // don't throw on file not found
 };
+
+using Meta = MetaBase<kit::dummy_mutex>;
+using MetaMT = MetaBase<std::recursive_mutex>;
 
 #include "meta.inl"
 
