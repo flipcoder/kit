@@ -6,7 +6,6 @@
 #include <vector>
 #include <string>
 #include <thread>
-#include <mutex>
 #include <utility>
 #include <map>
 #include <atomic>
@@ -683,6 +682,49 @@ namespace kit
         return ptr;
     }
 
+    template<class T>
+    class lazy
+    {
+        public:
+            lazy(std::function<T()> func):
+                m_Getter(func)
+            {}
+
+            void set(T value){
+                m_Value = value;
+            }
+
+            void invalidate() {
+                m_Value = boost::optional<T>();
+            }
+
+            void recache() {
+                m_Value = m_Getter();
+            }
+            
+            void ensure() {
+                if(!m_Value)
+                    m_Value = m_Getter();
+            }
+            
+            bool valid() const {
+                return m_Value;
+            }
+
+            boost::optional<T> try_get() {
+                return m_Value;
+            }
+            T& get() {
+                ensure();
+                return *m_Value;
+            }
+            //operator T&() { return get(); }
+
+        private:
+            boost::optional<T> m_Value;
+            std::function<T()> m_Getter;
+    };
+    
     template<class T>
     class reactive
     {

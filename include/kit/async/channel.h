@@ -50,6 +50,17 @@ class Channel:
             throw RetryTask();
         }
 
+        T peek() {
+            auto l = this->lock(std::defer_lock);
+            if(!l.try_lock())
+                throw RetryTask();
+            if(m_bClosed)
+                throw std::runtime_error("channel closed");
+            if(!m_Vals.empty())
+                return m_Vals.front();
+            throw RetryTask();
+        }
+        
         T get() {
             auto l = this->lock(std::defer_lock);
             if(!l.try_lock())
