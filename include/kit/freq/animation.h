@@ -15,31 +15,31 @@ template<class T> class Animation;
 
 namespace Interpolation {
     template<class T>
-    T linear(const T& a, const T& b, float t) {
+    T linear(T a, T b, float t) {
         return a + (b-a)*t;
     }
     template<class T>
-    T out_sine(const T& a, const T& b, float t) {
+    T out_sine(T a, T b, float t) {
         const float qtau = K_TAU / 4.0f;
         const float nt = sin(t * qtau);
         return linear(a,b,nt);
     }
     template<class T>
-    T in_sine(const T& a, const T& b, float t) {
+    T in_sine(T a, T b, float t) {
         const float qtau = K_TAU / 4.0f;
         const float nt = 1.0f + sin((t - 1.0f) * qtau);
         return linear(a,b,nt);
     }
     //(1-sqrt(x))|cos(x*2*tau)|
     template<class T, int bounces=2, int depth=3>
-    T bounce(const T& a, const T& b, float t) {
+    T bounce(T a, T b, float t) {
         const float nt = 1.0f - (std::pow(1.0f-t, depth)) *
             std::fabs(std::cos(t * bounces * K_PI));
         return linear(a,b,nt);
     }
     //f(x) = sin(2pi*(.75x-0.25))+1.0
     template<class T>
-    T exaggerate(const T& a, const T& b, float t) {
+    T exaggerate(T a, T b, float t) {
         float nt = std::sin(K_TAU*(0.75*t + 0.25)) + 1.0f;
         return linear(a,b,nt);
     }
@@ -84,7 +84,7 @@ class Frame
         Freq::Time m_Time; // length of time
         Freq::Alarm m_Alarm;
 
-        std::function<T (const T&, const T&, float)> m_Easing;
+        std::function<T (T, T, float)> m_Easing;
 
         //Animation<T>* m_pAnimation;
         Freq::Timeline* m_pTimeline;
@@ -96,8 +96,8 @@ class Frame
         Frame(
             T value,
             Freq::Time time = Freq::Time(0),
-            std::function<T (const T&, const T&, float)> easing =
-                std::function<T (const T&, const T&, float)>(),
+            std::function<T (T, T, float)> easing =
+                std::function<T (T, T, float)>(),
             Freq::Timeline* timeline = nullptr
         ):
             m_Value(value),
@@ -148,11 +148,11 @@ class Frame
             return m_Value;
         }
 
-        void easing(std::function<T (const T&, const T&, float)> func) {
+        void easing(std::function<T (T, T, float)> func) {
             m_Easing = func;
         }
 
-        const std::function<T (const T&, const T&, float)>& easing() const {
+        const std::function<T (T, T, float)>& easing() const {
             return m_Easing;
         }
         
@@ -291,19 +291,19 @@ class Animation:
                 m_Frames.clear();
             }
         }
-        void stop(const T& position) {
+        void stop(T position) {
             m_Current = position;
             m_Frames.clear();
         }
         void stop(
             T position,
             Freq::Time t,
-            std::function<T (const T&, const T&, float)> easing
+            std::function<T (T, T, float)> easing
         ){
-            m_Current = t ? get() : position;
+            m_Current = t.ms() ? get() : position;
             m_Frames.clear();
 
-            if(t)
+            if(t.ms())
             {
                 m_Frames.push_back(Frame<T>(position, t, easing, &m_Timeline));
                 reset();
@@ -313,8 +313,8 @@ class Animation:
         void ensure(
             T position,
             Freq::Time t,
-            std::function<T (const T&, const T&, float)> easing,
-            std::function<bool (const T&, const T&)> equality_cmp
+            std::function<T (T, T, float)> easing,
+            std::function<bool (T, T)> equality_cmp
         ){
             process();
 
@@ -345,9 +345,9 @@ class Animation:
         }
 
         T ease(
-            const std::function<T (const T&, const T&, float)>& easing,
-            const T& a,
-            const T& b,
+            const std::function<T (T, T, float)>& easing,
+            T a,
+            T b,
             float t
         ) const {
             return easing(a,b,t);

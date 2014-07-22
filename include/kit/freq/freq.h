@@ -31,7 +31,8 @@ public:
         static Time minutes(float m) { return Time((unsigned int)(m * 60000.0f));}
         static Time ms(unsigned int ms) { return Time(ms); }
 
-        operator bool() const { return value; }
+        //operator bool() const { return value; }
+        //operator float() const { return value / 1000.0f; }
 
         Time& operator+=(Time t) {
             value += t.internal();
