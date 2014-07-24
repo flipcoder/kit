@@ -75,7 +75,7 @@ namespace Matrix {
         float* f = glm::value_ptr(m);
         f[12]=f[13]=f[14]=0.0f;
     }
-    inline void scale(glm::mat4& m, float v = 1.0f) {
+    inline void scale(glm::mat4& m, float v) {
         float* f = glm::value_ptr(m);
         f[0]*=v;
         f[5]*=v;
@@ -84,6 +84,20 @@ namespace Matrix {
     inline void rescale(glm::mat4& m, float v = 1.0f) {
         float* f = glm::value_ptr(m);
         f[0]=f[5]=f[10]=v;
+        f[15]=1.0f;
+    }
+    inline void scale(glm::mat4& m, glm::vec3 v) {
+        float* f = glm::value_ptr(m);
+        f[0]*=v[0];
+        f[5]*=v[1];
+        f[10]*=v[2];
+    }
+    inline void rescale(glm::mat4& m, glm::vec3 v = glm::vec3(1.0f)) {
+        float* f = glm::value_ptr(m);
+        f[0]=v[0];
+        f[5]=v[1];
+        f[10]=v[2];
+        f[15]=1.0f;
     }
     // assuming uniform scale
     inline float uniform_scale(glm::mat4& m) {
