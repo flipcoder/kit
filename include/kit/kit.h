@@ -686,15 +686,27 @@ namespace kit
     class lazy
     {
         public:
-            lazy(std::function<T()> func):
-                m_Getter(func)
+            
+            lazy() = default;
+            lazy(const lazy&) = default;
+            lazy(std::function<T()> rhs):
+                m_Getter(rhs)
             {}
+            lazy(lazy&&) = default;
+            lazy& operator=(const lazy&) = default;
+            lazy& operator=(lazy&&) = default;
+            lazy& operator=(std::function<T()> rhs)
+            {
+                m_Value = boost::optional<T>();
+                m_Getter = rhs;
+                return *this;
+            }
 
-            void set(T value){
+            void set(const T& value){
                 m_Value = value;
             }
 
-            void invalidate() {
+            void pend() {
                 m_Value = boost::optional<T>();
             }
 
@@ -718,7 +730,14 @@ namespace kit
                 ensure();
                 return *m_Value;
             }
-            //operator T&() { return get(); }
+
+            void getter(std::function<T()> func){
+                m_Getter = func;
+            }
+
+            T& operator()() {
+                return get();
+            }
 
         private:
             boost::optional<T> m_Value;

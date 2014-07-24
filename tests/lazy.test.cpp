@@ -17,10 +17,10 @@ TEST_CASE("Lazy","[lazy]") {
         REQUIRE(call_count == 1);
         REQUIRE(num.valid());
         REQUIRE(num.get() == 2);
-        REQUIRE(call_count == 1); // should still be one
+        REQUIRE(call_count == 1); // still one
 
         REQUIRE(num.valid());
-        num.invalidate();
+        num.pend();
         REQUIRE(not num.valid());
         REQUIRE(not num.try_get());
         
