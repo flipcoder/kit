@@ -84,6 +84,8 @@ namespace kit
     struct move_on_copy
     {
         public:
+            move_on_copy() = default;
+            
             move_on_copy(T&& rhs):
                 m_Data(std::forward<T>(rhs)) {}
             
@@ -93,10 +95,15 @@ namespace kit
             move_on_copy(move_on_copy& rhs):
                 m_Data(std::move(rhs.m_Data)) {}
 
-            //T& get() {
-            //    return m_Data;
-            //}
-            T& get() const {
+            move_on_copy& operator=(move_on_copy&& rhs){
+                m_Data = rhs.m_Data;
+                return *this;
+            }
+
+            T& get() {
+                return m_Data;
+            }
+            const T& get() const {
                 return m_Data;
             }
             
@@ -642,6 +649,15 @@ namespace kit
         throw std::runtime_error("unable to compare values");
     }
     
+    inline void ensure_starts_with(std::string& s, std::string t){
+        if(not boost::starts_with(s,t))
+            s=t+s;
+    }
+    inline void ensure_ends_with(std::string& s, std::string t){
+        if(not boost::ends_with(s,t))
+            s+=t;
+    }
+    
     //std::string lines(const std::vector<std::string>& s, std::string sep="")
     //{
     //    return boost::algorithm::join(s, "\n");
@@ -656,12 +672,12 @@ namespace kit
             {}
     };
 
-    class interupt:
+    class interrupt:
         public std::runtime_error
     {
         public:
-            interupt():
-                std::runtime_error("interupt")
+            interrupt():
+                std::runtime_error("interrupt")
             {}
     };
 
@@ -918,15 +934,31 @@ namespace kit
             }
     };
 
-    //template<class Function>
-    //bool threw(Function&& f) {
-    //    try{
-    //        f();
-    //    }catch(...){
-    //        return true;
-    //    }
-    //    return false;
-    //}
+    template<typename T>
+    struct push_back_values
+    {
+        typedef T result_type;
+        template<class Iterator>
+        T operator()(Iterator first, Iterator last) const {
+            T r;
+            while(first != last) {
+                r.push_back(*first);
+                ++first;
+            }
+            return r;
+        }
+    };
+
+    template<class Function>
+    bool threw(Function f)
+    {
+        try{
+            f();
+        }catch(...){
+            return true;
+        }
+        return false;
+    }
 
     //template<class T>
     //class local_singleton
