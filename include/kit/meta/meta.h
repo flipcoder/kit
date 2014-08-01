@@ -153,8 +153,8 @@ struct MetaElement
     }
 
     void trigger() {
-        if(change)
-            (*change)();
+        //if(change)
+        //    (*change)();
     }
 
     // may throw bad_any_cast
@@ -176,7 +176,7 @@ struct MetaElement
     boost::any value;
 
     // value change listeners
-    std::shared_ptr<boost::signals2::signal<void()>> change;
+    //std::shared_ptr<boost::signals2::signal<void()>> on_change;
 };
 
 enum class MetaFormat : unsigned {

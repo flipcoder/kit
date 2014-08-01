@@ -100,12 +100,12 @@ namespace kit
                 return *this;
             }
 
-            T& get() {
+            T& get() const {
                 return m_Data;
             }
-            const T& get() const {
-                return m_Data;
-            }
+            //const T& get() const {
+            //    return m_Data;
+            //}
             
             T&& move() {
                 return std::move(m_Data);

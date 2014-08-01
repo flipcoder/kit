@@ -58,7 +58,7 @@ class Multiplexer//:
                             auto cbt = Task<T()>(std::move(cb));
                             auto fut = cbt.get_future();
                             auto cbc = kit::move_on_copy<Task<T()>>(std::move(cbt));
-                            m_Units.emplace_back(cond, [cbc]{
+                            m_Units.emplace_back(cond, [cbc]() {
                                 cbc.get()();
                             });
                             return fut;
