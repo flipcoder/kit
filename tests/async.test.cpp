@@ -16,8 +16,7 @@ TEST_CASE("Task","[task]") {
         });
         auto fut = task.get_future();
         task();
-        REQUIRE(fut.wait_for(std::chrono::seconds(0)) == 
-            std::future_status::ready);
+        REQUIRE(kit::ready(fut));
     }
     SECTION("retrying tasks"){
         Task<void(bool)> task([](bool err){
@@ -31,8 +30,7 @@ TEST_CASE("Task","[task]") {
             std::future_status::timeout);
         
         REQUIRE_NOTHROW(task(false));
-        REQUIRE(fut.wait_for(std::chrono::seconds(0)) == 
-            std::future_status::ready);
+        REQUIRE(kit::ready(fut));
     }
 }
 
@@ -89,18 +87,15 @@ TEST_CASE("Channel","[channel]") {
             mx.strand(0).task<void>([&mx, chan, &done]{
                 auto ping = mx.strand(0).task<void>([chan]{
                     *chan << "ping";
-                    //cout << "ping" << endl;
                 });
                 auto pong = mx.strand(0).task<string>([chan]{
                     auto r = chan->get();
                     r[1] = 'o';
-                    //cout << "pong" << endl;
                     return r;
                 });
                 mx.strand(0).when<void, string>(pong,[&done](future<string>& pong){
                     auto str = pong.get();
                     done = (str == "pong");
-                    //cout << "done" << endl;
                 });
             });
         }
@@ -118,7 +113,6 @@ TEST_CASE("Channel","[channel]") {
                 try{
                     *chan << msg.at(idx);
                     ++idx;
-                    cout << idx << endl;
                 }catch(const std::out_of_range&){
                     return;
                 }
