@@ -62,7 +62,8 @@ class Channel:
             throw RetryTask();
         }
         
-        // TODO: optimize
+        // NOTE: full buffers with no matching tokens will never
+        //       trigger this
         template<class R=std::vector<T>>
         R get_until(T token) {
             auto l = this->lock(std::defer_lock);
@@ -70,23 +71,16 @@ class Channel:
                 throw RetryTask();
             if(m_bClosed)
                 throw std::runtime_error("channel closed");
-            auto vals = m_Vals;
-            size_t pop_count = 0;
-            while(!vals.empty())
+            for(size_t i=0;i<m_Vals.size();++i)
             {
-                auto v = vals.front();
-                if(v != token) {
-                    vals.pop_front();
-                    ++pop_count;
-                }
-                else
+                if(m_Vals[i] == token)
                 {
-                    R r;
-                    for(size_t i=0;i<pop_count;++i){
-                        r.push_back(std::move(m_Vals.front()));
-                        m_Vals.pop_front();
-                    }
-                    m_Vals.pop_front(); // pop matching token as well
+                    R r(make_move_iterator(m_Vals.begin()),
+                        make_move_iterator(m_Vals.begin() + i));
+                    m_Vals.erase(
+                        m_Vals.begin(),
+                        m_Vals.begin() + i + 1
+                    );
                     return r;
                 }
             }
