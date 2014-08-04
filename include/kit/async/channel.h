@@ -2,6 +2,7 @@
 #define CHANNEL_H_FC6YZN5J
 
 #include <boost/thread.hpp>
+#include <boost/circular_buffer.hpp>
 #include <iostream>
 #include <vector>
 #include <queue>
@@ -29,7 +30,7 @@ class Channel:
             if(m_bClosed)
                 throw std::runtime_error("channel closed");
             if(!m_Buffered || m_Vals.size() < m_Buffered) {
-                m_Vals.push(std::move(val));
+                m_Vals.push_back(std::move(val));
                 return;
             }
             throw RetryTask();
@@ -44,7 +45,7 @@ class Channel:
                 throw std::runtime_error("channel closed");
             if(!m_Vals.empty()) {
                 val = std::move(m_Vals.front());
-                m_Vals.pop();
+                m_Vals.pop_front();
                 return;
             }
             throw RetryTask();
@@ -75,7 +76,7 @@ class Channel:
             {
                 auto v = vals.front();
                 if(v != token) {
-                    vals.pop();
+                    vals.pop_front();
                     ++pop_count;
                 }
                 else
@@ -83,9 +84,9 @@ class Channel:
                     R r;
                     for(size_t i=0;i<pop_count;++i){
                         r.push_back(std::move(m_Vals.front()));
-                        m_Vals.pop();
+                        m_Vals.pop_front();
                     }
-                    m_Vals.pop(); // pop matching token as well
+                    m_Vals.pop_front(); // pop matching token as well
                     return r;
                 }
             }
@@ -99,7 +100,7 @@ class Channel:
                 throw std::runtime_error("channel closed");
             if(!m_Vals.empty()) {
                 auto r = std::move(m_Vals.front());
-                m_Vals.pop();
+                m_Vals.pop_front();
                 return r;
             }
             throw RetryTask();
@@ -126,6 +127,8 @@ class Channel:
         }
         void buffer(size_t sz) {
             auto l = this->lock();
+            if(sz > m_Buffered)
+                m_Vals.reserve(sz);
             m_Buffered = sz;
         }
         void close() {
@@ -140,7 +143,7 @@ class Channel:
     private:
         
         size_t m_Buffered = 0;
-        std::queue<T> m_Vals;
+        std::deque<T> m_Vals;
         std::atomic<bool> m_bClosed = ATOMIC_VAR_INIT(false);
 };
 
