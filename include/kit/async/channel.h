@@ -61,6 +61,36 @@ class Channel:
             throw RetryTask();
         }
         
+        // TODO: optimize
+        template<class R=std::vector<T>>
+        R get_until(T token) {
+            auto l = this->lock(std::defer_lock);
+            if(!l.try_lock())
+                throw RetryTask();
+            if(m_bClosed)
+                throw std::runtime_error("channel closed");
+            auto vals = m_Vals;
+            size_t pop_count = 0;
+            while(!vals.empty())
+            {
+                auto v = vals.front();
+                if(v != token) {
+                    vals.pop();
+                    ++pop_count;
+                }
+                else
+                {
+                    R r;
+                    for(size_t i=0;i<pop_count;++i){
+                        r.push_back(std::move(m_Vals.front()));
+                        m_Vals.pop();
+                    }
+                    m_Vals.pop(); // pop matching token as well
+                    return r;
+                }
+            }
+            throw RetryTask();
+        }
         T get() {
             auto l = this->lock(std::defer_lock);
             if(!l.try_lock())

@@ -5,6 +5,8 @@
 //#include "../include/kit/async/channel.h"
 //#include "../include/kit/async/multiplexer.h"
 #include <atomic>
+#include <boost/thread.hpp>
+#include <boost/chrono.hpp>
 using namespace std;
 
 TEST_CASE("Task","[task]") {
@@ -104,6 +106,30 @@ TEST_CASE("Channel","[channel]") {
         }
         mx.finish();
         REQUIRE(done);
+    }
+    SECTION("get_until") {
+        Multiplexer mx;
+        std::string result;
+        std::string msg = "hello world";
+        size_t idx = 0;
+        {
+            auto chan = make_shared<Channel<char>>();
+            mx.strand(0).task<void>([chan, &idx, &msg]{
+                try{
+                    *chan << msg.at(idx);
+                    ++idx;
+                    cout << idx << endl;
+                }catch(const std::out_of_range&){
+                    return;
+                }
+                throw RetryTask();
+            });
+            mx.strand(1).task<void>([&result, chan]{
+                result = chan->get_until<string>(' ');
+            });
+        }
+        mx.finish();
+        REQUIRE(result == "hello");
     }
 }
 
