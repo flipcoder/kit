@@ -111,6 +111,18 @@ class Multiplexer//:
                     }
                 });
             }
+            void forever() {
+                if(m_Thread.joinable()) {
+                    m_Thread.join();
+                }
+            }
+            void finish_nojoin() {
+                m_Finish = true;
+            }
+            void join() {
+                if(m_Thread.joinable())
+                    m_Thread.join();
+            }
             void finish() {
                 m_Finish = true;
                 if(m_Thread.joinable()) {
@@ -179,16 +191,20 @@ class Multiplexer//:
             std::atomic<bool> m_Finish = ATOMIC_VAR_INIT(false);
         };
         
-        Multiplexer():
+        Multiplexer(bool init_now=true):
             m_Concurrency(std::max<unsigned>(1U,boost::thread::hardware_concurrency()))
         {
+            if(init_now)
+                init();
+        }
+        virtual ~Multiplexer() {
+            finish();
+        }
+        void init() {
             for(unsigned i=0;i<m_Concurrency;++i)
                 m_Strands.emplace_back(make_tuple(
                     kit::make_unique<Strand>(), CacheLinePadding()
                 ));
-        }
-        virtual ~Multiplexer() {
-            finish();
         }
         //void join() {
         //    for(auto& s: m_Strands)
@@ -210,7 +226,9 @@ class Multiplexer//:
 
         void finish() {
             for(auto& s: m_Strands)
-                std::get<0>(s)->finish();
+                std::get<0>(s)->finish_nojoin();
+            for(auto& s: m_Strands)
+                std::get<0>(s)->join();
         }
 
     private:

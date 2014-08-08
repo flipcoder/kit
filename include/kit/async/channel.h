@@ -26,18 +26,34 @@ class Channel:
             auto l = this->lock(std::defer_lock);
             if(!l.try_lock())
                 throw RetryTask();
-
             if(m_bClosed)
                 throw std::runtime_error("channel closed");
             if(!m_Buffered || m_Vals.size() < m_Buffered) {
                 m_Vals.push_back(std::move(val));
+                m_bNewData = true;
                 return;
             }
             throw RetryTask();
         }
         
+        //void operator<<(std::vector<T> val) {
+        //    auto l = this->lock(std::defer_lock);
+        //    if(!l.try_lock())
+        //        throw RetryTask();
+        //    if(m_bClosed)
+        //        throw std::runtime_error("channel closed");
+        //    if(!m_Buffered || m_Vals.size() < m_Buffered) {
+        //        m_Vals.push_back(std::move(val));
+        //        m_bNewData = true;
+        //        return;
+        //    }
+        //    throw RetryTask();
+        //}
+        
         // Get from stream
         void operator>>(T& val) {
+            if(not m_bNewData)
+                throw RetryTask();
             auto l = this->lock(std::defer_lock);
             if(!l.try_lock())
                 throw RetryTask();
@@ -52,6 +68,8 @@ class Channel:
         }
 
         T peek() {
+            if(not m_bNewData)
+                throw RetryTask();
             auto l = this->lock(std::defer_lock);
             if(!l.try_lock())
                 throw RetryTask();
@@ -66,6 +84,8 @@ class Channel:
         //       trigger this
         template<class R=std::vector<T>>
         R get_until(T token) {
+            if(not m_bNewData)
+                throw RetryTask();
             auto l = this->lock(std::defer_lock);
             if(!l.try_lock())
                 throw RetryTask();
@@ -87,6 +107,8 @@ class Channel:
             throw RetryTask();
         }
         T get() {
+            if(not m_bNewData)
+                throw RetryTask();
             auto l = this->lock(std::defer_lock);
             if(!l.try_lock())
                 throw RetryTask();
@@ -139,6 +161,7 @@ class Channel:
         size_t m_Buffered = 0;
         std::deque<T> m_Vals;
         std::atomic<bool> m_bClosed = ATOMIC_VAR_INIT(false);
+        std::atomic<bool> m_bNewData = ATOMIC_VAR_INIT(false);
 };
 
 #endif

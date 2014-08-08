@@ -847,7 +847,9 @@ class MetaBase:
                 m_Elements[idx].type.id == MetaType::ID::META
                 //m_Elements[idx].type.storage == MetaType::Storage::SHARED
             ){
-                at<std::shared_ptr<MetaBase<Mutex>>>(idx)->parent(this);
+                try{
+                    safe_ptr(at<std::shared_ptr<MetaBase<Mutex>>>(idx))->parent(this);
+                }catch(const kit::null_ptr_exception&){}
             }
 
             return idx;
