@@ -209,6 +209,9 @@ Json::Value MetaElement::serialize_json(
 
     Json::Value v;
 
+    if(not (flags & SERIALIZE))
+        throw SkipSerialize();
+        
     if(type.id == MetaType::ID::META)
     {
         boost::any_cast<std::shared_ptr<MetaBase<Mutex>>>(value)->serialize_json(v);
@@ -283,6 +286,7 @@ void MetaBase<Mutex> :: serialize_json(Json::Value& v) const
         {
             try{
                 v[e.key] = e.template serialize_json<Mutex>();
+            }catch(const MetaElement::SkipSerialize&){
             }catch(...){
                 WARNING("Unable to serialize element");
             }
@@ -300,6 +304,7 @@ void MetaBase<Mutex> :: serialize_json(Json::Value& v) const
                 v.append(e.template serialize_json<Mutex>((unsigned)MetaSerialize::STORE_KEY));
                 //else
                 //    keys[e.key] = e.serialize_json();
+            }catch(const MetaElement::SkipSerialize&){
             }catch(...){
                 WARNING("Unable to serialize element");
             }

@@ -125,6 +125,16 @@ struct MetaElement
 
     template<class Mutex>
     Json::Value serialize_json(unsigned flags = 0) const;
+
+    class SkipSerialize:
+        public std::runtime_error
+    {
+        public:
+            SkipSerialize():
+                std::runtime_error("null pointer exception")
+            {}
+    };
+
     
     //template<class Mutex>
     //void deserialize_json(const Json::Value&);
@@ -174,6 +184,12 @@ struct MetaElement
      * Value is safe to modify
     */
     boost::any value;
+
+    enum Flags {
+        SERIALIZE = kit::bit(0),
+        DEFAULT_FLAGS = SERIALIZE
+    };
+    unsigned flags = DEFAULT_FLAGS;
 
     // value change listeners
     //std::shared_ptr<boost::signals2::signal<void()>> on_change;
