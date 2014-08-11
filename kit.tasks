@@ -45,4 +45,8 @@
 * async
     * multiplexer
         [ ] task() and when() return scoped connections instead of future?
+        [ ] boost::coroutine
+        [ ] this_strand()
+        [ ] Strand::this_unit()
+        [ ] yield/await macro that works with futures, channels, locks, etc.
 

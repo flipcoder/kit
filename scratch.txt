@@ -1,0 +1,19 @@
+await keyword ideas
+---
+
+AWAIT(expr)
+
+    [&]{
+        while(true)
+            try{
+                return (expr);
+            }catch(const RetryTask&){
+                // may throw RetryTask if yield behavior is without coros
+                MX.this_strand().this_unit().yield();
+            }
+    }()
+
+
+int x;
+auto item = AWAIT(ch->get());
+
