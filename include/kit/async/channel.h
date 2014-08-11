@@ -125,6 +125,9 @@ class Channel:
         //operator bool() const {
         //    return m_bClosed;
         //}
+        bool ready() const {
+            return m_bNewData;
+        }
         bool empty() const {
             auto l = this->lock();
             return m_Vals.empty();
