@@ -44,13 +44,15 @@
 * async
     * multiplexer
         [-] task() and when() return scoped connections instead of future?
-        [|] boost::coroutine
-        [ ] this_strand()
-        [ ] Strand::this_unit()
+        [x] boost::coroutine
+        [x] this_strand()
+        [x] Strand::this_unit()
         [|] yield/await macro that works with futures, channels, locks, etc.
             [x] scratch paper macros
             [x] rough impl
-            [>] impl
+            [x] impl
+            [ ] yield() command stalls
+
 * log
     [ ] BUG: scoped log props are unusable across coroutines
     
