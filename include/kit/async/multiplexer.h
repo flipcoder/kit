@@ -5,7 +5,7 @@
 #include "../kit.h"
 #include <boost/thread.hpp>
 #include <boost/noncopyable.hpp>
-#include <boost/coroutine/coroutine.hpp>
+#include <boost/coroutine/all.hpp>
 #include <algorithm>
 #include <atomic>
 #include <deque>
@@ -15,6 +15,9 @@
 #ifndef CACHE_LINE_SIZE
 #define CACHE_LINE_SIZE 64
 #endif
+
+typedef boost::coroutines::coroutine<void>::pull_type pull_coro_t;
+typedef boost::coroutines::coroutine<void>::push_type push_coro_t;
 
 #define AWAIT(EXPR) \
     [&]{\
@@ -54,12 +57,11 @@ class Multiplexer//:
             Unit(
                 std::function<bool()> rdy,
                 std::function<void()> func,
-                std::unique_ptr<boost::coroutines::coroutine<void>::push_type> coro
-                    = std::unique_ptr<boost::coroutines::coroutine<void>::push_type>()
+                std::unique_ptr<push_coro_t>&& coro
             ):
                 m_Ready(rdy),
                 m_Func(func),
-                m_pCoro(coro)
+                m_pCoro(std::move(coro))
             {}
             
             Unit(
@@ -73,7 +75,7 @@ class Multiplexer//:
             // only a hint, assume ready if functor is 'empty'
             std::function<bool()> m_Ready; 
             Task<void()> m_Func;
-            std::unique_ptr<boost::coroutines::coroutine<void>::push_type> m_pCoro;
+            std::unique_ptr<push_coro_t> m_pCoro;
             // TODO: idletime hints for load balancing?
         };
 
@@ -118,8 +120,8 @@ class Multiplexer//:
                             auto cbt = Task<T()>(std::move(cb));
                             auto fut = cbt.get_future();
                             auto cbc = kit::move_on_copy<Task<T()>>(std::move(cbt));
-                            auto sink = kit::make_unique<boost::coroutines::coroutine<void>::push_type>(
-                                [cbc](boost::coroutines::coroutine<void>::pull_type&){
+                            auto sink = kit::make_unique<push_coro_t>(
+                                [cbc](pull_coro_t&){
                                     cbc.get()();
                                 }
                             );
@@ -129,7 +131,7 @@ class Multiplexer//:
                                 std::move(sink)
                             );
                             auto* coroptr = m_Units.back().m_pCoro.get();
-                            m_Units.back().m_Func = kit::make_unique<std::function<void()>>(
+                            m_Units.back().m_Func = Task<void()>(std::function<void()>(
                                 [coroptr]{
                                     (*coroptr)();
                                     if(*coroptr) // not completed?
@@ -137,7 +139,7 @@ class Multiplexer//:
                                     //if(coroptr->has_result())
                                     //return coroptr->get();
                                 }
-                            );
+                            ));
                             return fut;
                         }
                     }
