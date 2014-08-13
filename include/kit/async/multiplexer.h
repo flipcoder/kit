@@ -12,6 +12,8 @@
 #include "../kit.h"
 #include "task.h"
 
+#define MX Multiplexer::get()
+
 #ifndef CACHE_LINE_SIZE
 #define CACHE_LINE_SIZE 64
 #endif
@@ -25,28 +27,35 @@ typedef boost::coroutines::coroutine<void>::push_type push_coro_t;
             try{\
                 return (EXPR);\
             }catch(const RetryTask&){\
-                /*MX.this_strand().this_unit().yield();*/\
+                Multiplexer::get().this_strand().yield();\
             }\
     }()
 
 #define AWAIT_HINT(HINT, EXPR) \
     [&]{\
+        bool once = false;\
         while(true)\
-            bool once = false;\
+        {\
             try{\
                 return (EXPR);\
             }catch(const RetryTask&){\
                 if(not once) {\
-                    MX.this_strand().this_unit().cond = [=]{\
+                    Multiplexer::get().this_strand().this_unit().cond = [=]{\
                         return (HINT);\
                     };\
                     once = true;\
                 }\
-                /*MX.this_strand().this_unit().yield();*/\
+                Multiplexer::get().this_strand().yield();\
             }\
+            if(once)\
+            {\
+                kit::clear(Multiplexer::get().this_strand().this_unit().cond);\
+            }\
+        }\
     }()
 
-class Multiplexer//:
+class Multiplexer:
+    public kit::singleton<Multiplexer>
     //public IAsync
     //virtual public kit::freezable
 {
@@ -85,10 +94,18 @@ class Multiplexer//:
         {
         public:
             
-            Strand() {
+            Strand(Multiplexer* mx, unsigned idx):
+                m_pMultiplexer(mx),
+                m_Index(idx)
+            {
                 run();
             }
             virtual ~Strand() {}
+
+            void yield() {
+                if(m_pCurrentUnit && m_pCurrentUnit->m_pCoro)
+                    (*m_pCurrentUnit->m_pCoro)();
+            }
             
             template<class T = void>
             std::future<T> when(std::function<bool()> cond, std::function<T()> cb) {
@@ -181,6 +198,11 @@ class Multiplexer//:
 
             void run() {
                 m_Thread = boost::thread([this]{
+                    m_pMultiplexer->m_ThreadToStrand.with<void>(
+                        [this](std::map<boost::thread::id, unsigned>& m){
+                            m[boost::this_thread::get_id()] = m_Index;
+                        }
+                    );
                     unsigned idx = 0;
                     while(true) {
                         boost::this_thread::interruption_point();
@@ -236,6 +258,8 @@ class Multiplexer//:
             //virtual void run() override { assert(false); }
             //virtual void run_once() override { assert(false); }
             
+            Unit* this_unit() { return m_pCurrentUnit; }
+            
         private:
 
             virtual void next(unsigned& idx) {
@@ -251,6 +275,7 @@ class Multiplexer//:
                     auto& task = m_Units[idx];
                     if(!task.m_Ready || task.m_Ready()) {
                         l.unlock();
+                        m_pCurrentUnit = &m_Units[idx];
                         try{
                             task.m_Func();
                         }catch(...){
@@ -259,17 +284,23 @@ class Multiplexer//:
                             //idx = std::min<unsigned>(idx+1, m_Units.size());
                             return;
                         }
+                        m_pCurrentUnit = nullptr;
                         l.lock();
                         m_Units.erase(m_Units.begin() + idx);
                     }
                 }
             }
             
+            Unit* m_pCurrentUnit = nullptr;
             std::deque<Unit> m_Units;
             boost::thread m_Thread;
             size_t m_Buffered = 0;
             std::atomic<bool> m_Finish = ATOMIC_VAR_INIT(false);
+            Multiplexer* m_pMultiplexer;
+            unsigned m_Index=0;
         };
+        
+        friend class Strand;
         
         Multiplexer(bool init_now=true):
             m_Concurrency(std::max<unsigned>(1U,boost::thread::hardware_concurrency()))
@@ -283,7 +314,7 @@ class Multiplexer//:
         void init() {
             for(unsigned i=0;i<m_Concurrency;++i)
                 m_Strands.emplace_back(make_tuple(
-                    kit::make_unique<Strand>(), CacheLinePadding()
+                    kit::make_unique<Strand>(this, i), CacheLinePadding()
                 ));
         }
         //void join() {
@@ -302,6 +333,14 @@ class Multiplexer//:
         
         Strand& strand(unsigned idx) {
             return *std::get<0>((m_Strands[idx % m_Concurrency]));
+        }
+        
+        Strand& this_strand(){
+            return *m_ThreadToStrand.with<Strand*>(
+                [this](std::map<boost::thread::id, unsigned>& m
+            ){
+                return &strand(m[boost::this_thread::get_id()]);
+            });
         }
 
         size_t size() const {
@@ -324,6 +363,8 @@ class Multiplexer//:
 
         const unsigned m_Concurrency;
         std::vector<std::tuple<std::unique_ptr<Strand>, CacheLinePadding>> m_Strands;
+
+        kit::mutex_wrap<std::map<boost::thread::id, unsigned>> m_ThreadToStrand;
 };
 
 #endif

@@ -234,14 +234,14 @@ TEST_CASE("Multiplexer","[multiplexer]") {
 
 TEST_CASE("Coroutines","[coroutines]") {
     SECTION("Coroutines inside multiplexer"){
-        Multiplexer mx;
+        // Let's use the singleton multiplexer "MX"
         
         // create an integer channel 
         auto chan = make_shared<Channel<int>>();
         chan->buffer(1); // only 1 element can be in the channel at a time
         
         // schedule a coroutine to be our consumer
-        auto nums_fut = mx.strand(0).coro<vector<int>>([chan]{
+        auto nums_fut = MX.strand(0).coro<vector<int>>([chan]{
             vector<int> nums;
             while(not chan->closed())
             {
@@ -252,7 +252,7 @@ TEST_CASE("Coroutines","[coroutines]") {
             return nums;
         });
         // schedule a coroutine to be our producer of integers
-        mx.strand(1).coro<void>([chan]{
+        MX.strand(1).coro<void>([chan]{
             // send some numbers through the channel
             // AWAIT() allows context switching instead of blocking
             AWAIT(*chan << 1);
@@ -263,8 +263,6 @@ TEST_CASE("Coroutines","[coroutines]") {
 
         // see if all the numbers got through the channel
         REQUIRE((nums_fut.get() == vector<int>{1,2,3}));
-        
-        mx.finish();
     }
 }
 

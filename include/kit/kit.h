@@ -301,6 +301,9 @@ namespace kit
     {
         T data;
 
+        mutex_wrap():
+            data(T())
+        {}
         mutex_wrap(T&& v):
             data(v)
         {}
@@ -317,12 +320,12 @@ namespace kit
             return lhs.data == rhs;
         }
         
-        template<class R>
+        template<class R = void>
         R with(std::function<R(T&)> cb) {
             auto l = this->lock();
             return cb(data);
         }
-        template<class R>
+        template<class R = void>
         R with(std::function<R(const T&)> cb) const {
             auto l = this->lock();
             return cb(data);
