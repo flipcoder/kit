@@ -75,6 +75,7 @@ solution("kit")
             "boost_system",
             "boost_regex",
             "boost_filesystem",
+            "boost_coroutine",
             "jsoncpp"
             --"bson",
             --"natpmp"

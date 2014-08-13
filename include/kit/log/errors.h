@@ -23,6 +23,7 @@ enum class ErrorCode: unsigned
     LOCK,
     FATAL,
     TEST,
+    TIMEOUT,
 
     MAX
 };
@@ -43,6 +44,7 @@ static const std::string g_ErrorString[] = {
     "Failed to obtain lock",
     "Fatal error occurred",
     "Failed test",
+    "Timeout"
 };
 
 class Error:

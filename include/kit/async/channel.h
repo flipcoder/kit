@@ -146,8 +146,8 @@ class Channel:
         }
         void buffer(size_t sz) {
             auto l = this->lock();
-            if(sz > m_Buffered)
-                m_Vals.reserve(sz);
+            //if(sz > m_Buffered)
+            //    m_Vals.reserve(sz);
             m_Buffered = sz;
         }
         void close() {

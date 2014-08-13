@@ -5,6 +5,7 @@
 #include "../kit.h"
 #include <boost/thread.hpp>
 #include <boost/noncopyable.hpp>
+#include <boost/coroutine/coroutine.hpp>
 #include <algorithm>
 #include <atomic>
 #include <deque>
@@ -14,6 +15,33 @@
 #ifndef CACHE_LINE_SIZE
 #define CACHE_LINE_SIZE 64
 #endif
+
+#define AWAIT(EXPR) \
+    [&]{\
+        while(true)\
+            try{\
+                return (EXPR);\
+            }catch(const RetryTask&){\
+                /*MX.this_strand().this_unit().yield();*/\
+            }\
+    }()
+
+#define AWAIT_HINT(HINT, EXPR) \
+    [&]{\
+        while(true)\
+            bool once = false;\
+            try{\
+                return (EXPR);\
+            }catch(const RetryTask&){\
+                if(not once) {\
+                    MX.this_strand().this_unit().cond = [=]{\
+                        return (HINT);\
+                    };\
+                    once = true;\
+                }\
+                /*MX.this_strand().this_unit().yield();*/\
+            }\
+    }()
 
 class Multiplexer//:
     //public IAsync
@@ -25,6 +53,17 @@ class Multiplexer//:
         {
             Unit(
                 std::function<bool()> rdy,
+                std::function<void()> func,
+                std::unique_ptr<boost::coroutines::coroutine<void>::push_type> coro
+                    = std::unique_ptr<boost::coroutines::coroutine<void>::push_type>()
+            ):
+                m_Ready(rdy),
+                m_Func(func),
+                m_pCoro(coro)
+            {}
+            
+            Unit(
+                std::function<bool()> rdy,
                 std::function<void()> func
             ):
                 m_Ready(rdy),
@@ -34,6 +73,7 @@ class Multiplexer//:
             // only a hint, assume ready if functor is 'empty'
             std::function<bool()> m_Ready; 
             Task<void()> m_Func;
+            std::unique_ptr<boost::coroutines::coroutine<void>::push_type> m_pCoro;
             // TODO: idletime hints for load balancing?
         };
 
@@ -66,6 +106,44 @@ class Multiplexer//:
                     }
                     boost::this_thread::yield();
                 }
+            }
+
+            template<class T = void>
+            std::future<T> coro(std::function<T()> cb) {
+                while(true) {
+                    boost::this_thread::interruption_point();
+                    {
+                        auto l = lock();
+                        if(!m_Buffered || m_Units.size() < m_Buffered) {
+                            auto cbt = Task<T()>(std::move(cb));
+                            auto fut = cbt.get_future();
+                            auto cbc = kit::move_on_copy<Task<T()>>(std::move(cbt));
+                            auto sink = kit::make_unique<boost::coroutines::coroutine<void>::push_type>(
+                                [cbc](boost::coroutines::coroutine<void>::pull_type&){
+                                    cbc.get()();
+                                }
+                            );
+                            m_Units.emplace_back(
+                                std::function<bool()>(),
+                                std::function<void()>(),
+                                std::move(sink)
+                            );
+                            auto* coroptr = m_Units.back().m_pCoro.get();
+                            m_Units.back().m_Func = kit::make_unique<std::function<void()>>(
+                                [coroptr]{
+                                    (*coroptr)();
+                                    if(*coroptr) // not completed?
+                                        throw RetryTask(); // continue
+                                    //if(coroptr->has_result())
+                                    //return coroptr->get();
+                                }
+                            );
+                            return fut;
+                        }
+                    }
+                    boost::this_thread::yield();
+                }
+
             }
             
             template<class T = void>
@@ -215,7 +293,11 @@ class Multiplexer//:
                 std::get<0>(s)->stop();
         }
 
-        //Strand& this_strand()
+        Strand& any_strand(){
+            // TODO: load balancing would be nice here
+            return *std::get<0>((m_Strands[std::rand() % m_Concurrency]));
+        }
+        
         Strand& strand(unsigned idx) {
             return *std::get<0>((m_Strands[idx % m_Concurrency]));
         }

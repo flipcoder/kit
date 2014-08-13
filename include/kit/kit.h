@@ -672,6 +672,15 @@ namespace kit
             {}
     };
 
+    class timeout:
+        public std::runtime_error
+    {
+        public:
+            timeout():
+                std::runtime_error("timeout")
+            {}
+    };
+    
     class interrupt:
         public std::runtime_error
     {
