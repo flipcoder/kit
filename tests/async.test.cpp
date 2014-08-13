@@ -238,10 +238,14 @@ TEST_CASE("Coroutines","[coroutines]") {
         
         // create an integer channel 
         auto chan = make_shared<Channel<int>>();
-        chan->buffer(1); // only 1 element can be in the channel at a time
         
+        // enforce context switching by assigning both tasks to same strand
+        //   and only allowing 1 integer across the channel at once
+        chan->buffer(1);
+        const int SAME_STRAND = 0;
+
         // schedule a coroutine to be our consumer
-        auto nums_fut = MX.strand(0).coro<vector<int>>([chan]{
+        auto nums_fut = MX.strand(SAME_STRAND).coro<vector<int>>([chan]{
             vector<int> nums;
             while(not chan->closed())
             {
@@ -252,7 +256,7 @@ TEST_CASE("Coroutines","[coroutines]") {
             return nums;
         });
         // schedule a coroutine to be our producer of integers
-        MX.strand(1).coro<void>([chan]{
+        MX.strand(SAME_STRAND).coro<void>([chan]{
             // send some numbers through the channel
             // AWAIT() allows context switching instead of blocking
             AWAIT(*chan << 1);
