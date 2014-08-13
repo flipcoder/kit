@@ -253,7 +253,6 @@ TEST_CASE("Coroutines","[coroutines]") {
                 // AWAIT() allows context switching instead of blocking
                 int n = AWAIT(chan->get());
                 nums.push_back(n);
-                cout << "Recv: " << n << endl;
             }
             return nums;
         });

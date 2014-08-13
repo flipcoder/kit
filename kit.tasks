@@ -52,8 +52,8 @@
             [x] rough impl
             [x] impl
             [x] yield() command stalls
-            [>] channel input seems to stall with chan closed check removed (!!!)
-                # must be thread-related bug
+            [x] channel input seems to stall with chan closed check removed (!!!)
+                # nope! it was another unit test that relied on the check xD
 
 * log
     [ ] BUG: scoped log props are unusable across coroutines
