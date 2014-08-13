@@ -2,7 +2,7 @@
 My personal C++11 toolset
 
 ## async
-Async task handler, strands, (Go-style) channels with buffering support
+Stackful coroutines, task scheduling, strands, (Go-style) bufferable channels
 
 ## meta
 Thread-aware serializable meta-objects, property trees, and reflection

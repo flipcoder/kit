@@ -30,7 +30,6 @@
         [|] deserialization
             [x] impl
             [ ] test
-    [?] parent(recursion_levels=0) should use the (optional) treespace lock
     * iteration
         [-] move each() to .cpp file -- inl now
         [-] each_of_type<>() -- each() with check function isn't good enough?
@@ -44,9 +43,20 @@
 
 * async
     * multiplexer
-        [ ] task() and when() return scoped connections instead of future?
-        [ ] boost::coroutine
+        [-] task() and when() return scoped connections instead of future?
+        [|] boost::coroutine
         [ ] this_strand()
         [ ] Strand::this_unit()
-        [ ] yield/await macro that works with futures, channels, locks, etc.
+        [|] yield/await macro that works with futures, channels, locks, etc.
+            [x] scratch paper macros
+            [x] rough impl
+            [>] impl
+* log
+    [ ] BUG: scoped log props are unusable across coroutines
+    
+* freq
+    [>] Timelines and Alarms must be wrap-safe, if we're ever going to use this
+        # for async's sleep mechanism
+    [L] Higher precision scheduling (days, months) would be nice
+    [L] Persistent timelines and alarms using serialization
 
