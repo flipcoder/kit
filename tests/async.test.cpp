@@ -245,37 +245,32 @@ TEST_CASE("Coroutines","[coroutines]") {
         const int SAME_STRAND = 0;
 
         // schedule a coroutine to be our consumer
-        //auto nums_fut = MX.strand(SAME_STRAND).coro<vector<int>>([chan]{
-        //    vector<int> nums;
-        //    while(not chan->closed())
-        //    {
-        //        // recv some numbers from our channel
-        //        // AWAIT() allows context switching instead of blocking
-        //        int n = AWAIT(chan->get());
-        //        nums.push_back(n);
-        //        cout << "Recv: " << n << endl;
-        //    }
-        //    return nums;
-        //});
+        auto nums_fut = MX.strand(SAME_STRAND).coro<vector<int>>([chan]{
+            vector<int> nums;
+            while(not chan->closed())
+            {
+                // recv some numbers from our channel
+                // AWAIT() allows context switching instead of blocking
+                int n = AWAIT(chan->get());
+                nums.push_back(n);
+                cout << "Recv: " << n << endl;
+            }
+            return nums;
+        });
         // schedule a coroutine to be our producer of integers
-        //MX.strand(SAME_STRAND).coro<void>([chan]{
-        //    cout << "hi" << endl;
-        //});
         MX.strand(SAME_STRAND).coro<void>([chan]{
             // send some numbers through the channel
             // AWAIT() allows context switching instead of blocking
-            //Multiplexer::get().this_strand().yield();
-            
-            //AWAIT(*chan << 1);
-            //AWAIT(*chan << 2);
-            //AWAIT(*chan << 3);
-            //chan->close();
+            AWAIT(*chan << 1);
+            AWAIT(*chan << 2);
+            AWAIT(*chan << 3);
+            chan->close();
         });
 
-        // see if all the numbers got through the channel
         MX.finish();
-        REQUIRE(true);
-        //REQUIRE((nums_fut.get() == vector<int>{1,2,3}));
+
+        // see if all the numbers got through the channel
+        REQUIRE((nums_fut.get() == vector<int>{1,2,3}));
     }
 }
 

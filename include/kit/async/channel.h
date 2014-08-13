@@ -57,8 +57,8 @@ class Channel:
             auto l = this->lock(std::defer_lock);
             if(!l.try_lock())
                 throw RetryTask();
-            if(m_bClosed)
-                throw std::runtime_error("channel closed");
+            //if(m_bClosed)
+            //    throw std::runtime_error("channel closed");
             if(!m_Vals.empty()) {
                 val = std::move(m_Vals.front());
                 m_Vals.pop_front();
@@ -73,8 +73,8 @@ class Channel:
             auto l = this->lock(std::defer_lock);
             if(!l.try_lock())
                 throw RetryTask();
-            if(m_bClosed)
-                throw std::runtime_error("channel closed");
+            //if(m_bClosed)
+            //    throw std::runtime_error("channel closed");
             if(!m_Vals.empty())
                 return m_Vals.front();
             throw RetryTask();
@@ -89,8 +89,8 @@ class Channel:
             auto l = this->lock(std::defer_lock);
             if(!l.try_lock())
                 throw RetryTask();
-            if(m_bClosed)
-                throw std::runtime_error("channel closed");
+            //if(m_bClosed)
+            //    throw std::runtime_error("channel closed");
             for(size_t i=0;i<m_Vals.size();++i)
             {
                 if(m_Vals[i] == token)
@@ -112,8 +112,8 @@ class Channel:
             auto l = this->lock(std::defer_lock);
             if(!l.try_lock())
                 throw RetryTask();
-            if(m_bClosed)
-                throw std::runtime_error("channel closed");
+            //if(m_bClosed)
+            //    throw std::runtime_error("channel closed");
             if(!m_Vals.empty()) {
                 auto r = std::move(m_Vals.front());
                 m_Vals.pop_front();

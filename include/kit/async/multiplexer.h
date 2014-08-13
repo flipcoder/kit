@@ -66,11 +66,13 @@ class Multiplexer:
             Unit(
                 std::function<bool()> rdy,
                 std::function<void()> func,
-                std::unique_ptr<push_coro_t>&& coro
+                std::unique_ptr<push_coro_t>&& push,
+                pull_coro_t* pull
             ):
                 m_Ready(rdy),
                 m_Func(func),
-                m_pCoro(std::move(coro))
+                m_pPush(std::move(push)),
+                m_pPull(pull)
             {}
             
             Unit(
@@ -84,7 +86,8 @@ class Multiplexer:
             // only a hint, assume ready if functor is 'empty'
             std::function<bool()> m_Ready; 
             Task<void()> m_Func;
-            std::unique_ptr<push_coro_t> m_pCoro;
+            std::unique_ptr<push_coro_t> m_pPush;
+            pull_coro_t* m_pPull = nullptr;
             // TODO: idletime hints for load balancing?
         };
 
@@ -103,8 +106,10 @@ class Multiplexer:
             virtual ~Strand() {}
 
             void yield() {
-                if(m_pCurrentUnit && m_pCurrentUnit->m_pCoro)
-                    (*m_pCurrentUnit->m_pCoro)();
+                if(m_pCurrentUnit && m_pCurrentUnit->m_pPull)
+                    (*m_pCurrentUnit->m_pPull)();
+                //else
+                //    boost::this_thread::yield();
             }
             
             template<class T = void>
@@ -137,24 +142,30 @@ class Multiplexer:
                             auto cbt = Task<T()>(std::move(cb));
                             auto fut = cbt.get_future();
                             auto cbc = kit::move_on_copy<Task<T()>>(std::move(cbt));
-                            auto sink = kit::make_unique<push_coro_t>(
-                                [cbc](pull_coro_t&){
+                            m_Units.emplace_back(
+                                std::function<bool()>(),
+                                std::function<void()>()
+                            );
+                            auto* pullptr = &m_Units.back().m_pPull;
+                            auto source = kit::make_unique<push_coro_t>(
+                                [cbc, pullptr](pull_coro_t& sink){
+                                    *pullptr = &sink;
                                     cbc.get()();
                                 }
                             );
-                            m_Units.emplace_back(
-                                std::function<bool()>(),
-                                std::function<void()>(),
-                                std::move(sink)
+                            
+                            m_Units.back().m_pPush = std::move(source);
+                            auto* coroptr = m_Units.back().m_pPush.get();
+                            m_Units.back().m_Ready = std::function<bool()>(
+                                [coroptr]() -> bool {
+                                    return *coroptr;
+                                }
                             );
-                            auto* coroptr = m_Units.back().m_pCoro.get();
                             m_Units.back().m_Func = Task<void()>(std::function<void()>(
                                 [coroptr]{
                                     (*coroptr)();
                                     if(*coroptr) // not completed?
                                         throw RetryTask(); // continue
-                                    //if(coroptr->has_result())
-                                    //return coroptr->get();
                                 }
                             ));
                             return fut;
