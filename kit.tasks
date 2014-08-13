@@ -51,7 +51,9 @@
             [x] scratch paper macros
             [x] rough impl
             [x] impl
-            [ ] yield() command stalls
+            [x] yield() command stalls
+            [>] channel input seems to stall with chan closed check removed (!!!)
+                # must be thread-related bug
 
 * log
     [ ] BUG: scoped log props are unusable across coroutines
