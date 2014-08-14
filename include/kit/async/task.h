@@ -35,8 +35,8 @@ class Task<R (Args...)>
         void operator()(T&&... t) {
             try{
                 m_Promise.set_value(m_Func(std::forward<T>(t)...));
-            }catch(RetryTask e){
-                throw e;
+            }catch(const RetryTask&){
+                throw;
             }catch(const std::exception& e){
                 m_Promise.set_exception(std::make_exception_ptr(e));
             }

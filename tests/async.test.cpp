@@ -271,5 +271,27 @@ TEST_CASE("Coroutines","[coroutines]") {
         // see if all the numbers got through the channel
         REQUIRE((nums_fut.get() == vector<int>{1,2,3}));
     }
+    //SECTION("Unwinding Coroutines"){
+    //    Multiplexer mx;
+    //    struct UnwindMe {
+    //        bool* unwound;
+    //        UnwindMe(bool* b):
+    //            unwound(b)
+    //        {}
+    //        ~UnwindMe() {
+    //            *unwound = true;
+    //        }
+    //    };
+    //    auto unwound = kit::make_unique<bool>(false);
+    //    bool* unwoundptr = unwound.get();
+    //    auto fut = mx.strand(0).coro<void>([unwoundptr]{
+    //        UnwindMe u(unwoundptr);
+    //        throw kit::interrupt();
+    //    });
+        
+    //    mx.finish();
+    //    REQUIRE_THROWS(fut.get());
+    //    REQUIRE(*unwound);
+    //}
 }
 

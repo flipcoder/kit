@@ -42,15 +42,19 @@
 * kit.h (util)
 
 * async
-    * multiplexer
-        [-] task() and when() return scoped connections instead of future?
+    [>] coroutine exceptions don't make into Task promise (?)
+        # happens in unit test for Coroutine unwinding
+        # feature is impl'ed, so this is definitely a bug
+    [ ] add way to yield to a specific multiplexer YIELD_MX()
+        # needed since unit tests shouldn't use the singleton
+    [-] task() and when() return scoped connections instead of future?
 
 * log
-    [ ] BUG: scoped log props are unusable across coroutines
+    [ ] scoped log props are unusable across coroutines
     
 * freq
-    [>] Timelines and Alarms must be wrap-safe, if we're ever going to use this
+    [ ] Timelines and Alarms must be wrap-safe, if we're ever going to use this
         # for async's sleep mechanism
-    [L] Higher precision scheduling (days, months) would be nice
+    [L] Longer scheduling (days, months) would be nice
     [L] Persistent timelines and alarms using serialization
 

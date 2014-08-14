@@ -147,14 +147,12 @@ class Multiplexer:
                                 std::function<void()>()
                             );
                             auto* pullptr = &m_Units.back().m_pPull;
-                            auto source = kit::make_unique<push_coro_t>(
+                            m_Units.back().m_pPush = kit::make_unique<push_coro_t>(
                                 [cbc, pullptr](pull_coro_t& sink){
                                     *pullptr = &sink;
                                     cbc.get()();
                                 }
                             );
-                            
-                            m_Units.back().m_pPush = std::move(source);
                             auto* coroptr = m_Units.back().m_pPush.get();
                             m_Units.back().m_Ready = std::function<bool()>(
                                 [coroptr]() -> bool {
@@ -217,7 +215,7 @@ class Multiplexer:
                     unsigned idx = 0;
                     while(true) {
                         boost::this_thread::interruption_point();
-                        next(idx); // poll iterates one index each call
+                        next(idx); // next() iterates one index each call
                         if(m_Finish && empty())
                             return;
                         boost::this_thread::yield();
