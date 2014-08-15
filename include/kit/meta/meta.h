@@ -520,11 +520,6 @@ class MetaBase:
             return this->shared_from_this();
         }
 
-        /*
-         * Sync config with a specifc key-value file (ini?)
-         *
-         * TODO: Make flags handle overwrite case
-         */
         //void sync() {
         //}
         //void sync(const std::string& fn) {

@@ -612,17 +612,55 @@ namespace kit
     {
         return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
     }
-
-    template <class T>
-    std::unique_ptr<T> clone_unique(T const* t)
+    template<class T, class... Args>
+    std::unique_ptr<T> init_unique(Args&&... args)
     {
-        return std::shared_ptr<T>(t->clone());
+        auto p = std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+        p->init();
+        return p;
     }
-
-    template <class T>
-    std::shared_ptr<T> clone_shared(T const* t)
+    template<class T, class... Args>
+    std::shared_ptr<T> init_shared(Args&&... args)
     {
-        return std::shared_ptr<T>(t->clone());
+        auto p = std::shared_ptr<T>(new T(std::forward<Args>(args)...));
+        p->init();
+        return p;
+    }
+    template<class T, class... Args>
+    std::unique_ptr<T>& make(std::unique_ptr<T>& p, Args&&... args)
+    {
+        p = std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+        return p;
+    }
+    template<class T, class... Args>
+    std::shared_ptr<T>& make(std::shared_ptr<T>& p, Args&&... args)
+    {
+        p = std::shared_ptr<T>(new T(std::forward<Args>(args)...));
+        return p;
+    }
+    template<class T, class... Args>
+    std::unique_ptr<T>& init(std::unique_ptr<T>& p, Args&&... args)
+    {
+        try {
+            p = std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+            p->init();
+        }catch(...){
+            p = std::unique_ptr<T>();
+            throw;
+        }
+        return p;
+    }
+    template<class T, class... Args>
+    std::shared_ptr<T>& init(std::shared_ptr<T>& p, Args&&... args)
+    {
+        try {
+            p = std::shared_ptr<T>(new T(std::forward<Args>(args)...));
+            p->init();
+        }catch(...){
+            p = std::shared_ptr<T>();
+            throw;
+        }
+        return p;
     }
 
     inline std::vector<std::string> lines(const std::string& s)
