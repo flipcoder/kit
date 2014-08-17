@@ -4,6 +4,7 @@
 #include <boost/thread.hpp>
 #include <boost/circular_buffer.hpp>
 #include <iostream>
+#include <iterator>
 #include <vector>
 #include <queue>
 #include <future>
@@ -28,14 +29,47 @@ class Channel:
                 throw kit::yield_exception();
             if(m_bClosed)
                 throw std::runtime_error("channel closed");
-            if(!m_Buffered || m_Vals.size() < m_Buffered) {
+            if(!m_Buffered || m_Vals.size() < m_Buffered)
+            {
                 m_Vals.push_back(std::move(val));
                 m_bNewData = true;
                 return;
             }
             throw kit::yield_exception();
         }
-        
+        void operator<<(std::vector<T>& vals) {
+            auto l = this->lock(std::defer_lock);
+            if(!l.try_lock())
+                throw kit::yield_exception();
+            if(m_bClosed)
+                throw std::runtime_error("channel closed");
+            size_t capacity = 0;
+            size_t buflen = vals.size();
+            bool partial = false;
+            if(m_Buffered)
+            {
+                capacity = m_Buffered - m_Vals.size();
+                if(buflen > capacity)
+                {
+                    buflen = capacity;
+                    partial = true;
+                }
+            }
+            if(buflen)
+            {
+                m_Vals.insert(m_Vals.end(),
+                    make_move_iterator(vals.begin()),
+                    make_move_iterator(vals.begin() + buflen)
+                );
+                vals.erase(vals.begin(), vals.begin() + buflen);
+                m_bNewData = true;
+                if(partial)
+                    throw kit::yield_exception();
+                return;
+            }
+            throw kit::yield_exception();
+        }
+
         //void operator<<(std::vector<T> val) {
         //    auto l = this->lock(std::defer_lock);
         //    if(!l.try_lock())
@@ -59,9 +93,31 @@ class Channel:
                 throw kit::yield_exception();
             //if(m_bClosed)
             //    throw std::runtime_error("channel closed");
-            if(!m_Vals.empty()) {
+            m_bNewData = false;
+            if(!m_Vals.empty())
+            {
                 val = std::move(m_Vals.front());
                 m_Vals.pop_front();
+                return;
+            }
+            throw kit::yield_exception();
+        }
+        void operator>>(std::vector<T>& vals) {
+            if(not m_bNewData)
+                throw kit::yield_exception();
+            auto l = this->lock(std::defer_lock);
+            if(!l.try_lock())
+                throw kit::yield_exception();
+            //if(m_bClosed)
+            //    throw std::runtime_error("channel closed");
+            m_bNewData = false;
+            if(!m_Vals.empty())
+            {
+                vals.insert(vals.end(),
+                    make_move_iterator(m_Vals.begin()),
+                    make_move_iterator(m_Vals.end())
+                );
+                m_Vals.clear();
                 return;
             }
             throw kit::yield_exception();
@@ -112,6 +168,7 @@ class Channel:
             auto l = this->lock(std::defer_lock);
             if(!l.try_lock())
                 throw kit::yield_exception();
+            m_bNewData = 0;
             //if(m_bClosed)
             //    throw std::runtime_error("channel closed");
             if(!m_Vals.empty()) {

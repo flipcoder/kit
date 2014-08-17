@@ -5,6 +5,7 @@
 //#include "../include/kit/async/channel.h"
 //#include "../include/kit/async/multiplexer.h"
 #include <atomic>
+#include <vector>
 #include <boost/thread.hpp>
 #include <boost/chrono.hpp>
 using namespace std;
@@ -124,6 +125,37 @@ TEST_CASE("Channel","[channel]") {
         }
         mx.finish();
         REQUIRE(result == "hello");
+    }
+    SECTION("buffered streaming") {
+        Multiplexer mx;
+        //std::string in = "12345";
+        //std::string out;
+        vector<char> in = {'1','2','3','4','5'};
+        vector<char> out;
+        auto chan = make_shared<Channel<char>>();
+        chan->buffer(3);
+        {
+            mx.strand(0).task<void>([chan, &in]{
+                try{
+                    // usually this will continue after first chunk
+                    //   but let's stop it early
+                    *chan << in;
+                }catch(const kit::yield_exception&){
+                    if(in.size() == 2) // repeat until 2 chars left
+                        return;
+                }
+                throw kit::yield_exception();
+            });
+            mx.strand(1).task<void>([chan, &out]{
+                *chan >> out;
+                if(out.size() == 3) // repeat until obtaining chars
+                    return;
+                throw kit::yield_exception();
+            });
+        }
+        mx.finish();
+        REQUIRE((in == vector<char>{'4','5'}));
+        REQUIRE((out == vector<char>{'1','2','3'}));
     }
 }
 
