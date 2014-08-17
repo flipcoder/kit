@@ -21,7 +21,7 @@ TEST_CASE("Task","[task]") {
     SECTION("retrying tasks"){
         Task<void(bool)> task([](bool err){
             if(err)
-                throw RetryTask();
+                throw kit::yield_exception();
         });
         auto fut = task.get_future();
         
@@ -42,7 +42,7 @@ TEST_CASE("Channel","[channel]") {
             try{
                 chan << 42;
                 break;
-            }catch(const RetryTask& rt){}
+            }catch(const kit::yield_exception& rt){}
         };
         REQUIRE(chan.size() == 1);
         int num = 0;
@@ -50,7 +50,7 @@ TEST_CASE("Channel","[channel]") {
             try{
                 chan >> num;
                 break;
-            }catch(const RetryTask& rt){}
+            }catch(const kit::yield_exception& rt){}
         };
         REQUIRE(num == 42);
     }
@@ -65,14 +65,14 @@ TEST_CASE("Channel","[channel]") {
             
             chan << 1; // retries task if this blocks
             
-            throw RetryTask(); // keep this event going until chan is closed
+            throw kit::yield_exception(); // keep this event going until chan is closed
         });
         mx.strand(1).task<void>([&sum, &chan]{
             int num;
             chan >> num; // if this blocks, task is retried later
             sum += num;
             if(sum < 5)
-                throw RetryTask();
+                throw kit::yield_exception();
             chan.close(); // done, triggers the other strand to throw
         });
         mx.finish();
@@ -116,7 +116,7 @@ TEST_CASE("Channel","[channel]") {
                 }catch(const std::out_of_range&){
                     return;
                 }
-                throw RetryTask();
+                throw kit::yield_exception();
             });
             mx.strand(1).task<void>([&result, chan]{
                 result = chan->get_until<string>(' ');

@@ -25,7 +25,7 @@ class Channel:
         void operator<<(T val) {
             auto l = this->lock(std::defer_lock);
             if(!l.try_lock())
-                throw RetryTask();
+                throw kit::yield_exception();
             if(m_bClosed)
                 throw std::runtime_error("channel closed");
             if(!m_Buffered || m_Vals.size() < m_Buffered) {
@@ -33,13 +33,13 @@ class Channel:
                 m_bNewData = true;
                 return;
             }
-            throw RetryTask();
+            throw kit::yield_exception();
         }
         
         //void operator<<(std::vector<T> val) {
         //    auto l = this->lock(std::defer_lock);
         //    if(!l.try_lock())
-        //        throw RetryTask();
+        //        throw kit::yield_exception();
         //    if(m_bClosed)
         //        throw std::runtime_error("channel closed");
         //    if(!m_Buffered || m_Vals.size() < m_Buffered) {
@@ -47,16 +47,16 @@ class Channel:
         //        m_bNewData = true;
         //        return;
         //    }
-        //    throw RetryTask();
+        //    throw kit::yield_exception();
         //}
         
         // Get from stream
         void operator>>(T& val) {
             if(not m_bNewData)
-                throw RetryTask();
+                throw kit::yield_exception();
             auto l = this->lock(std::defer_lock);
             if(!l.try_lock())
-                throw RetryTask();
+                throw kit::yield_exception();
             //if(m_bClosed)
             //    throw std::runtime_error("channel closed");
             if(!m_Vals.empty()) {
@@ -64,20 +64,20 @@ class Channel:
                 m_Vals.pop_front();
                 return;
             }
-            throw RetryTask();
+            throw kit::yield_exception();
         }
 
         T peek() {
             if(not m_bNewData)
-                throw RetryTask();
+                throw kit::yield_exception();
             auto l = this->lock(std::defer_lock);
             if(!l.try_lock())
-                throw RetryTask();
+                throw kit::yield_exception();
             //if(m_bClosed)
             //    throw std::runtime_error("channel closed");
             if(!m_Vals.empty())
                 return m_Vals.front();
-            throw RetryTask();
+            throw kit::yield_exception();
         }
         
         // NOTE: full buffers with no matching tokens will never
@@ -85,10 +85,10 @@ class Channel:
         template<class R=std::vector<T>>
         R get_until(T token) {
             if(not m_bNewData)
-                throw RetryTask();
+                throw kit::yield_exception();
             auto l = this->lock(std::defer_lock);
             if(!l.try_lock())
-                throw RetryTask();
+                throw kit::yield_exception();
             //if(m_bClosed)
             //    throw std::runtime_error("channel closed");
             for(size_t i=0;i<m_Vals.size();++i)
@@ -104,14 +104,14 @@ class Channel:
                     return r;
                 }
             }
-            throw RetryTask();
+            throw kit::yield_exception();
         }
         T get() {
             if(not m_bNewData)
-                throw RetryTask();
+                throw kit::yield_exception();
             auto l = this->lock(std::defer_lock);
             if(!l.try_lock())
-                throw RetryTask();
+                throw kit::yield_exception();
             //if(m_bClosed)
             //    throw std::runtime_error("channel closed");
             if(!m_Vals.empty()) {
@@ -119,7 +119,7 @@ class Channel:
                 m_Vals.pop_front();
                 return r;
             }
-            throw RetryTask();
+            throw kit::yield_exception();
         }
 
         //operator bool() const {

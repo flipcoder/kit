@@ -26,7 +26,7 @@ typedef boost::coroutines::coroutine<void>::push_type push_coro_t;
         while(true)\
             try{\
                 return (EXPR);\
-            }catch(const RetryTask&){\
+            }catch(const kit::yield_exception&){\
                 Multiplexer::get().this_strand().yield();\
             }\
     }()
@@ -38,7 +38,7 @@ typedef boost::coroutines::coroutine<void>::push_type push_coro_t;
         {\
             try{\
                 return (EXPR);\
-            }catch(const RetryTask&){\
+            }catch(const kit::yield_exception&){\
                 if(not once) {\
                     Multiplexer::get().this_strand().this_unit().cond = [=]{\
                         return (HINT);\
@@ -163,7 +163,7 @@ class Multiplexer:
                                 [coroptr]{
                                     (*coroptr)();
                                     if(*coroptr) // not completed?
-                                        throw RetryTask(); // continue
+                                        throw kit::yield_exception(); // continue
                                 }
                             ));
                             return fut;

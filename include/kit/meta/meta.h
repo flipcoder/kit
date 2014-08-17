@@ -209,7 +209,7 @@ enum class MetaLoop : unsigned {
     REPEAT // repeat this current iteration
 };
 
-enum class MetaSerialize {
+enum class MetaSerialize : unsigned {
     /*
      * JSON data makes a distinction between maps and arrays.
      * Since Meta does not, we can store the kv elements as a
@@ -255,7 +255,7 @@ class MetaBase:
         //    return Iterator(this, size());
         //}
 
-        enum class EachFlag : unsigned {
+        enum EachFlag {
             LEAFS_ONLY = kit::bit(0),
             POSTORDER = kit::bit(1), // default is preorder
             RECURSIVE = kit::bit(2), // implied on RecursiveIterator
@@ -266,8 +266,8 @@ class MetaBase:
         };
         
         // to avoid possible race conditions, some functions need lock options
-        enum LockFlags: unsigned {
-            TRY = kit::bit(0)
+        enum LockFlags {
+            TRY_LOCK = kit::bit(0)
         };
 
         /*
@@ -462,9 +462,6 @@ class MetaBase:
             throw std::out_of_range("no such element");
         }
 
-        /*
-         * May throw on null
-         */
         void parent(const std::shared_ptr<MetaBase<Mutex>>& p) {
             auto l = this->lock();
             m_pParent = p.get();
@@ -481,16 +478,15 @@ class MetaBase:
             return par->first_key_of(this->shared_from_this());
         }
 
-        // TODO: Treespace lock is important for recursion here
         std::shared_ptr<MetaBase<Mutex>> parent(
             unsigned lock_flags=0,
             bool recursion=false
         ){
             auto l = this->lock(std::defer_lock);
-            if(lock_flags & (unsigned)LockFlags::TRY)
+            if(lock_flags & TRY_LOCK)
             {
                 if(!l.try_lock())
-                    throw kit::lock_exception();
+                    throw kit::yield_exception();
             }
             else
             {
@@ -763,10 +759,10 @@ class MetaBase:
             return set(std::string(), val);
         }
 
-        enum class PathFlags : unsigned {
+        enum PathFlags {
             ABSOLUTE_PATH = kit::bit(0),
             REPLACE_ON_CONFLICT = kit::bit(1), // default behavior for now
-            ENSURE = kit::bit(2)
+            ENSURE_PATH = kit::bit(2)
         };
         // Ensures the path exists in the tree and initializes an element `val`
         // the endpoint.
@@ -814,7 +810,7 @@ class MetaBase:
         /*
          * Set func with automatic type hints (WIP)
          */
-        //enum class SetFlags {
+        //enum SetFlags {
         //    // only "ensures" the value is there and initializes it to default `val`,
         //    // but does not overwrite a preexisting value with the given key
         //    ENSURE = kit::bit(0)
@@ -1034,8 +1030,8 @@ class MetaBase:
         //        try{
         //            // hooks?
         //            // auto p = parent();
-        //        }catch(const kit::lock_exception& e){
-        //            if(lock_flags & (unsigned)LockFlags::TRY)
+        //        }catch(const kit::yield_exception& e){
+        //            if(lock_flags & TRY_LOCK)
         //                throw e;
         //            continue;
         //        }
@@ -1187,7 +1183,7 @@ class MetaBase:
          * Enforce flags
          */
         enum Flag {
-            // Don't reseting values to incompatible types thru set()
+            // Don't allow reseting values to incompatible types thru set()
             STATIC = kit::bit(0),
             // all types in the meta are the same
             TYPED = kit::bit(1),

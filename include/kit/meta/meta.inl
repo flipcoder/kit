@@ -103,7 +103,7 @@ MetaLoop MetaBase<Mutex>::each(
         do{ // inner
             repeat = false;
 
-            if(!(flags & (unsigned)EachFlag::POSTORDER))
+            if(!(flags & POSTORDER))
             {
                 status = func(*spthis, e, level+1);
                 if(status == MetaLoop::BREAK) {
@@ -122,7 +122,7 @@ MetaLoop MetaBase<Mutex>::each(
 
             // reset status just in case we don't enter this block (*)
             status = MetaLoop::STEP;
-            if((flags & (unsigned)EachFlag::RECURSIVE) &&
+            if((flags & RECURSIVE) &&
                 e.type.id == MetaType::ID::META
             ){
                 // TODO: catch flags from each() call here
@@ -165,7 +165,7 @@ MetaLoop MetaBase<Mutex>::each(
             }
 
             // the CONTINUE check here is why we reset status above (*)
-            if(flags & (unsigned)EachFlag::POSTORDER
+            if(flags & POSTORDER
                 && status != MetaLoop::CONTINUE // warning: untested
             ){
                 status = func(*spthis, e, level+1);
@@ -483,7 +483,7 @@ std::tuple<std::shared_ptr<MetaBase<Mutex>>, bool> MetaBase<Mutex> :: path(
 
     {
         // TODO; redo this try locks like in parent()
-        if(flags & (unsigned)PathFlags::ABSOLUTE_PATH)
+        if(flags & ABSOLUTE_PATH)
         {
             if(!(base = root()))
                 base = this->shared_from_this();
@@ -516,7 +516,7 @@ std::tuple<std::shared_ptr<MetaBase<Mutex>>, bool> MetaBase<Mutex> :: path(
             base = child;
             continue;
         }catch(const std::exception&){
-            if(flags & (unsigned)PathFlags::ENSURE) {
+            if(flags & ENSURE_PATH) {
                 auto child = std::make_shared<MetaBase<Mutex>>();
                 base->set(p, child);
                 base = child;
