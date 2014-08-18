@@ -21,17 +21,21 @@
 typedef boost::coroutines::coroutine<void>::pull_type pull_coro_t;
 typedef boost::coroutines::coroutine<void>::push_type push_coro_t;
 
-#define AWAIT(EXPR) \
+
+
+#define AWAIT_MX(MUX, EXPR) \
     [&]{\
         while(true)\
             try{\
                 return (EXPR);\
             }catch(const kit::yield_exception&){\
-                Multiplexer::get().this_strand().yield();\
+                MUX.this_strand().yield();\
             }\
     }()
 
-#define AWAIT_HINT(HINT, EXPR) \
+#define AWAIT(EXPR) AWAIT_MX(Multiplexer::get(), EXPR)
+
+#define AWAIT_HINT_MX(MUX, HINT, EXPR) \
     [&]{\
         bool once = false;\
         while(true)\
@@ -53,6 +57,8 @@ typedef boost::coroutines::coroutine<void>::push_type push_coro_t;
             }\
         }\
     }()
+
+#define AWAIT_HINT(HINT, EXPR) AWAIT_HINT_MX(MUX, HINT, EXPR)
 
 class Multiplexer:
     public kit::singleton<Multiplexer>

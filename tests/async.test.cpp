@@ -83,48 +83,43 @@ TEST_CASE("Channel","[channel]") {
         Multiplexer mx;
 
         bool done = false;
-        {
-            auto chan = make_shared<Channel<string>>();
-            mx.strand(0).task<void>([&mx, chan, &done]{
-                auto ping = mx.strand(0).task<void>([chan]{
-                    *chan << "ping";
-                });
-                auto pong = mx.strand(0).task<string>([chan]{
-                    auto r = chan->get();
-                    r[1] = 'o';
-                    return r;
-                });
-                mx.strand(0).when<void, string>(pong,[&done](future<string>& pong){
-                    auto str = pong.get();
-                    done = (str == "pong");
-                });
+        auto chan = make_shared<Channel<string>>();
+        mx.strand(0).task<void>([&mx, chan, &done]{
+            auto ping = mx.strand(0).task<void>([chan]{
+                *chan << "ping";
             });
-        }
+            auto pong = mx.strand(0).task<string>([chan]{
+                auto r = chan->get();
+                r[1] = 'o';
+                return r;
+            });
+            mx.strand(0).when<void, string>(pong,[&done](future<string>& pong){
+                auto str = pong.get();
+                done = (str == "pong");
+            });
+        });
         mx.finish();
         REQUIRE(done);
     }
     SECTION("get_until") {
         Multiplexer mx;
-        std::string result;
         std::string msg = "hello world";
         size_t idx = 0;
-        {
-            auto chan = make_shared<Channel<char>>();
-            mx.strand(0).task<void>([chan, &idx, &msg]{
-                try{
-                    *chan << msg.at(idx);
-                    ++idx;
-                }catch(const std::out_of_range&){
-                    return;
-                }
-                throw kit::yield_exception();
-            });
-            mx.strand(1).task<void>([&result, chan]{
-                result = chan->get_until<string>(' ');
-            });
-        }
+        auto chan = make_shared<Channel<char>>();
+        mx.strand(0).task<void>([chan, &idx, &msg]{
+            try{
+                *chan << msg.at(idx);
+                ++idx;
+            }catch(const std::out_of_range&){
+                return;
+            }
+            throw kit::yield_exception();
+        });
+        auto result = mx.strand(1).task<string>([chan]{
+            return chan->get_until<string>(' ');
+        });
         mx.finish();
-        REQUIRE(result == "hello");
+        REQUIRE(result.get() == "hello");
     }
     SECTION("buffered streaming") {
         Multiplexer mx;
@@ -270,7 +265,11 @@ TEST_CASE("Multiplexer","[multiplexer]") {
 
 TEST_CASE("Coroutines","[coroutines]") {
     SECTION("Coroutines inside multiplexer"){
-        // Let's use the singleton multiplexer "MX"
+        // In most apps, we'd use the singleton multiplexer "MX"
+        //   and use AWAIT() instead of AWAIT_MX(mx, ...)
+        // But since we want to isolate the multiplexer across unit tests
+        //   we will declare a separate one here
+        Multiplexer mx;
         
         // create an integer channel 
         auto chan = make_shared<Channel<int>>();
@@ -281,28 +280,28 @@ TEST_CASE("Coroutines","[coroutines]") {
         const int SAME_STRAND = 0;
 
         // schedule a coroutine to be our consumer
-        auto nums_fut = MX.strand(SAME_STRAND).coro<vector<int>>([chan]{
+        auto nums_fut = mx.strand(SAME_STRAND).coro<vector<int>>([chan, &mx]{
             vector<int> nums;
             while(not chan->closed())
             {
                 // recv some numbers from our channel
                 // AWAIT() allows context switching instead of blocking
-                int n = AWAIT(chan->get());
+                int n = AWAIT_MX(mx, chan->get());
                 nums.push_back(n);
             }
             return nums;
         });
         // schedule a coroutine to be our producer of integers
-        MX.strand(SAME_STRAND).coro<void>([chan]{
+        mx.strand(SAME_STRAND).coro<void>([chan, &mx]{
             // send some numbers through the channel
             // AWAIT() allows context switching instead of blocking
-            AWAIT(*chan << 1);
-            AWAIT(*chan << 2);
-            AWAIT(*chan << 3);
+            AWAIT_MX(mx, *chan << 1);
+            AWAIT_MX(mx, *chan << 2);
+            AWAIT_MX(mx, *chan << 3);
             chan->close();
         });
 
-        MX.finish();
+        mx.finish();
 
         // see if all the numbers got through the channel
         REQUIRE((nums_fut.get() == vector<int>{1,2,3}));
