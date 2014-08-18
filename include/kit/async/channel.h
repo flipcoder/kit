@@ -37,7 +37,8 @@ class Channel:
             }
             throw kit::yield_exception();
         }
-        void operator<<(std::vector<T>& vals) {
+        template<class Buffer=std::vector<T>>
+        void stream(Buffer& vals) {
             auto l = this->lock(std::defer_lock);
             if(!l.try_lock())
                 throw kit::yield_exception();
@@ -68,6 +69,9 @@ class Channel:
                 return;
             }
             throw kit::yield_exception();
+        }
+        void operator<<(std::vector<T>& vals) {
+            stream(vals);
         }
 
         //void operator<<(std::vector<T> val) {
@@ -103,6 +107,10 @@ class Channel:
             throw kit::yield_exception();
         }
         void operator>>(std::vector<T>& vals) {
+            get(vals);
+        }
+        template<class Buffer=std::vector<T>>
+        void get(Buffer& vals) {
             if(not m_bNewData)
                 throw kit::yield_exception();
             auto l = this->lock(std::defer_lock);
@@ -121,6 +129,12 @@ class Channel:
                 return;
             }
             throw kit::yield_exception();
+        }
+        template<class Buffer=std::vector<T>>
+        Buffer get() {
+            Buffer buf;
+            get(buf);
+            return buf;
         }
 
         T peek() {

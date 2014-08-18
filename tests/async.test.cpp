@@ -128,10 +128,10 @@ TEST_CASE("Channel","[channel]") {
     }
     SECTION("buffered streaming") {
         Multiplexer mx;
-        //std::string in = "12345";
-        //std::string out;
-        vector<char> in = {'1','2','3','4','5'};
-        vector<char> out;
+        std::string in = "12345";
+        std::string out;
+        //vector<char> in = {'1','2','3','4','5'};
+        //vector<char> out;
         auto chan = make_shared<Channel<char>>();
         chan->buffer(3);
         {
@@ -139,7 +139,8 @@ TEST_CASE("Channel","[channel]") {
                 try{
                     // usually this will continue after first chunk
                     //   but let's stop it early
-                    *chan << in;
+                    //*chan << in;
+                    chan->stream<string>(in);
                 }catch(const kit::yield_exception&){
                     if(in.size() == 2) // repeat until 2 chars left
                         return;
@@ -147,15 +148,18 @@ TEST_CASE("Channel","[channel]") {
                 throw kit::yield_exception();
             });
             mx.strand(1).task<void>([chan, &out]{
-                *chan >> out;
+                //*chan >> out;
+                chan->get<string>(out);
                 if(out.size() == 3) // repeat until obtaining chars
                     return;
                 throw kit::yield_exception();
             });
         }
         mx.finish();
-        REQUIRE((in == vector<char>{'4','5'}));
-        REQUIRE((out == vector<char>{'1','2','3'}));
+        REQUIRE(in == "45");
+        REQUIRE(out == "123");
+        //REQUIRE((in == vector<char>{'4','5'}));
+        //REQUIRE((out == vector<char>{'1','2','3'}));
     }
 }
 
