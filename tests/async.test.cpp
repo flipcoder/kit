@@ -277,10 +277,10 @@ TEST_CASE("Coroutines","[coroutines]") {
         // enforce context switching by assigning both tasks to same circuit
         //   and only allowing 1 integer across the channel at once
         chan->buffer(1);
-        const int SAME_STRAND = 0;
+        const int SAME_CIRCUIT = 0;
 
         // schedule a coroutine to be our consumer
-        auto nums_fut = mx.circuit(SAME_STRAND).coro<vector<int>>([chan, &mx]{
+        auto nums_fut = mx.circuit(SAME_CIRCUIT).coro<vector<int>>([chan, &mx]{
             vector<int> nums;
             while(not chan->closed())
             {
@@ -292,7 +292,7 @@ TEST_CASE("Coroutines","[coroutines]") {
             return nums;
         });
         // schedule a coroutine to be our producer of integers
-        mx.circuit(SAME_STRAND).coro<void>([chan, &mx]{
+        mx.circuit(SAME_CIRCUIT).coro<void>([chan, &mx]{
             // send some numbers through the channel
             // AWAIT() allows context switching instead of blocking
             AWAIT_MX(mx, *chan << 1);
