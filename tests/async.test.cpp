@@ -60,21 +60,21 @@ TEST_CASE("Channel","[channel]") {
         Channel<int> chan;
         
         int sum = 0;
-        mx.strand(0).buffer(256);
-        mx.strand(0).task<void>([&chan]{
+        mx.circuit(0).buffer(256);
+        mx.circuit(0).task<void>([&chan]{
             // only way to stop this event is closing the channel from the outside
             
             chan << 1; // retries task if this blocks
             
             throw kit::yield_exception(); // keep this event going until chan is closed
         });
-        mx.strand(1).task<void>([&sum, &chan]{
+        mx.circuit(1).task<void>([&sum, &chan]{
             int num;
             chan >> num; // if this blocks, task is retried later
             sum += num;
             if(sum < 5)
                 throw kit::yield_exception();
-            chan.close(); // done, triggers the other strand to throw
+            chan.close(); // done, triggers the other circuit to throw
         });
         mx.finish();
         REQUIRE(sum == 5);
@@ -84,16 +84,16 @@ TEST_CASE("Channel","[channel]") {
 
         bool done = false;
         auto chan = make_shared<Channel<string>>();
-        mx.strand(0).task<void>([&mx, chan, &done]{
-            auto ping = mx.strand(0).task<void>([chan]{
+        mx.circuit(0).task<void>([&mx, chan, &done]{
+            auto ping = mx.circuit(0).task<void>([chan]{
                 *chan << "ping";
             });
-            auto pong = mx.strand(0).task<string>([chan]{
+            auto pong = mx.circuit(0).task<string>([chan]{
                 auto r = chan->get();
                 r[1] = 'o';
                 return r;
             });
-            mx.strand(0).when<void, string>(pong,[&done](future<string>& pong){
+            mx.circuit(0).when<void, string>(pong,[&done](future<string>& pong){
                 auto str = pong.get();
                 done = (str == "pong");
             });
@@ -106,7 +106,7 @@ TEST_CASE("Channel","[channel]") {
         std::string msg = "hello world";
         size_t idx = 0;
         auto chan = make_shared<Channel<char>>();
-        mx.strand(0).task<void>([chan, &idx, &msg]{
+        mx.circuit(0).task<void>([chan, &idx, &msg]{
             try{
                 *chan << msg.at(idx);
                 ++idx;
@@ -115,7 +115,7 @@ TEST_CASE("Channel","[channel]") {
             }
             throw kit::yield_exception();
         });
-        auto result = mx.strand(1).task<string>([chan]{
+        auto result = mx.circuit(1).task<string>([chan]{
             return chan->get_until<string>(' ');
         });
         mx.finish();
@@ -130,7 +130,7 @@ TEST_CASE("Channel","[channel]") {
         auto chan = make_shared<Channel<char>>();
         chan->buffer(3);
         {
-            mx.strand(0).task<void>([chan, &in]{
+            mx.circuit(0).task<void>([chan, &in]{
                 try{
                     // usually this will continue after first chunk
                     //   but let's stop it early
@@ -142,7 +142,7 @@ TEST_CASE("Channel","[channel]") {
                 }
                 throw kit::yield_exception();
             });
-            mx.strand(1).task<void>([chan, &out]{
+            mx.circuit(1).task<void>([chan, &out]{
                 //*chan >> out;
                 chan->get<string>(out);
                 if(out.size() == 3) // repeat until obtaining chars
@@ -233,10 +233,10 @@ TEST_CASE("Multiplexer","[multiplexer]") {
     SECTION("thread wait on condition"){
         Multiplexer mx;
         std::atomic<int> num = ATOMIC_VAR_INIT(0);
-        mx.strand(0).task<void>([&num]{
+        mx.circuit(0).task<void>([&num]{
             num = 42;
         });
-        mx.strand(1).when<void>(
+        mx.circuit(1).when<void>(
             [&num]{return num == 42;},
             [&num]{num = 100;}
         );
@@ -253,7 +253,7 @@ TEST_CASE("Multiplexer","[multiplexer]") {
         bool done = false;
         //numbers.run();
         //REQUIRE(fut.get() == 42);
-        mx.strand(0).when<void, int>(fut, [&done](std::future<int>& num){
+        mx.circuit(0).when<void, int>(fut, [&done](std::future<int>& num){
             //done = true;
             done = (num.get() == 42);
         });
@@ -274,13 +274,13 @@ TEST_CASE("Coroutines","[coroutines]") {
         // create an integer channel 
         auto chan = make_shared<Channel<int>>();
         
-        // enforce context switching by assigning both tasks to same strand
+        // enforce context switching by assigning both tasks to same circuit
         //   and only allowing 1 integer across the channel at once
         chan->buffer(1);
         const int SAME_STRAND = 0;
 
         // schedule a coroutine to be our consumer
-        auto nums_fut = mx.strand(SAME_STRAND).coro<vector<int>>([chan, &mx]{
+        auto nums_fut = mx.circuit(SAME_STRAND).coro<vector<int>>([chan, &mx]{
             vector<int> nums;
             while(not chan->closed())
             {
@@ -292,7 +292,7 @@ TEST_CASE("Coroutines","[coroutines]") {
             return nums;
         });
         // schedule a coroutine to be our producer of integers
-        mx.strand(SAME_STRAND).coro<void>([chan, &mx]{
+        mx.circuit(SAME_STRAND).coro<void>([chan, &mx]{
             // send some numbers through the channel
             // AWAIT() allows context switching instead of blocking
             AWAIT_MX(mx, *chan << 1);
@@ -319,7 +319,7 @@ TEST_CASE("Coroutines","[coroutines]") {
     //    };
     //    auto unwound = kit::make_unique<bool>(false);
     //    bool* unwoundptr = unwound.get();
-    //    auto fut = mx.strand(0).coro<void>([unwoundptr]{
+    //    auto fut = mx.circuit(0).coro<void>([unwoundptr]{
     //        UnwindMe u(unwoundptr);
     //        throw kit::interrupt();
     //    });

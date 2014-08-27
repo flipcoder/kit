@@ -29,7 +29,7 @@ typedef boost::coroutines::coroutine<void>::push_type push_coro_t;
             try{\
                 return (EXPR);\
             }catch(const kit::yield_exception&){\
-                MUX.this_strand().yield();\
+                MUX.this_circuit().yield();\
             }\
     }()
 
@@ -44,16 +44,16 @@ typedef boost::coroutines::coroutine<void>::push_type push_coro_t;
                 return (EXPR);\
             }catch(const kit::yield_exception&){\
                 if(not once) {\
-                    Multiplexer::get().this_strand().this_unit().cond = [=]{\
+                    Multiplexer::get().this_circuit().this_unit().cond = [=]{\
                         return (HINT);\
                     };\
                     once = true;\
                 }\
-                Multiplexer::get().this_strand().yield();\
+                Multiplexer::get().this_circuit().yield();\
             }\
             if(once)\
             {\
-                kit::clear(Multiplexer::get().this_strand().this_unit().cond);\
+                kit::clear(Multiplexer::get().this_circuit().this_unit().cond);\
             }\
         }\
     }()
@@ -97,19 +97,19 @@ class Multiplexer:
             // TODO: idletime hints for load balancing?
         };
 
-        class Strand:
+        class Circuit:
             //public IAsync,
             public kit::mutexed<std::mutex>
         {
         public:
             
-            Strand(Multiplexer* mx, unsigned idx):
+            Circuit(Multiplexer* mx, unsigned idx):
                 m_pMultiplexer(mx),
                 m_Index(idx)
             {
                 run();
             }
-            virtual ~Strand() {}
+            virtual ~Circuit() {}
 
             void yield() {
                 if(m_pCurrentUnit && m_pCurrentUnit->m_pPull)
@@ -213,7 +213,7 @@ class Multiplexer:
 
             void run() {
                 m_Thread = boost::thread([this]{
-                    m_pMultiplexer->m_ThreadToStrand.with<void>(
+                    m_pMultiplexer->m_ThreadToCircuit.with<void>(
                         [this](std::map<boost::thread::id, unsigned>& m){
                             m[boost::this_thread::get_id()] = m_Index;
                         }
@@ -315,7 +315,7 @@ class Multiplexer:
             unsigned m_Index=0;
         };
         
-        friend class Strand;
+        friend class Circuit;
         
         Multiplexer(bool init_now=true):
             m_Concurrency(std::max<unsigned>(1U,boost::thread::hardware_concurrency()))
@@ -328,33 +328,33 @@ class Multiplexer:
         }
         void init() {
             for(unsigned i=0;i<m_Concurrency;++i)
-                m_Strands.emplace_back(make_tuple(
-                    kit::make_unique<Strand>(this, i), CacheLinePadding()
+                m_Circuits.emplace_back(make_tuple(
+                    kit::make_unique<Circuit>(this, i), CacheLinePadding()
                 ));
         }
         //void join() {
-        //    for(auto& s: m_Strands)
+        //    for(auto& s: m_Circuits)
         //        s.join();
         //}
         void stop() {
-            for(auto& s: m_Strands)
+            for(auto& s: m_Circuits)
                 std::get<0>(s)->stop();
         }
 
-        Strand& any_strand(){
+        Circuit& any_circuit(){
             // TODO: load balancing would be nice here
-            return *std::get<0>((m_Strands[std::rand() % m_Concurrency]));
+            return *std::get<0>((m_Circuits[std::rand() % m_Concurrency]));
         }
         
-        Strand& strand(unsigned idx) {
-            return *std::get<0>((m_Strands[idx % m_Concurrency]));
+        Circuit& circuit(unsigned idx) {
+            return *std::get<0>((m_Circuits[idx % m_Concurrency]));
         }
         
-        Strand& this_strand(){
-            return *m_ThreadToStrand.with<Strand*>(
+        Circuit& this_circuit(){
+            return *m_ThreadToCircuit.with<Circuit*>(
                 [this](std::map<boost::thread::id, unsigned>& m
             ){
-                return &strand(m[boost::this_thread::get_id()]);
+                return &circuit(m[boost::this_thread::get_id()]);
             });
         }
 
@@ -363,9 +363,9 @@ class Multiplexer:
         }
 
         void finish() {
-            for(auto& s: m_Strands)
+            for(auto& s: m_Circuits)
                 std::get<0>(s)->finish_nojoin();
-            for(auto& s: m_Strands)
+            for(auto& s: m_Circuits)
                 std::get<0>(s)->join();
         }
 
@@ -377,9 +377,9 @@ class Multiplexer:
         };
 
         const unsigned m_Concurrency;
-        std::vector<std::tuple<std::unique_ptr<Strand>, CacheLinePadding>> m_Strands;
+        std::vector<std::tuple<std::unique_ptr<Circuit>, CacheLinePadding>> m_Circuits;
 
-        kit::mutex_wrap<std::map<boost::thread::id, unsigned>> m_ThreadToStrand;
+        kit::mutex_wrap<std::map<boost::thread::id, unsigned>> m_ThreadToCircuit;
 };
 
 #endif
