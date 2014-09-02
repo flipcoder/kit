@@ -49,10 +49,9 @@ void SchemaBase<Mutex> :: validate(const std::shared_ptr<MetaBase<TMutex>>& m) c
             
         //LOGf("path element: %s", boost::algorithm::join(path,"/"));
         
-        std::tuple<std::shared_ptr<MetaBase<Mutex>>, bool> r;
+        std::shared_ptr<MetaBase<Mutex>> r;
         try{
-            r = m_pSchema->path(path);
-            auto schema_metadata = std::get<0>(r);
+            auto schema_metadata = m_pSchema->path(path);
             bool valid_value = false;
             //LOGf("json: %s", schema_metadata->serialize(MetaFormat::JSON));
                 for(auto&& val: *schema_metadata->meta(".values")) {

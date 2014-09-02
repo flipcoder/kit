@@ -473,9 +473,10 @@ void MetaBase<Mutex> :: serialize(const std::string& fn, unsigned flags) const
 }
 
 template<class Mutex>
-std::tuple<std::shared_ptr<MetaBase<Mutex>>, bool> MetaBase<Mutex> :: path(
-    const std::vector<std::string>& path,
-    unsigned flags
+std::shared_ptr<MetaBase<Mutex>> MetaBase<Mutex> :: path(
+    const std::vector<std::string>& pth,
+    unsigned flags,
+    bool* created
 ){
     // don't this->lock until you have the root
 
@@ -504,10 +505,8 @@ std::tuple<std::shared_ptr<MetaBase<Mutex>>, bool> MetaBase<Mutex> :: path(
 
     // TODO: replace this with the backwards try-locks like in parent()
 
-    bool created = false;
-
     std::list<std::unique_lock<Mutex>> locks;
-    for(auto&& p: path)
+    for(auto&& p: pth)
     {
         locks.push_back(base->lock());
         try{
@@ -520,7 +519,8 @@ std::tuple<std::shared_ptr<MetaBase<Mutex>>, bool> MetaBase<Mutex> :: path(
                 auto child = std::make_shared<MetaBase<Mutex>>();
                 base->set(p, child);
                 base = child;
-                created = true;
+                if(created)
+                    *created = true;
                 continue;
             }else{
                 throw std::out_of_range("no such path");
@@ -532,7 +532,7 @@ std::tuple<std::shared_ptr<MetaBase<Mutex>>, bool> MetaBase<Mutex> :: path(
     }
     //locks.clear();
 
-    return std::tuple<std::shared_ptr<MetaBase<Mutex>>,bool>(base, !created);
+    return base;
 }
 
 template<class Mutex>

@@ -673,6 +673,21 @@ class MetaBase:
             return m_Elements.at(idx).value;
         }
 
+        std::shared_ptr<MetaBase<Mutex>> meta(
+            const std::string& key,
+            const std::shared_ptr<MetaBase<Mutex>>& def
+        ){
+            auto l = this->lock();
+            try{
+                return boost::any_cast<std::shared_ptr<MetaBase<Mutex>>>(
+                    m_Elements.at(m_Keys.at(key)).value
+                );
+            }catch(...){
+                set(key, def);
+                return def;
+            }
+        }
+
         std::shared_ptr<MetaBase<Mutex>> meta(const std::string& key) {
             auto l = this->lock();
             return boost::any_cast<std::shared_ptr<MetaBase<Mutex>>>(
@@ -766,10 +781,20 @@ class MetaBase:
         };
         // Ensures the path exists in the tree and initializes an element `val`
         // the endpoint.
-        std::tuple<std::shared_ptr<MetaBase<Mutex>>, bool> path(
+        std::shared_ptr<MetaBase<Mutex>> path(
             const std::vector<std::string>& path,
-            unsigned flags = 0
+            unsigned flags = 0,
+            bool* created = nullptr
         );
+        std::shared_ptr<MetaBase<Mutex>> path(
+            std::string& p,
+            unsigned flags = 0,
+            bool* created = nullptr
+        ){
+            std::string s;
+            boost::split(p, s, boost::is_any_of("./\\"));
+            return path(p, flags, created);
+        }
 
         //std::optional<
 
