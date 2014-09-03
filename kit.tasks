@@ -5,7 +5,7 @@
         # may need to do some research first... (drop-in won't work)
     [|] json serialization (recursive)
         [ ] use pure flag for json hint (serialize as [] vs. {}?)
-        [.] fast type check instead of branching -- use typeid as offset ;)
+        [.] fast type check instead of branching -- use typeid as offset
         [.] containers (vectors, maps?)
     [-] treespace locks
         # update: don't actually need this anymore with weak-locking system
@@ -19,7 +19,12 @@
         # ---
         # ensure the parent pointer is respected in disconnect routines
         # incorporate m_IndexOfSelfInParent in add(), set(), etc.?
-    [ ] path
+    [x] path
+        # example: meta->path("this.is.a.path")
+    [ ] path array indices
+        # example: meta->path("items[3].subitems[1]")
+    [ ] subdocument loading with a path
+        # example: Meta("file.json:path.here")
     [-] binary
         [-] serial
         [-] deserial

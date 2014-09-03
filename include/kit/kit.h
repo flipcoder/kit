@@ -1021,6 +1021,8 @@ namespace kit
         }
         return false;
     }
+    
+    #define TRY(expr) try{ (expr); } catch(...) {}
 
     //template<class T>
     //class local_singleton
