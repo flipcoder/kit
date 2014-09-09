@@ -394,14 +394,53 @@ std::string MetaBase<Mutex> :: serialize(MetaFormat fmt, unsigned flags) const
 }
 
 template<class Mutex>
-void MetaBase<Mutex> :: deserialize(MetaFormat fmt, const std::string& data, const std::string& fn)
+void MetaBase<Mutex> :: deserialize(MetaFormat fmt, const std::string& data, const std::string& fn, const std::string& pth)
 {
     std::istringstream iss(data);
-    deserialize(fmt, iss, fn);
+    deserialize(fmt, iss, fn, pth);
 }
 
 template<class Mutex>
-void MetaBase<Mutex> :: deserialize(MetaFormat fmt, std::istream& data, const std::string& fn)
+void MetaBase<Mutex> :: deserialize_json(
+    const Json::Value& v,
+    const std::vector<std::string>& pth
+){
+    //if(pth.empty())
+    //{
+    //    deserialize_json(v);
+    //    return;
+    //}
+    
+    for(auto i = v.begin();
+        i != v.end();
+        ++i)
+    {
+        auto&& e = *i;
+
+        std::string k;
+        if(i.memberName())
+            k = i.memberName();
+
+        if(/*e.isArray() || */e.isObject())
+        {
+            if(pth.size() == 1)
+            {
+                deserialize_json(e);
+                return;
+            }
+            if(not pth.empty() && *pth.begin() == k)
+            {
+                std::vector<std::string> cur_pth(pth.begin()+1,pth.end());
+                deserialize_json(e, cur_pth);
+                return;
+            }
+        }
+    }
+    ERROR(READ, "subpath");
+}
+
+template<class Mutex>
+void MetaBase<Mutex> :: deserialize(MetaFormat fmt, std::istream& data, const std::string& fn, const std::string& pth)
 {
     auto l = this->lock();
 
@@ -417,8 +456,15 @@ void MetaBase<Mutex> :: deserialize(MetaFormat fmt, std::istream& data, const st
                 ERROR(PARSE, fn);
             }
         }
-
-        deserialize_json(root);
+        
+        if(pth.empty())
+            deserialize_json(root);
+        else
+        {
+            //std::vector<std::string> pth_vec;
+            //boost::split(pth, pth_vec, boost::is_any_of("."));
+            //deserialize_json(root, pth_vec);
+        }
     }
     else if (fmt == MetaFormat::HUMAN)
     {
@@ -447,8 +493,32 @@ void MetaBase<Mutex> :: deserialize(const std::string& fn)
     if(!file.good())
         ERROR(READ, fn);
 
+    // TODO: subdocument path
+    std::string pth;
+    auto ofs = fn.rfind(':');
+    if(ofs != std::string::npos && ofs > 1)
+       pth = fn.substr(ofs+1);
+    
     // may throw, but dont catch
-    deserialize(filename_to_format(fn), file, fn);
+    deserialize(filename_to_format(fn), file, fn, pth);
+
+    //if(not pth.empty())
+    //{
+    //    // this is temp, so no need to lock
+    //    std::shared_ptr<MetaBase<Mutex>> m;
+    //    try{
+    //        MetaBase<Mutex>* par = parent_ptr();
+    //        bool created = false;
+    //        m = path(pth, 0, &created);
+    //        if(created)
+    //            ERROR(READ, fn);
+    //        *this = std::move(*m);
+    //        parent(par);
+    //        m = std::make_shared<MetaBase<Mutex>>();
+    //    }catch(...){
+    //        ERROR(READ, fn);
+    //    }
+    //}
 
     m_Filename = fn;
 }
@@ -699,7 +769,6 @@ void MetaBase<Mutex> :: merge(
     const std::string& fn,
     unsigned flags
 ){
-    // TODO: Could use null mutex for temp meta here
     merge(std::make_shared<MetaBase<kit::dummy_mutex>>(fn), flags);
 }
 

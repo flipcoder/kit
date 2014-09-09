@@ -354,8 +354,6 @@ class MetaBase:
         MetaBase(const MetaBase&)= delete;
         MetaBase& operator=(const MetaBase&) = delete;
         MetaBase& operator=(MetaBase&&) = delete;
-
-        // TODO: add init list
         
         virtual ~MetaBase() {}
         
@@ -478,6 +476,15 @@ class MetaBase:
             return par->first_key_of(this->shared_from_this());
         }
 
+        const MetaBase<Mutex>* parent_ptr() const {
+            auto l = this->lock();
+            return m_pParent;
+        }
+        MetaBase<Mutex>* parent_ptr() {
+            auto l = this->lock();
+            return m_pParent;
+        }
+        
         std::shared_ptr<MetaBase<Mutex>> parent(
             unsigned lock_flags=0,
             bool recursion=false
@@ -791,9 +798,9 @@ class MetaBase:
             unsigned flags = 0,
             bool* created = nullptr
         ){
-            std::string s;
-            boost::split(p, s, boost::is_any_of("./\\"));
-            return path(p, flags, created);
+            std::vector<std::string> v;
+            boost::split(p, v, boost::is_any_of("."));
+            return path(v, flags, created);
         }
 
         //std::optional<
@@ -1111,12 +1118,14 @@ class MetaBase:
         void deserialize(
             MetaFormat fmt,
             const std::string& data,
-            const std::string& fn = std::string()
+            const std::string& fn = std::string(),
+            const std::string& pth = std::string()
         );
         void deserialize(
             MetaFormat fmt,
             std::istream& data,
-            const std::string& fn = std::string()
+            const std::string& fn = std::string(),
+            const std::string& pth = std::string()
         );
         
         void deserialize() {
@@ -1200,6 +1209,7 @@ class MetaBase:
 
         void serialize_json(Json::Value& v) const;
         void deserialize_json(const Json::Value& v);
+        void deserialize_json(const Json::Value& v, const std::vector<std::string>& pth);
 
         std::string m_Filename;
         bool m_bModified = true; // modified since last save?
