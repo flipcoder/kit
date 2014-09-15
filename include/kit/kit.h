@@ -793,13 +793,13 @@ namespace kit
 
             void clear()
             {
-                on_destroy();
+                //on_destroy();
                 on_change.disconnect_all_slots();
-                on_destroy.disconnect_all_slots();
+                //on_destroy.disconnect_all_slots();
             }
             
             boost::signals2::signal<void(const T&)> on_change;
-            boost::signals2::signal<void()> on_destroy;
+            //boost::signals2::signal<void()> on_destroy;
             
         private:
             
@@ -1020,6 +1020,23 @@ namespace kit
             return true;
         }
         return false;
+    }
+
+    template<class T>
+    T clamp(T val, T minval, T maxval)
+    {
+        if(val < minval)
+            return minval;
+        if(val > maxval)
+            return maxval;
+        return val;
+    }
+
+    
+    template<class T>
+    T saturate(T val)
+    {
+        return clamp(val, T(0.0), T(1.0));
     }
     
     #define TRY(expr) try{ (expr); } catch(...) {}

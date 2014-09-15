@@ -2,6 +2,7 @@
 #define _FREQ_H
 
 #include <iostream>
+#include <boost/signals2.hpp>
 #include "../math/common.h"
 #include "../kit.h"
 #include "../log/log.h"
@@ -118,8 +119,9 @@ public:
         unsigned long m_ulAlarmTime;
         unsigned long m_ulStartTime;
 
-        //todo:add alarm pausing?
-    
+        std::shared_ptr<boost::signals2::signal<void()>> m_pCallback =
+            std::make_shared<boost::signals2::signal<void()>>();
+        
     public:
     
         //Alarm():
@@ -160,7 +162,7 @@ public:
             return *this;
         }
 
-        bool hasTimer() const { return (m_pTimer!=NULL); }
+        bool has_timer() const { return (m_pTimer!=NULL); }
         
         void timer(Timeline* timerRef)
         {
@@ -238,6 +240,16 @@ public:
             return Freq::Time(m_pTimer->ms() - m_ulAlarmTime);
         }
 
+        void connect(std::function<void()> cb) {
+            m_pCallback->connect(std::move(cb));
+        }
+        void poll() {
+            if(elapsed()) {
+                (*m_pCallback)();
+                m_pCallback->disconnect_all_slots();
+            }
+        }
+        
         float fraction_left() const
         {
             if(elapsed())

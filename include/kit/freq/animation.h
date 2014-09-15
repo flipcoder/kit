@@ -98,6 +98,7 @@ class Frame
             Freq::Time time = Freq::Time(0),
             std::function<T (T, T, float)> easing =
                 std::function<T (T, T, float)>(),
+            std::function<void()> cb = std::function<void()>(),
             Freq::Timeline* timeline = nullptr
         ):
             m_Value(value),
@@ -108,6 +109,8 @@ class Frame
             m_pCallback(std::make_shared<boost::signals2::signal<void()>>())
             //m_pAnimation(nav)
         {
+            if(cb)
+                m_pCallback->connect(std::move(cb));
             //assert(m_pTimeline);
         }
         //void nav(Animation<T>* nav) {
@@ -121,7 +124,7 @@ class Frame
         }
 
         template<class Func>
-        void callback(Func func) {
+        void connect(Func func) {
             m_pCallback->connect(func);
         }
         
@@ -305,7 +308,9 @@ class Animation:
 
             if(t.ms())
             {
-                m_Frames.push_back(Frame<T>(position, t, easing, &m_Timeline));
+                auto f = Frame<T>(position, t, easing);
+                f.timeline(&m_Timeline);
+                m_Frames.push_back(std::move(f));
                 reset();
             }
         }
