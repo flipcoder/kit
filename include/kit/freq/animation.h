@@ -131,6 +131,9 @@ class Frame
         std::shared_ptr<boost::signals2::signal<void()>> callback() {
             return m_pCallback;
         }
+        void callback(std::function<void()> cb) {
+            m_pCallback->connect(std::move(cb));
+        }
 
         //virtual void logic(Freq::Time t) {
         //    //m_pTimeline->logic(t);

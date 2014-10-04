@@ -162,7 +162,7 @@ class Multiplexer:
                             auto* coroptr = m_Units.back().m_pPush.get();
                             m_Units.back().m_Ready = std::function<bool()>(
                                 [coroptr]() -> bool {
-                                    return *coroptr;
+                                    return bool(*coroptr);
                                 }
                             );
                             m_Units.back().m_Func = Task<void()>(std::function<void()>(

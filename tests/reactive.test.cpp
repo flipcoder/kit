@@ -26,22 +26,22 @@ TEST_CASE("Reactive","[reactive]") {
     
     SECTION("as a signal") {
         bool updated = false;
-        bool destroyed = false;
+        //bool destroyed = false;
          
         reactive<bool> prop;
         prop.on_change.connect([&updated](const bool& b){
             updated = b;
         });
-        prop.on_destroy.connect([&destroyed](){
-            destroyed = true;
-        });
+        //prop.on_destroy.connect([&destroyed](){
+        //    destroyed = true;
+        //});
         REQUIRE(updated == false); // still false
         prop = true;
         REQUIRE(updated == true); // now true
         
-        REQUIRE(destroyed == false);
-        prop.clear();
-        REQUIRE(destroyed == true);
+        //REQUIRE(destroyed == false);
+        //prop.clear();
+        //REQUIRE(destroyed == true);
     }
     
 }

@@ -856,7 +856,7 @@ namespace kit
             }
             
             bool valid() const {
-                return m_Value;
+                return bool(m_Value);
             }
 
             boost::optional<T> try_get() {
