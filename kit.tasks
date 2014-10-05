@@ -1,5 +1,6 @@
 * meta
-    * fixes
+    * bugs
+        [>] 1 serialized as null in unit tests
         [ ] fix serialization warnings
     [-] switch keys to bimap for faster removal key changes
         # may need to do some research first... (drop-in won't work)
