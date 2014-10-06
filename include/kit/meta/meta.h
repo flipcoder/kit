@@ -186,8 +186,8 @@ struct MetaElement
     boost::any value;
 
     enum Flags {
-        SERIALIZE = kit::bit(0),
-        DEFAULT_FLAGS = SERIALIZE
+        SKIP_SERIALIZE = kit::bit(0),
+        DEFAULT_FLAGS = 0
     };
     unsigned flags = DEFAULT_FLAGS;
 

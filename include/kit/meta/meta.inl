@@ -209,7 +209,7 @@ Json::Value MetaElement::serialize_json(
 
     Json::Value v;
 
-    if(not (flags & SERIALIZE))
+    if((flags & SKIP_SERIALIZE))
         throw SkipSerialize();
         
     if(type.id == MetaType::ID::META)
