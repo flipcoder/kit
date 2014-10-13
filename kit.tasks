@@ -47,7 +47,7 @@
 * kit.h (util)
 
 * async
-    [>] coroutine exceptions don't make into Task promise (?)
+    [ ] coroutine exceptions don't make into Task promise (?)
         # happens in unit test for Coroutine unwinding
         # feature is impl'ed, so this is definitely a bug
     [ ] add way to yield to a specific multiplexer YIELD_MX()

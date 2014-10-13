@@ -40,4 +40,12 @@ TEST_CASE("Log","[log]") {
         // make sure all indent counts for threads auto-cleared
         REQUIRE(Log::get().num_threads() == 0);
     }
+
+    SECTION("emit"){
+        //auto ll = Log::get().lock();
+        //Log::Capturer c;
+        //LOG("hello");
+        //REQUIRE(Log::get().emit() == "hello");
+    }
 }
+
