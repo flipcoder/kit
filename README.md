@@ -4,6 +4,9 @@ My personal C++11 toolset
 ## async
 Stackful coroutines, task scheduling, strands, (Go-style) bufferable channels
 
+## reactive
+reactive (signal-paired vars) and lazy evaluation
+
 ## meta
 Thread-aware serializable meta-objects, property trees, and reflection
 
