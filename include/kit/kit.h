@@ -607,6 +607,14 @@ namespace kit
         c.erase(std::remove(ENTIRE(c), o), c.end());
     }
 
+    template<class T, class ...Args>
+    std::future<T> make_future(Args&&... args)
+    {
+        std::promise<T> tmp;
+        tmp.set_value(std::forward<Args>(args)...);
+        return tmp.get_future();
+    }
+
     template<class T, class... Args>
     std::unique_ptr<T> make_unique(Args&&... args)
     {

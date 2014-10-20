@@ -101,11 +101,16 @@ namespace Matrix {
         f[10]=v[2];
         f[15]=1.0f;
     }
-    // assuming uniform scale
-    inline float uniform_scale(glm::mat4& m) {
-        float* f = glm::value_ptr(m);
+    
+    inline float uniform_scale(const glm::mat4& m) {
+        const float* f = glm::value_ptr(m);
         return f[0];
     }
+    inline glm::vec3 scale(const glm::mat4& m) {
+        const float* f = glm::value_ptr(m);
+        return glm::vec3(f[0], f[5], f[10]);
+    }
+
     //inline float average_scale(glm::mat4& m) {
     //    float* f = glm::value_ptr(m);
     //    return (f[0] + f[5] + f[10]) / 3.0f;

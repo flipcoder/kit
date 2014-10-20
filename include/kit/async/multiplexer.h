@@ -256,6 +256,13 @@ class Multiplexer:
                 auto l = lock();
                 return m_Units.empty();
             }
+            void sync() {
+                while(true){
+                    if(empty())
+                        return;
+                    boost::this_thread::yield();
+                };
+            }
             size_t buffered() const {
                 auto l = lock();
                 return m_Buffered;

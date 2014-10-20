@@ -291,10 +291,11 @@ class Animation:
             m_Frames.clear();
         }
         void finish(){
-            process();
             if(!m_Frames.empty()) {
-                m_Current = m_Frames.back().value();
+                auto current = m_Frames.back().value();
+                process();
                 m_Frames.clear();
+                m_Current = current;
             }
         }
         void stop(T position) {
