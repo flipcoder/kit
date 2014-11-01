@@ -7,18 +7,26 @@
 #include "../kit.h"
 #include "icache.h"
 
-template<class Class, class T>
+template<class Class, class T, class Mutex=kit::optional_mutex<std::recursive_mutex>>
 class Cache:
-    public Factory<Class, std::tuple<T, ICache*>>,
+    public Factory<Class, std::tuple<T, ICache*>, std::string, Mutex>,
     public ICache,
-    virtual public kit::mutexed<std::recursive_mutex>
+    virtual public kit::mutexed<Mutex>
 {
     public:
+        
+        Cache() = default;
+        Cache(std::string fn):
+            Factory<Class, std::tuple<T, ICache*>>(fn)
+        {}
+        Cache(std::shared_ptr<Meta> cfg):
+            Factory<Class, std::tuple<T, ICache*>>(cfg)
+        {}
         
         virtual ~Cache() {}
         
         virtual void optimize() override {
-            auto l = lock();
+            auto l = this->lock();
             for(auto itr = m_Resources.begin();
                 itr != m_Resources.end();)
             {
@@ -30,7 +38,7 @@ class Cache:
         }
         
         virtual std::shared_ptr<Class> cache_raw(const T& arg) {
-            auto l = lock();
+            auto l = this->lock();
             try{
                 return m_Resources.at(arg);
             }catch(const std::out_of_range&){
@@ -43,7 +51,7 @@ class Cache:
         }
         
         virtual std::shared_ptr<Class> cache(T arg) {
-            auto l = lock();
+            auto l = this->lock();
             if(m_Transformer)
                 arg = m_Transformer(arg);
             return cache_raw(arg);
@@ -55,7 +63,7 @@ class Cache:
         
         template<class Cast>
         std::shared_ptr<Cast> cache_as(T arg) {
-            auto l = lock();
+            auto l = this->lock();
             if(m_Transformer)
                 arg = m_Transformer(arg);
             std::shared_ptr<Cast> p;
@@ -76,16 +84,16 @@ class Cache:
         }
         
         virtual size_t size() const override {
-            auto l = lock();
+            auto l = this->lock();
             return m_Resources.size();
         }
         virtual bool empty() const override {
-            auto l = lock();
+            auto l = this->lock();
             return m_Resources.empty();
         }
 
         virtual void clear() override {
-            auto l = lock();
+            auto l = this->lock();
             m_Resources.clear();
         }
 
@@ -93,7 +101,7 @@ class Cache:
             return m_Transformer(t);
         }
         void register_transformer(std::function<T(const T&)> f) {
-            auto l = lock();
+            auto l = this->lock();
             m_Transformer=f;
         }
         

@@ -25,10 +25,24 @@
 struct MetaType {
 
     MetaType() = default;
-    MetaType(MetaType&&) = default;
-    MetaType(const MetaType&) = default;
-    MetaType& operator=(MetaType&&) = default;
-    MetaType& operator=(const MetaType&) = default;
+    MetaType(MetaType&& rhs):
+        id(rhs.id),
+        flags(rhs.flags)
+    {}
+    MetaType(const MetaType& rhs):
+        id(rhs.id),
+        flags(rhs.flags)
+    {}
+    MetaType& operator=(MetaType&& rhs) {
+        id=rhs.id;
+        flags=rhs.flags;
+        return *this;
+    }
+    MetaType& operator=(const MetaType& rhs) {
+        id=rhs.id;
+        flags=rhs.flags;
+        return *this;
+    }
 
     template<class T>
     MetaType(T val) {
@@ -113,16 +127,41 @@ struct MetaType {
 
 struct MetaElement
 {
+    MetaElement() = default;
     MetaElement(MetaType type, const std::string& key, boost::any&& value):
         type(type),
         key(key),
         value(value)
     {}
-
-    MetaElement(const MetaElement& e) = default;
-    MetaElement(MetaElement&& e) = default;
-    MetaElement& operator=(const MetaElement& e) = default;
-
+    MetaElement(const MetaElement& rhs):
+        type(rhs.type),
+        key(rhs.key),
+        value(rhs.value),
+        flags(rhs.flags)
+    {}
+    MetaElement(MetaElement&& rhs):
+        type(rhs.type),
+        key(rhs.key),
+        value(std::move(rhs.value)),
+        flags(rhs.flags)
+    {}
+    MetaElement& operator=(const MetaElement& rhs)
+    {
+        type = rhs.type;
+        key = rhs.key;
+        value = rhs.value;
+        flags = rhs.flags;
+        return *this;
+    }
+    MetaElement& operator=(MetaElement&& rhs)
+    {
+        type = rhs.type;
+        key = rhs.key;
+        value = std::move(rhs.value);
+        flags = rhs.flags;
+        return *this;
+    }
+    
     template<class Mutex>
     Json::Value serialize_json(unsigned flags = 0) const;
 
@@ -134,7 +173,6 @@ struct MetaElement
                 std::runtime_error("null pointer exception")
             {}
     };
-
     
     //template<class Mutex>
     //void deserialize_json(const Json::Value&);
@@ -148,14 +186,10 @@ struct MetaElement
     //{}
     // type data (reflection)
 
-    /*
-     * Deduced type id
-     */
-    MetaType type; // null
-
     void nullify() {
         type.id = MetaType::ID::EMPTY;
         value = boost::any();
+        on_change.disconnect_all_slots();
     }
 
     explicit operator bool() const {
@@ -163,8 +197,7 @@ struct MetaElement
     }
 
     void trigger() {
-        //if(change)
-        //    (*change)();
+        on_change();
     }
 
     // may throw bad_any_cast
@@ -172,6 +205,12 @@ struct MetaElement
     T as() const {
         return boost::any_cast<T>(value);
     }
+
+    
+    /*
+     * Deduced type id
+     */
+    MetaType type; // null
 
     /*
      * Key (if any)
@@ -192,7 +231,7 @@ struct MetaElement
     unsigned flags = DEFAULT_FLAGS;
 
     // value change listeners
-    //std::shared_ptr<boost::signals2::signal<void()>> on_change;
+    boost::signals2::signal<void()> on_change;
 };
 
 enum class MetaFormat : unsigned {
@@ -351,7 +390,9 @@ class MetaBase:
         MetaBase(MetaFormat fmt, const std::string& data);
 
         MetaBase(MetaBase&&)= delete;
-        MetaBase(const MetaBase&)= delete;
+        
+        MetaBase(const MetaBase&) = delete;
+        explicit MetaBase(const std::shared_ptr<MetaBase<Mutex>>& rhs);
         MetaBase& operator=(const MetaBase&) = delete;
         MetaBase& operator=(MetaBase&&) = delete;
         
@@ -864,8 +905,19 @@ class MetaBase:
                 if((itr = m_Keys.find(key)) != m_Keys.end()) {
                     // TODO: if dynamic typing is off, check type compatibility
                     auto& e = m_Elements[itr->second];
-                    e.type = MetaType(val); // overwrite type just in case
-                    e.value = val;
+                    if(e.type.id != MetaType(val).id)
+                    {
+                        // type changed
+                        e.type = MetaType(val);
+                        e.value = val;
+                        e.on_change.disconnect_all_slots();
+                    }
+                    else
+                    {
+                        e.value = val;
+                        e.trigger();
+                    }
+                    // 
                     // TODO: trigger change listener?... or maybe only for sync()?
                     return itr->second;
                 }
@@ -916,13 +968,27 @@ class MetaBase:
             T&& val
         ){
             // Should really check type compatibility here...
+            auto l = this->lock();
 
             try{
-                m_Elements.at(offset).value = val;
+                auto& e = m_Elements.at(offset);
+                if(e.value != val) {
+                    e.value = val;
+                    e.trigger();
+                }
             }catch(...){
                 return false;
             }
             return true;
+        }
+
+        boost::signals2::connection on_change(
+            const std::string& key,
+            const boost::signals2::signal<void()>::slot_type& slot
+        ){
+            auto l = this->lock();
+            auto& e = m_Elements.at(index(key));
+            return e.on_change.connect(slot);
         }
 
         /*
@@ -976,9 +1042,11 @@ class MetaBase:
         //}
 
         void callbacks(bool enabled) {
+            auto l = this->lock();
             m_bCallbacks = enabled;
         }
         bool callbacks() {
+            auto l = this->lock();
             return m_bCallbacks;
         }
 

@@ -18,6 +18,13 @@ MetaBase<Mutex> :: MetaBase(MetaFormat fmt, const std::string& data)
 }
 
 template<class Mutex>
+MetaBase<Mutex> :: MetaBase(const std::shared_ptr<MetaBase<Mutex>>& rhs)
+{
+    clear();
+    merge(rhs);
+}
+
+template<class Mutex>
 void MetaBase<Mutex> :: from_args(std::vector<std::string> args)
 {
     // remove whitespace args

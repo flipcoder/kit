@@ -3,7 +3,9 @@
         "env": {
             "CXX": "clang++"
         },
-        "makefile_params": "CXX='clang++'"
+        "makefile_params": [
+            "CXX='clang++'"
+        ]
     },
 
     "dependencies": {

@@ -12,16 +12,22 @@
 #include <limits>
 #include "ifactory.h"
 #include "../kit.h"
+#include "../meta/meta.h"
 
 // TODO: add some way to have resolvers pass data into constructor instead
 //   of relying on unchangable ctor parameters (hmm...)
 // TODO: or how about add second callback for after the ctor (?)
 //   Let's use signals :D
 
-template<class Class, class T, class ClassName=std::string>
+template<
+    class Class,
+    class T,
+    class ClassName=std::string,
+    class Mutex=kit::optional_mutex<std::recursive_mutex>
+>
 class Factory:
     public IFactory,
-    virtual public kit::mutexed<std::recursive_mutex>
+    virtual public kit::mutexed<Mutex>
 {
     private:
 
@@ -44,13 +50,27 @@ class Factory:
 
         std::function<unsigned(const T&)> m_Resolver;
         std::function<T(const T&)> m_Transformer;
+        std::shared_ptr<MetaBase<Mutex>> m_pConfig;
 
     public:
 
+        Factory():
+            m_pConfig(std::make_shared<MetaBase<Mutex>>())
+        {}
+        Factory(std::string fn):
+            m_pConfig(std::make_shared<MetaBase<Mutex>>(fn))
+        {}
+        Factory(std::shared_ptr<Meta> cfg):
+            m_pConfig(std::make_shared<MetaBase<Mutex>>(cfg))
+        {}
+
+        std::shared_ptr<MetaBase<Mutex>> config() { return m_pConfig; }
+        std::shared_ptr<const MetaBase<Mutex>> config() const { return m_pConfig; }
+        
         virtual ~Factory() {}
 
         bool empty() const {
-            auto l = lock();
+            auto l = this->lock();
             return m_Classes.empty();
         }
         
@@ -62,7 +82,7 @@ class Factory:
         ) {
             // bind subclass's make_shared() to functor and store it in m_Classes list
             // TODO: exceptions?
-            auto l = lock();
+            auto l = this->lock();
 
             const size_t size = m_Classes.size();
             if(id == std::numeric_limits<unsigned>::max()) // don't care about class ID
@@ -92,12 +112,12 @@ class Factory:
         }
 
         void register_resolver(std::function<unsigned(const T&)> func) {
-            auto l = lock();
+            auto l = this->lock();
             m_Resolver = func;
         }
 
         unsigned class_id(ClassName name) const {
-            auto l = lock();
+            auto l = this->lock();
             try{
                 return m_ClassNames.at(name);
             } catch(const std::out_of_range&) {}
@@ -108,14 +128,14 @@ class Factory:
         }
 
         std::shared_ptr<Class> create(unsigned id, T args) const {
-            auto l = lock();
+            auto l = this->lock();
             if(m_Transformer)
                 args = m_Transformer(args);
             return m_Classes.at(id)(args);
         }
 
         std::shared_ptr<Class> create(T args) const {
-            auto l = lock();
+            auto l = this->lock();
             if(m_Transformer)
                 args = m_Transformer(args);
             unsigned id = m_Resolver(args);
@@ -132,12 +152,21 @@ class Factory:
         }
         
         void register_transformer(std::function<T(const T&)> f) {
-            auto l = lock();
+            auto l = this->lock();
             m_Transformer=f;
         }
 
         T transform(const T& t){
             return m_Transformer(t);
+        }
+        
+        void share_config(std::shared_ptr<MetaBase<Mutex>> cfg){
+            auto l = this->lock();
+            m_pConfig = cfg;
+        }
+        std::shared_ptr<MetaBase<Mutex>> share_config() {
+            auto l = this->lock();
+            return m_pConfig;
         }
 
         //std::vector<std::shared_ptr<Class>> create_all(

@@ -134,6 +134,25 @@ namespace kit
     };
     
     template<class Mutex=std::mutex>
+    struct optional_mutex
+    {
+        void lock() {
+            if(mutex)
+                mutex->lock();
+        }
+        bool try_lock() {
+            if(mutex)
+                return mutex->try_lock();
+            return true;
+        }
+        void unlock() {
+            if(mutex)
+                mutex->unlock();
+        }
+        std::shared_ptr<Mutex> mutex = std::make_shared<Mutex>();
+    };
+    
+    template<class Mutex=std::mutex>
     class mutexed
     {
         public:
@@ -751,8 +770,9 @@ namespace kit
     template<class T>
     T safe_ptr(T ptr)
     {
-        if(ptr == nullptr)
+        if(ptr == nullptr){
             throw null_ptr_exception();
+        }
         return ptr;
     }
 
