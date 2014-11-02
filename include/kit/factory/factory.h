@@ -64,8 +64,14 @@ class Factory:
             m_pConfig(std::make_shared<MetaBase<Mutex>>(cfg))
         {}
 
-        std::shared_ptr<MetaBase<Mutex>> config() { return m_pConfig; }
-        std::shared_ptr<const MetaBase<Mutex>> config() const { return m_pConfig; }
+        std::shared_ptr<MetaBase<Mutex>> config() {
+            auto l = this->lock();
+            return m_pConfig; 
+        }
+        std::shared_ptr<const MetaBase<Mutex>> config() const {
+            auto l = this->lock();
+            return m_pConfig;
+        }
         
         virtual ~Factory() {}
 

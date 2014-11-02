@@ -136,6 +136,13 @@ namespace kit
     template<class Mutex=std::mutex>
     struct optional_mutex
     {
+        optional_mutex():
+            mutex(std::make_shared<Mutex>())
+        {}
+        optional_mutex(const optional_mutex<Mutex>&) = default;
+        optional_mutex(optional_mutex<Mutex>&&) = default;
+        optional_mutex& operator=(const optional_mutex<Mutex>&) = default;
+        optional_mutex& operator=(optional_mutex<Mutex>&&) = default;
         void lock() {
             if(mutex)
                 mutex->lock();
@@ -149,7 +156,7 @@ namespace kit
             if(mutex)
                 mutex->unlock();
         }
-        std::shared_ptr<Mutex> mutex = std::make_shared<Mutex>();
+        std::shared_ptr<Mutex> mutex;
     };
     
     template<class Mutex=std::mutex>
@@ -938,7 +945,7 @@ namespace kit
     template<class T>
     T sgn(T x) {return floatcmp(x,0.0)?0.0:(x>0.0?1.0:-1.0);}
     
-    #define TRY(expr) try{ (expr); } catch(...) {}
+    #define TRY(expr) try{ expr; } catch(...) {}
 
     //template<class T>
     //class local_singleton
