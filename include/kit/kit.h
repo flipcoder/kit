@@ -19,7 +19,7 @@
 #include <boost/signals2.hpp>
 
 // lazy range for entire container
-#define ENTIRE(blah) blah.begin(), blah.end()
+#define ENTIRE(blah) (blah).begin(), (blah).end()
 
 /*
  * marking unused parameter to supress warnings, but also keep the name
@@ -941,9 +941,6 @@ namespace kit
     {
         return clamp(val, T(0.0), T(1.0));
     }
-
-    template<class T>
-    T sgn(T x) {return floatcmp(x,0.0)?0.0:(x>0.0?1.0:-1.0);}
     
     #define TRY(expr) try{ expr; } catch(...) {}
 

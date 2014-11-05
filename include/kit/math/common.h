@@ -48,6 +48,11 @@ inline T abs(T x)
     return x>0?x:-x;
 }
 
+template<class T>
+T sgn(T x) {
+    return floatcmp(x,0.0)?0.0:(x>0.0?1.0:-1.0);
+}
+
 template <class T>
 inline T max_val(T a, T b)
 {
