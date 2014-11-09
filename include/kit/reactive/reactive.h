@@ -6,7 +6,6 @@
 
 namespace kit
 {
-
     template<class T>
     class reactive
     {

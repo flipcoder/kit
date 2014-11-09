@@ -1,7 +1,28 @@
 #include <catch.hpp>
 #include "../include/kit/reactive/reactive.h"
+#include "../include/kit/reactive/signal.h"
 using namespace std;
 using namespace kit;
+
+TEST_CASE("Signal","[signal]") {
+    SECTION("basic") {
+        unsigned i = 0;
+        signal<void()> sig;
+        REQUIRE(sig == false);
+        sig.connect([&i]{++i;});
+        REQUIRE(sig == true);
+        REQUIRE(i == 0);
+        sig();
+        REQUIRE(i == 1);
+        sig();
+        REQUIRE(i == 2);
+        REQUIRE(sig == true);
+        sig.clear();
+        REQUIRE(sig == false);
+        sig();
+        REQUIRE(i == 2);
+    }
+}
 
 TEST_CASE("Reactive","[reactive]") {
 
