@@ -1,6 +1,7 @@
 #include <catch.hpp>
 #include "../include/kit/kit.h"
 #include "../include/kit/async/async.h"
+#include "../include/kit/async/async_fstream.h"
 //#include "../include/kit/async/task.h"
 //#include "../include/kit/async/channel.h"
 //#include "../include/kit/async/multiplexer.h"
@@ -328,5 +329,24 @@ TEST_CASE("Coroutines","[coroutines]") {
     //    REQUIRE_THROWS(fut.get());
     //    REQUIRE(*unwound);
     //}
+}
+
+
+TEST_CASE("async_fstream","[async_fstream]") {
+    SECTION("file operations"){
+        // Beware global MX used inside this class,
+        //   so potential heisenbug exists among tests...
+        // Eventually class should allow custom mx to eliminate this risk
+        
+        const std::string fn = "/tmp/blah";
+        async_fstream file(fn);
+        file.with<bool>([](fstream& f){
+            return f.is_open();
+        }).get();
+        REQUIRE(file.filename().get() == fn);
+        file.close().get();
+        REQUIRE(file.filename().get() == "");
+        // success here is no hanging :)
+    }
 }
 

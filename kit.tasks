@@ -1,6 +1,7 @@
 * meta
     * bugs
         [ ] fix serialization warnings
+        [ ] serialization broken for arrays, booleans
     [-] switch keys to bimap for faster removal key changes
         # may need to do some research first... (drop-in won't work)
     [|] json serialization (recursive)

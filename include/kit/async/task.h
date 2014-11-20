@@ -4,6 +4,7 @@
 #include <boost/noncopyable.hpp>
 #include <future>
 #include <stdexcept>
+#include "../kit.h"
 
 template<class R, class ...Args>
 class Task;

@@ -3,6 +3,7 @@
 
 #include <boost/optional.hpp>
 #include "../kit.h"
+#include "signal.h"
 
 namespace kit
 {

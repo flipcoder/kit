@@ -21,8 +21,6 @@
 typedef boost::coroutines::coroutine<void>::pull_type pull_coro_t;
 typedef boost::coroutines::coroutine<void>::push_type push_coro_t;
 
-
-
 #define AWAIT_MX(MUX, EXPR) \
     [&]{\
         while(true)\
