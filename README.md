@@ -1,8 +1,17 @@
 # kit
 My personal C++11 toolset
+Copyright (c) 2013 Grady O'Connell
 
 ## async
-Stackful coroutines, task scheduling, strands, (Go-style) bufferable channels
+- Stackful coroutines
+- System of task separation strands/cores, called "circuits"
+- Easy per-circuit YIELD()
+- Task Scheduler (Similiar to boost asio, but simpler)
+- Intercircuit task transfering
+- (Go-style) buffered and unbuffered async channels, compatible with YIELD() statement
+- Async fstream alternative, cross-platform safe
+    - Superior and simpler (imo) than posix AIO in most use cases.
+- NOTE: Still needs more optimization to minimize contention on the circuit's task queue (WIP)
 
 ## reactive
 reactive (signal-paired vars) and lazy evaluation
