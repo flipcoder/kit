@@ -11,8 +11,6 @@ Copyright (c) 2013 Grady O'Connell
 - Intercircuit task transfering
 - (Go-style) buffered and unbuffered async channels, compatible with YIELD() statement
 - Async fstream alternative, cross-platform safe
-    - Superior and simpler (imo) than posix AIO in most use cases.
-- NOTE: Still needs more optimization to minimize contention on the circuit's task queue (WIP)
 
 ## reactive
 reactive (signal-paired vars) and lazy evaluation
