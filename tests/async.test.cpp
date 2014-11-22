@@ -350,3 +350,12 @@ TEST_CASE("async_fstream","[async_fstream]") {
     }
 }
 
+//TEST_CASE("Temp","[temp]") {
+//    SECTION("Some quick tests for debugging"){
+//        Multiplexer mx;
+//        REQUIRE(true);
+//        mx.finish();
+//        REQUIRE(true);
+//    }
+//}
+

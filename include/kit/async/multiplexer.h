@@ -97,7 +97,7 @@ class Multiplexer:
 
         class Circuit:
             //public IAsync,
-            public kit::mutexed<std::mutex>
+            public kit::mutexed<boost::mutex>
         {
         public:
             
@@ -129,6 +129,7 @@ class Multiplexer:
                             m_Units.emplace_back(cond, [cbc]() {
                                 cbc.get()();
                             });
+                            m_CondVar.notify_one();
                             return fut;
                         }
                     }
@@ -170,6 +171,7 @@ class Multiplexer:
                                         throw kit::yield_exception(); // continue
                                 }
                             ));
+                            m_CondVar.notify_one();
                             return fut;
                         }
                     }
@@ -217,13 +219,7 @@ class Multiplexer:
                         }
                     );
                     unsigned idx = 0;
-                    while(true) {
-                        boost::this_thread::interruption_point();
-                        next(idx); // next() iterates one index each call
-                        if(m_Finish && empty())
-                            return;
-                        boost::this_thread::yield();
-                    }
+                    while(next(idx)) {}
                 });
             }
             void forever() {
@@ -233,6 +229,10 @@ class Multiplexer:
             }
             void finish_nojoin() {
                 m_Finish = true;
+                {
+                    auto l = this->lock<boost::unique_lock<boost::mutex>>();
+                    m_CondVar.notify_one();
+                }
             }
             void join() {
                 if(m_Thread.joinable())
@@ -240,6 +240,10 @@ class Multiplexer:
             }
             void finish() {
                 m_Finish = true;
+                {
+                    auto l = this->lock<boost::unique_lock<boost::mutex>>();
+                    m_CondVar.notify_one();
+                }
                 if(m_Thread.joinable()) {
                     m_Thread.join();
                 }
@@ -247,11 +251,15 @@ class Multiplexer:
             void stop() {
                 if(m_Thread.joinable()) {
                     m_Thread.interrupt();
+                    {
+                        auto l = this->lock<boost::unique_lock<boost::mutex>>();
+                        m_CondVar.notify_one();
+                    }
                     m_Thread.join();
                 }
             }
             bool empty() const {
-                auto l = lock();
+                auto l = this->lock<boost::unique_lock<boost::mutex>>();
                 return m_Units.empty();
             }
             void sync() {
@@ -282,33 +290,44 @@ class Multiplexer:
             
         private:
 
-            virtual void next(unsigned& idx) {
-                auto l = this->lock(std::defer_lock);
-                if(l.try_lock())
-                {
-                    if(m_Units.empty() || idx >= m_Units.size())
-                    {
-                        idx = 0;
-                        return;
-                    }
-                    
-                    auto& task = m_Units[idx];
-                    if(!task.m_Ready || task.m_Ready()) {
-                        l.unlock();
-                        m_pCurrentUnit = &m_Units[idx];
-                        try{
-                            task.m_Func();
-                        }catch(...){
-                            l.lock();
-                            ++idx;
-                            //idx = std::min<unsigned>(idx+1, m_Units.size());
-                            return;
-                        }
-                        m_pCurrentUnit = nullptr;
-                        l.lock();
-                        m_Units.erase(m_Units.begin() + idx);
-                    }
+            // returns false only on empty() && m_Finish
+            virtual bool next(unsigned& idx) {
+                auto lck = this->lock<boost::unique_lock<boost::mutex>>();
+                //if(l.try_lock())
+                // wait until task queued or thread interrupt
+                while(true){
+                    boost::this_thread::interruption_point();
+                    if(not m_Units.empty())
+                        break;
+                    else if(m_Finish) // finished AND empty
+                        return false;
+                    m_CondVar.wait(lck);
+                    continue;
                 }
+                
+                if(idx >= m_Units.size())
+                    idx = 0;
+                
+                auto& task = m_Units[idx];
+                if(!task.m_Ready || task.m_Ready()) {
+                    lck.unlock();
+                    m_pCurrentUnit = &m_Units[idx]; // TODO: fix this garbage
+                    try{
+                        task.m_Func();
+                    }catch(...){
+                        lck.lock();
+                        //++idx;
+                        size_t sz = m_Units.size();
+                        idx = std::min<unsigned>(idx+1, sz);
+                        if(idx == sz)
+                            idx = 0;
+                        return true;
+                    }
+                    m_pCurrentUnit = nullptr;
+                    lck.lock();
+                    m_Units.erase(m_Units.begin() + idx);
+                }
+                return true;
             }
             
             Unit* m_pCurrentUnit = nullptr;
@@ -318,6 +337,7 @@ class Multiplexer:
             std::atomic<bool> m_Finish = ATOMIC_VAR_INIT(false);
             Multiplexer* m_pMultiplexer;
             unsigned m_Index=0;
+            boost::condition_variable m_CondVar;
         };
         
         friend class Circuit;

@@ -617,11 +617,10 @@ namespace kit
     }
     
     template<class Container, class Object>
-    bool has(const Container& c, const Object& o)
-    {
+    bool has(const Container& c, const Object& o) {
         return std::find(ENTIRE(c), o) != c.end();
     }
-
+    
     template<class Container, class Pred>
     void remove_if(Container& c, Pred&& p) {
         c.erase(std::remove_if(ENTIRE(c), p), c.end());
