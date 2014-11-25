@@ -972,10 +972,8 @@ class MetaBase:
 
             try{
                 auto& e = m_Elements.at(offset);
-                if(e.value != val) {
-                    e.value = val;
-                    e.trigger();
-                }
+                e.value = val;
+                e.trigger();
             }catch(...){
                 return false;
             }

@@ -28,16 +28,13 @@
  */
 #define UNUSED(blah)
 
-namespace compiler
-{
-    // branch optimization
-    //inline bool likely(bool expr) {
-    //    return __builtin_expect(expr,true);
-    //}
-    //inline bool unlikely(bool expr) {
-    //    return __builtin_expect(expr,false);
-    //}
-}
+#ifdef K_USE_BRANCH_OPT
+    #define K_LIKELY(expr) __builtin_expect((expr),true)
+    #define K_UNLIKELY(expr) __builtin_expect((expr),false)
+#else
+    #define K_LIKELY(expr) (expr)
+    #define K_UNLIKELY(expr) (expr)
+#endif
 
 namespace kit
 {

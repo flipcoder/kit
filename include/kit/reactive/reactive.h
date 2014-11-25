@@ -76,13 +76,13 @@ namespace kit
             
             lazy() = default;
             lazy(const lazy&) = default;
-            lazy(std::function<T()> rhs):
+            lazy(const std::function<T()>& rhs):
                 m_Getter(rhs)
             {}
             lazy(lazy&&) = default;
             lazy& operator=(const lazy&) = default;
             lazy& operator=(lazy&&) = default;
-            lazy& operator=(std::function<T()> rhs)
+            lazy& operator=(const std::function<T()>& rhs)
             {
                 m_Value = boost::optional<T>();
                 m_Getter = rhs;
@@ -114,7 +114,7 @@ namespace kit
             }
             
             void ensure() {
-                if(!m_Value)
+                if(K_UNLIKELY(!m_Value))
                     m_Value = m_Getter();
             }
             
