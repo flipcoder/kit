@@ -1,4 +1,0 @@
-#!/bin/bash
-pushd bin >/dev/null
-./test $*
-popd >/dev/null

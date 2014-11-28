@@ -10,7 +10,7 @@ namespace kit
     template<class R, class ...Args>
     class signal;
 
-    // a single-threaded reentrant signal
+    // a single-threaded signal
     template<class R, class ...Args>
     class signal<R (Args...)>
     {
@@ -22,10 +22,7 @@ namespace kit
             typedef std::vector<std::function<R (Args...)>> container_type;
            
             void connect(function_type func) {
-                BOOST_SCOPE_EXIT_ALL(this) {
-                    --m_Recursion;
-                };
-                if(not m_Recursion++)
+                if(not m_Recursion)
                     m_Slots.push_back(std::move(func));
                 else
                     m_PendingOperations.push_back([this, func]{
@@ -57,15 +54,26 @@ namespace kit
                 return r;
             }
 
-            void clear() {
-                if(not m_Recursion++)
-                    m_Slots.clear();
+            void sync(const std::function<void()>& func){
+                if(m_Recursion)
+                    func();
                 else
+                    m_PendingOperations.push_back(func);
+            }
+            bool recursion() const
+            {
+                return m_Recursion;
+            }
+            void clear()
+            {
+                if(m_Recursion)
                     m_PendingOperations.push_back([this]{
                         m_Slots.clear();
                     });
-                --m_Recursion;
+                else
+                    m_Slots.clear();
             }
+
             bool empty() const {
                 return m_Slots.empty();
             }
@@ -92,8 +100,8 @@ namespace kit
             
             container_type m_Slots;
             
-            mutable std::vector<std::function<void()>> m_PendingOperations; // should be mutexed in MT
-            mutable unsigned m_Recursion = 0; // should be atomic in MT
+            mutable std::vector<std::function<void()>> m_PendingOperations;
+            mutable unsigned m_Recursion = 0;
     };
     
 }
