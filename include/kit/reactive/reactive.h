@@ -57,11 +57,12 @@ namespace kit
             void clear()
             {
                 //on_destroy();
-                on_change.disconnect_all_slots();
+                on_change.clear();
+                //on_change.disconnect_all_slots();
                 //on_destroy.disconnect_all_slots();
             }
             
-            boost::signals2::signal<void(const T&)> on_change;
+            kit::signal<void(const T&)> on_change;
             //boost::signals2::signal<void()> on_destroy;
             
         private:

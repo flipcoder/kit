@@ -37,7 +37,7 @@ namespace kit
                 return not m_Slots.empty();
             }
             
-            void operator()(Args... args) {
+            void operator()(Args... args) const {
                 bool recur = not m_Recursion++;
                 for(auto&& slot: m_Slots) {
                     slot(args...);
@@ -84,7 +84,7 @@ namespace kit
             
         private:
 
-            void run_pending_ops()
+            void run_pending_ops() const
             {
                 for(auto&& op: m_PendingOperations)
                     op();
@@ -92,8 +92,8 @@ namespace kit
             
             container_type m_Slots;
             
-            std::vector<std::function<void()>> m_PendingOperations; // should be mutexed in MT
-            unsigned m_Recursion = 0; // should be atomic in MT
+            mutable std::vector<std::function<void()>> m_PendingOperations; // should be mutexed in MT
+            mutable unsigned m_Recursion = 0; // should be atomic in MT
     };
     
 }

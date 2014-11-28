@@ -22,6 +22,14 @@ TEST_CASE("Signal","[signal]") {
         sig();
         REQUIRE(i == 2);
     }
+    SECTION("accumulation") {
+        signal<int()> sig;
+        sig.connect([]{ return 1; });
+        sig.connect([]{ return 2; });
+        sig.connect([]{ return 3; });
+        auto vals = sig.accumulate();
+        REQUIRE((vals == vector<int>{1,2,3}));
+    }
     SECTION("reentrant") {
         signal<void()> sig;
         unsigned call_count = 0;
