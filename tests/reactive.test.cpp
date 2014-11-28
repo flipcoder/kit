@@ -22,6 +22,20 @@ TEST_CASE("Signal","[signal]") {
         sig();
         REQUIRE(i == 2);
     }
+    SECTION("reentrant") {
+        signal<void()> sig;
+        unsigned call_count = 0;
+        sig.connect([&sig, &call_count]{
+            sig.connect([&sig, &call_count]{
+                ++call_count;
+            });
+        });
+        REQUIRE(call_count == 0);
+        sig();
+        REQUIRE(call_count == 0);
+        sig();
+        REQUIRE(call_count == 1);
+    }
 }
 
 TEST_CASE("Reactive","[reactive]") {
