@@ -815,12 +815,16 @@ class MetaBase:
         //    UNIQUE = kit::bit(0)
         //};
         template<class T>
-        unsigned add(
-            T val
-            //kit::thread_safety safety = kit::thread_safety::safe
-        ){
+        unsigned add(T val){
             return set(std::string(), val);
         }
+        template<class T>
+        void append(std::vector<T>&& vec){
+            auto l = this->lock();
+            for(auto&& val: vec)
+                set(std::string(), std::move(val));
+        }
+
 
         enum PathFlags {
             ABSOLUTE_PATH = kit::bit(0),
