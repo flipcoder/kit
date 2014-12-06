@@ -91,7 +91,6 @@ class Socket
             hostent* he;
             char* connectip;
             char* ipp = (char*)ip.c_str();
-            connectip = ipp;
 
             //he = gethostbyname(ipp);
             //if(not he)
@@ -107,7 +106,7 @@ class Socket
 
             destAddr.sin_family = AF_INET;
             destAddr.sin_port = htons(port);
-            destAddr.sin_addr.s_addr = inet_addr(connectip);
+            destAddr.sin_addr.s_addr = inet_addr(ipp);
             memset(&(destAddr.sin_zero), '\0', sizeof(destAddr.sin_zero));
 
             if(::connect(m_Socket, (sockaddr*)&destAddr, sizeof(destAddr))==SOCKET_ERROR)

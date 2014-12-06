@@ -389,6 +389,9 @@ class Multiplexer:
         Circuit& circuit(unsigned idx) {
             return *std::get<0>((m_Circuits[idx % m_Concurrency]));
         }
+        Circuit& operator[](unsigned idx) {
+            return *std::get<0>((m_Circuits[idx % m_Concurrency]));
+        }
         
         void yield(){
             try{
