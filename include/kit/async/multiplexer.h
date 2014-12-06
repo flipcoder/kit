@@ -21,17 +21,30 @@
 typedef boost::coroutines::coroutine<void>::pull_type pull_coro_t;
 typedef boost::coroutines::coroutine<void>::push_type push_coro_t;
 
+// async await a future (continously yield until future is available or exception)
 #define AWAIT_MX(MUX, EXPR) \
     [&]{\
-        while(true)\
+        while(true){\
             try{\
                 return (EXPR);\
             }catch(const kit::yield_exception&){\
-                MUX.this_circuit().yield();\
+                MUX.yield();\
             }\
+        }\
     }()
+#define AWAIT(EXPR) AWAIT_MX(MX, EXPR)
 
-#define AWAIT(EXPR) AWAIT_MX(Multiplexer::get(), EXPR)
+// async await a condition (continously yield until condition is true)
+#define YIELD_UNTIL_MX(MUX, EXPR) \
+    [&]{\
+        while(not (EXPR)){\
+            MUX.yield();\
+        }\
+    }()
+#define YIELD_UNTIL(EXPR) AWAIT_MX(MX, EXPR)
+
+#define YIELD_MX(MUX) MUX.yield();
+#define YIELD() YIELD_MX(MX)
 
 #define AWAIT_HINT_MX(MUX, HINT, EXPR) \
     [&]{\
@@ -47,7 +60,7 @@ typedef boost::coroutines::coroutine<void>::push_type push_coro_t;
                     };\
                     once = true;\
                 }\
-                Multiplexer::get().this_circuit().yield();\
+                MX.yield();\
             }\
             if(once)\
             {\
@@ -112,6 +125,8 @@ class Multiplexer:
             void yield() {
                 if(m_pCurrentUnit && m_pCurrentUnit->m_pPull)
                     (*m_pCurrentUnit->m_pPull)();
+                else
+                    throw kit::yield_exception();
                 //else
                 //    boost::this_thread::yield();
             }
@@ -375,11 +390,18 @@ class Multiplexer:
             return *std::get<0>((m_Circuits[idx % m_Concurrency]));
         }
         
+        void yield(){
+            try{
+                this_circuit().yield();
+            }catch(const std::out_of_range&){
+                throw kit::yield_exception();
+            }
+        }
         Circuit& this_circuit(){
             return *m_ThreadToCircuit.with<Circuit*>(
                 [this](std::map<boost::thread::id, unsigned>& m
             ){
-                return &circuit(m[boost::this_thread::get_id()]);
+                return &circuit(m.at(boost::this_thread::get_id()));
             });
         }
 

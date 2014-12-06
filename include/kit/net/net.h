@@ -91,20 +91,19 @@ class Socket
             hostent* he;
             char* connectip;
             char* ipp = (char*)ip.c_str();
+            connectip = ipp;
 
-            he = gethostbyname(ipp);
-            if(not he)
-            {
-                // use normal IP
-                connectip = ipp;
-            }
-            else
-            {
-                // use hostname IP
-                connectip = (char*)inet_ntoa(*(in_addr*)he->h_addr);
-            }
-
-            inet_ntoa(*(in_addr*)he->h_addr);
+            //he = gethostbyname(ipp);
+            //if(not he)
+            //{
+            //    // use normal IP
+            //    connectip = ipp;
+            //}
+            //else
+            //{
+            //    // use hostname IP
+            //    //connectip = (char*)inet_ntoa(*(in_addr*)he->h_addr);
+            //}
 
             destAddr.sin_family = AF_INET;
             destAddr.sin_port = htons(port);
@@ -116,6 +115,8 @@ class Socket
             return true;
         }
         
+        // Async usage (inside coroutine or repeated circuit unit):
+        //      YIELD_UNTIL(socket.select());
         bool select() const
         {
             fd_set fds_read;

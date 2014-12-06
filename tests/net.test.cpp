@@ -7,6 +7,7 @@ TEST_CASE("Socket","[socket]") {
         s.bind();
         REQUIRE(not s);
         REQUIRE_NOTHROW(s.open());
+        //REQUIRE(s.connect("127.0.0.1", 1337));
         REQUIRE(s);
         //REQUIRE(not s.select());
         REQUIRE_NOTHROW(s.close());

@@ -22,8 +22,10 @@ TEST_CASE("Task","[task]") {
     }
     SECTION("retrying tasks"){
         Task<void(bool)> task([](bool err){
+            // in non-coroutine contexts (task() instead of coro),
+            //   YIELD() recalls the function
             if(err)
-                throw kit::yield_exception();
+                YIELD();
         });
         auto fut = task.get_future();
         
@@ -67,14 +69,14 @@ TEST_CASE("Channel","[channel]") {
             
             chan << 1; // retries task if this blocks
             
-            throw kit::yield_exception(); // keep this event going until chan is closed
+            YIELD(); // keep this event going until chan is closed
         });
         mx.circuit(1).task<void>([&sum, &chan]{
             int num;
             chan >> num; // if this blocks, task is retried later
             sum += num;
             if(sum < 5)
-                throw kit::yield_exception();
+                YIELD();
             chan.close(); // done, triggers the other circuit to throw
         });
         mx.finish();
@@ -114,7 +116,7 @@ TEST_CASE("Channel","[channel]") {
             }catch(const std::out_of_range&){
                 return;
             }
-            throw kit::yield_exception();
+            YIELD();
         });
         auto result = mx.circuit(1).task<string>([chan]{
             return chan->get_until<string>(' ');
@@ -141,14 +143,14 @@ TEST_CASE("Channel","[channel]") {
                     if(in.size() == 2) // repeat until 2 chars left
                         return;
                 }
-                throw kit::yield_exception();
+                YIELD();
             });
             mx.circuit(1).task<void>([chan, &out]{
                 //*chan >> out;
                 chan->get<string>(out);
                 if(out.size() == 3) // repeat until obtaining chars
                     return;
-                throw kit::yield_exception();
+                YIELD();
             });
         }
         mx.finish();
