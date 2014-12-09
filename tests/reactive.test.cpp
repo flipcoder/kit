@@ -44,6 +44,8 @@ TEST_CASE("Signal","[signal]") {
         sig();
         REQUIRE(call_count == 1);
     }
+    //SECTION("sync & pend") {
+    //}
 }
 
 TEST_CASE("Reactive","[reactive]") {

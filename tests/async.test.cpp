@@ -336,7 +336,7 @@ TEST_CASE("Coroutines","[coroutines]") {
 
 TEST_CASE("async_fstream","[async_fstream]") {
     SECTION("file operations"){
-        // Beware global MX used inside this class,
+        // Beware singleton MX is used inside this class,
         //   so potential heisenbug exists among tests...
         // Eventually class should allow custom mx to eliminate this risk
         
@@ -348,16 +348,14 @@ TEST_CASE("async_fstream","[async_fstream]") {
         REQUIRE(file.filename().get() == fn);
         file.close().get();
         REQUIRE(file.filename().get() == "");
-        // success here is no hanging :)
     }
 }
 
-//TEST_CASE("Temp","[temp]") {
-//    SECTION("Some quick tests for debugging"){
-//        Multiplexer mx;
-//        REQUIRE(true);
-//        mx.finish();
-//        REQUIRE(true);
-//    }
-//}
+TEST_CASE("Temp","[temp]") {
+    SECTION("Some quick tests for debugging"){
+        Multiplexer mx;
+        mx.finish();
+        REQUIRE(true);
+    }
+}
 

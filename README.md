@@ -13,7 +13,7 @@ Copyright (c) 2013 Grady O'Connell
 - Async fstream alternative, cross-platform safe
 
 ## reactive
-reactive (signal-paired vars) and lazy evaluation
+signals, reactive values (signal-paired vars), and lazy evaluation
 
 ## meta
 Thread-aware serializable meta-objects, property trees, and reflection

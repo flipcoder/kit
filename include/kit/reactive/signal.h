@@ -35,13 +35,13 @@ namespace kit
             }
             
             void operator()(Args... args) const {
-                bool recur = not m_Recursion++;
+                bool recur = not (m_Recursion++);
                 for(auto&& slot: m_Slots) {
                     slot(args...);
                 }
+                --m_Recursion;
                 if(recur)
                     run_pending_ops();
-                m_Recursion--;
             }
             
             std::vector<R> accumulate(Args... args) {
@@ -55,21 +55,24 @@ namespace kit
             }
 
             void sync(const std::function<void()>& func){
-                if(m_Recursion)
+                if(not m_Recursion)
                     func();
                 else
                     m_PendingOperations.push_back(func);
             }
-            bool recursion() const
-            {
+            unsigned recursion() const {
                 return m_Recursion;
             }
             void clear()
             {
                 if(m_Recursion)
+                {
                     m_PendingOperations.push_back([this]{
                         m_Slots.clear();
+                        --m_BlockReenter;
                     });
+                    ++m_BlockReenter;
+                }
                 else
                     m_Slots.clear();
             }
@@ -96,9 +99,11 @@ namespace kit
             {
                 for(auto&& op: m_PendingOperations)
                     op();
+                m_PendingOperations.clear();
             }
             
             container_type m_Slots;
+            unsigned m_BlockReenter = 0;
             
             mutable std::vector<std::function<void()>> m_PendingOperations;
             mutable unsigned m_Recursion = 0;

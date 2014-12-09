@@ -290,7 +290,7 @@ public:
             thread_local LogThread th;
             return th;
         #else
-            //auto l = lock();
+            auto l = lock();
             return m_Threads[std::this_thread::get_id()];
         #endif
     }
