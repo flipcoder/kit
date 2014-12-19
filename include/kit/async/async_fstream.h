@@ -8,16 +8,24 @@
 #include "async.h"
 #include "../kit.h"
 
-#ifndef MX_FILE_CIRCUIT
-#define MX_FILE_CIRCUIT 0
-#endif
-
 class async_fstream
 {
     public:
 
-        async_fstream() = default;
-        async_fstream(std::string fn){open(fn);}
+        async_fstream(Multiplexer::Circuit* circuit = &MX[0]):
+            m_pCircuit(circuit)
+        {}
+        //async_fstream(
+        //    std::string fn, Multiplexer::Circuit* circuit = &MX[0]
+        //):
+        //    m_pCircuit(circuit),
+        //    m_Filename(fn)
+        //{
+        //    m_pCircuit->task<void>([this, fn]{
+        //        m_File.open(fn);
+        //        m_Filename = fn;
+        //    });
+        //}
         ~async_fstream() {
             close().get();
         }
@@ -27,20 +35,91 @@ class async_fstream
         async_fstream& operator=(const async_fstream&) = default;
         async_fstream& operator=(async_fstream&&) = default;
 
-        std::future<void> open(std::string fn);
-        std::future<void> close();
-        std::future<std::string> filename() const;
+        std::future<void> open(
+            std::ios_base::openmode mode = std::ios_base::in|std::ios_base::out
+        ){
+            return m_pCircuit->task<void>([this, mode]{
+                m_File.open(m_Filename, mode);
+            });
+        }
+        std::future<void> open(
+            std::string fn,
+            std::ios_base::openmode mode = std::ios_base::in|std::ios_base::out
+        ){
+            return m_pCircuit->task<void>([this, fn, mode]{
+                _close();
+                m_File.open(fn, mode);
+                m_Filename = fn;
+            });
+        }
+
+        std::future<bool> is_open() {
+            return m_pCircuit->task<bool>([this]{
+                return m_File.is_open();
+            });
+        }
+        std::future<void> close() {
+            return m_pCircuit->task<void>([this]{
+                _close();
+            });
+        }
+        std::future<std::string> filename() const {
+            return m_pCircuit->task<std::string>(
+                [this]{return m_Filename;}
+            );
+        };
 
         template<class T>
         std::future<T> with(std::function<T(std::fstream& f)> func) {
-            return MX.circuit(Circuit).task<T>([this,func]{ return func(m_File); });
+            return m_pCircuit->task<T>([this,func]{ return func(m_File); });
         }
-        
+
+        std::future<void> invalidate() {
+            return m_pCircuit->task<void>(
+                [this]{_invalidate();}
+            );
+        }
+
+        std::future<void> recache() {
+            return m_pCircuit->task<void>(
+                [this]{_invalidate();_cache();}
+            );
+        }
+        std::future<void> cache() {
+            return m_pCircuit->task<void>(
+                [this]{_cache();}
+            );
+        }
+
     private:
 
-        const unsigned Circuit = MX_FILE_CIRCUIT;
+        void _close() {
+            m_Filename = std::string();
+            _invalidate();
+            //if(m_File.is_open()
+            m_File.close();
+        }
+
+        void _invalidate() {
+            m_Buffer.clear();
+        }
+        void _cache() {
+            if(m_Buffer.empty()){
+                m_File.seekg(0, std::ios::end);   
+                m_Buffer.reserve(m_File.tellg());
+                m_File.seekg(0, std::ios::beg);
+                m_Buffer.assign(
+                    (std::istreambuf_iterator<char>(m_File)),
+                    std::istreambuf_iterator<char>()
+                );
+            }            
+        }
+
+        Multiplexer::Circuit* const m_pCircuit;
         std::fstream m_File;
         std::string m_Filename;
+
+        std::string m_Buffer;
 };
 
 #endif

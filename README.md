@@ -10,7 +10,7 @@ Copyright (c) 2013 Grady O'Connell
 - Task Scheduler (Similiar to boost asio, but simpler)
 - Intercircuit task transfering
 - (Go-style) buffered and unbuffered async channels, compatible with YIELD() statement
-- Async fstream alternative, cross-platform safe
+- Async fstream alternative (WIP)
 
 ## reactive
 signals, reactive values (signal-paired vars), and lazy evaluation

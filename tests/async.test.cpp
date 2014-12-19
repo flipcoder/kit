@@ -333,21 +333,46 @@ TEST_CASE("Coroutines","[coroutines]") {
     //}
 }
 
+TEST_CASE("async_wrap","[async_wrap]") {
+    SECTION("basic usage"){
+        int num = 0;
+        async_wrap<int> val(42);
+        REQUIRE(num != val.get());
+        val.with<void>([&num](int& v){
+            num = v;
+        }).get();
+        REQUIRE(num == 42);
+        REQUIRE(num == val.get());
+    }
+}
 
 TEST_CASE("async_fstream","[async_fstream]") {
     SECTION("file operations"){
-        // Beware singleton MX is used inside this class,
-        //   so potential heisenbug exists among tests...
-        // Eventually class should allow custom mx to eliminate this risk
-        
-        const std::string fn = "/tmp/blah";
-        async_fstream file(fn);
-        file.with<bool>([](fstream& f){
-            return f.is_open();
-        }).get();
-        REQUIRE(file.filename().get() == fn);
-        file.close().get();
-        REQUIRE(file.filename().get() == "");
+        Multiplexer mx;
+        {
+            const std::string fn = "test.txt";
+            const std::string not_fn = "test_nonexist.txt";
+            async_fstream file(&mx[0]);
+            REQUIRE(not file.is_open().get());
+            file.open(fn).get();
+            REQUIRE(file.is_open().get());
+            REQUIRE(file.with<bool>([](fstream& f){
+                return f.is_open();
+            }).get() == true);
+            REQUIRE(file.filename().get() == fn);
+            file.close().get();
+            REQUIRE(file.filename().get() == "");
+            
+            // open behavior on non-existant file responds like fstream
+            file.open(not_fn).get();
+            REQUIRE(not file.is_open().get());
+
+            // failed opens still store file name
+            REQUIRE(not file.filename().get().empty());
+        }
+        mx.finish();
+    }
+    SECTION("file operations"){
     }
 }
 
