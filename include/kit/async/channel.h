@@ -97,11 +97,13 @@ class Channel:
                 throw kit::yield_exception();
             //if(m_bClosed)
             //    throw std::runtime_error("channel closed");
-            m_bNewData = false;
+            //m_bNewData = false;
             if(!m_Vals.empty())
             {
                 val = std::move(m_Vals.front());
                 m_Vals.pop_front();
+                if(m_Vals.empty())
+                    m_bNewData = false;
                 return;
             }
             throw kit::yield_exception();

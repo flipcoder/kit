@@ -418,7 +418,7 @@ class Multiplexer:
             for(auto& s: m_Circuits)
                 std::get<0>(s)->join();
         }
-
+        
     private:
 
         struct CacheLinePadding

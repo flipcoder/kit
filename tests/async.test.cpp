@@ -11,6 +11,8 @@
 #include <boost/chrono.hpp>
 using namespace std;
 
+#define LOCK_WAIT_MS 10
+
 TEST_CASE("Task","[task]") {
     SECTION("empty task"){
         Task<void()> task([]{
@@ -58,6 +60,42 @@ TEST_CASE("Channel","[channel]") {
         };
         REQUIRE(num == 42);
     }
+    SECTION("peeking, coroutines, explicit locking"){
+        Multiplexer mx;
+        auto chan = make_shared<Channel<int>>();
+        auto cl = chan->lock();
+        atomic<bool> started = ATOMIC_VAR_INIT(false);
+        mx[0].coro<void>([&mx, chan, &started]{
+            int x;
+            for(int i=1;i<=3;++i)
+            {
+                AWAIT_MX(mx, *chan << i);
+            }
+            started = true;
+            for(int i=1;i<=3;++i)
+            {
+                //int n;
+                //n = AWAIT_MX(mx, chan->peek());
+                //REQUIRE(n == i);
+                AWAIT_MX(mx, *chan >> x);
+                //REQUIRE(x == i);
+            }
+        });
+        REQUIRE(not started);
+        boost::this_thread::sleep_for(boost::chrono::milliseconds(LOCK_WAIT_MS));
+        REQUIRE(not started); // should still be awaiting lock
+
+        // do something else in same channel, to prove coroutine is paused
+        mx[0].task<void>([]{}).get();
+        
+        cl.unlock(); // give up our lock, so coroutine can resume
+        while(not started) {
+            boost::this_thread::sleep_for(boost::chrono::milliseconds(1));
+        }
+        REQUIRE(started); // intention of loop above
+        mx.finish();
+        REQUIRE(started);
+    } 
     SECTION("retrying"){
         Multiplexer mx;
         Channel<int> chan;
