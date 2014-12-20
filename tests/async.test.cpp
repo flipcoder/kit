@@ -305,7 +305,7 @@ TEST_CASE("Multiplexer","[multiplexer]") {
 }
 
 TEST_CASE("Coroutines","[coroutines]") {
-    SECTION("Coroutines inside multiplexer"){
+    SECTION("Interleaved"){
         // In most apps, we'd use the singleton multiplexer "MX"
         //   and use AWAIT() instead of AWAIT_MX(mx, ...)
         // But since we want to isolate the multiplexer across unit tests
@@ -414,6 +414,10 @@ TEST_CASE("async_fstream","[async_fstream]") {
                 return f.is_open();
             }).get() == true);
             REQUIRE(file.filename().get() == fn);
+            //std::string buf = file.with<string>([](const std::string& b){
+            //    return b;
+            //}).get();
+            REQUIRE(file.buffer().get() == "test\n"); // contents of file
             file.close().get();
             REQUIRE(file.filename().get() == "");
             

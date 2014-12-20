@@ -68,10 +68,23 @@ class async_fstream
                 [this]{return m_Filename;}
             );
         };
+        std::future<std::string> buffer() const {
+            return m_pCircuit->task<std::string>([this]{
+                _cache();
+                return m_Buffer;
+            });
+        }
 
         template<class T>
         std::future<T> with(std::function<T(std::fstream& f)> func) {
             return m_pCircuit->task<T>([this,func]{ return func(m_File); });
+        }
+        template<class T>
+        std::future<T> with(std::function<T(const std::string&)> func) {
+            return m_pCircuit->task<T>([this,func]{
+                _cache();
+                return func(m_Buffer);
+            });
         }
 
         std::future<void> invalidate() {
@@ -85,7 +98,7 @@ class async_fstream
                 [this]{_invalidate();_cache();}
             );
         }
-        std::future<void> cache() {
+        std::future<void> cache() const {
             return m_pCircuit->task<void>(
                 [this]{_cache();}
             );
@@ -103,9 +116,9 @@ class async_fstream
         void _invalidate() {
             m_Buffer.clear();
         }
-        void _cache() {
+        void _cache() const {
             if(m_Buffer.empty()){
-                m_File.seekg(0, std::ios::end);   
+                m_File.seekg(0, std::ios::end);
                 m_Buffer.reserve(m_File.tellg());
                 m_File.seekg(0, std::ios::beg);
                 m_Buffer.assign(
@@ -116,10 +129,10 @@ class async_fstream
         }
 
         Multiplexer::Circuit* const m_pCircuit;
-        std::fstream m_File;
+        mutable std::fstream m_File;
         std::string m_Filename;
 
-        std::string m_Buffer;
+        mutable std::string m_Buffer;
 };
 
 #endif
