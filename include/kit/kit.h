@@ -741,6 +741,7 @@ namespace kit
             yield_exception():
                 std::runtime_error("blocking operation requested yield")
             {}
+            virtual ~yield_exception() throw() {}
     };
 
     class timeout:
@@ -750,6 +751,7 @@ namespace kit
             timeout():
                 std::runtime_error("timeout")
             {}
+            virtual ~timeout() throw() {}
     };
     
     class interrupt:
@@ -759,6 +761,7 @@ namespace kit
             interrupt():
                 std::runtime_error("interrupt")
             {}
+            virtual ~interrupt() throw() {}
     };
 
     class null_ptr_exception:
@@ -768,6 +771,7 @@ namespace kit
             null_ptr_exception():
                 std::runtime_error("null pointer exception")
             {}
+            virtual ~null_ptr_exception() throw() {}
     };
 
     template<class T>

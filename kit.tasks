@@ -48,15 +48,16 @@
 * kit.h (util)
 
 * async
-    [ ] coroutine exceptions don't make into Task promise (?)
+    [>] exceptions seem completely broken
         # happens in unit test for Coroutine unwinding
         # feature is impl'ed, so this is definitely a bug
-    [ ] add way to yield to a specific multiplexer YIELD_MX()
-        # needed since unit tests shouldn't use the singleton
+        # looks like catch's REQUIRE_THROWS might be broken
     [-] task() and when() return scoped connections instead of future?
+    [ ] helgrind reporting race condition(s)
 
 * log
     [ ] scoped log props are unusable across coroutines
+        # in order to fix we need Log coroutine_local data
     
 * freq
     [ ] Timelines and Alarms must be wrap-safe, if we're ever going to use this

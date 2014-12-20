@@ -29,11 +29,14 @@ class Task<R (Args...)>
         void operator()(T&&... t) {
             try{
                 m_Promise.set_value(m_Func(std::forward<T>(t)...));
-            }catch(const kit::yield_exception&){
-                throw;
-            }catch(const std::exception& e){
-                m_Promise.set_exception(std::make_exception_ptr(e));
+            }catch(const kit::yield_exception& e){
+                throw e;
+            }catch(...){
+                m_Promise.set_exception(std::current_exception());
             }
+            //}catch(...){
+            //    assert(false);
+            //}
         }
 
         std::future<R> get_future() {
@@ -69,8 +72,8 @@ class Task<void(Args...)>
                 m_Promise.set_value();
             }catch(const kit::yield_exception& e){
                 throw e;
-            }catch(const std::exception& e){
-                m_Promise.set_exception(std::make_exception_ptr(e));
+            }catch(...){
+                m_Promise.set_exception(std::current_exception());
             }
         }
 

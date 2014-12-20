@@ -222,7 +222,7 @@ class Multiplexer:
                         cb(futc.get());
                     }
                     else
-                        throw;
+                        throw kit::yield_exception();
                 });
             }
 
@@ -331,8 +331,7 @@ class Multiplexer:
                         task.m_Func();
                     }catch(...){
                         lck.lock();
-                        //++idx;
-                        size_t sz = m_Units.size();
+                        const size_t sz = m_Units.size();
                         idx = std::min<unsigned>(idx+1, sz);
                         if(idx == sz)
                             idx = 0;

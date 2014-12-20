@@ -347,28 +347,44 @@ TEST_CASE("Coroutines","[coroutines]") {
         // see if all the numbers got through the channel
         REQUIRE((nums_fut.get() == vector<int>{1,2,3}));
     }
-    //SECTION("Unwinding Coroutines"){
-    //    Multiplexer mx;
-    //    struct UnwindMe {
-    //        bool* unwound;
-    //        UnwindMe(bool* b):
-    //            unwound(b)
-    //        {}
-    //        ~UnwindMe() {
-    //            *unwound = true;
-    //        }
-    //    };
-    //    auto unwound = kit::make_unique<bool>(false);
-    //    bool* unwoundptr = unwound.get();
-    //    auto fut = mx[0].coro<void>([unwoundptr]{
-    //        UnwindMe u(unwoundptr);
-    //        throw kit::interrupt();
-    //    });
+    SECTION("Exceptions"){
+        Multiplexer mx;
         
-    //    mx.finish();
-    //    REQUIRE_THROWS(fut.get());
-    //    REQUIRE(*unwound);
-    //}
+        struct UnwindMe {
+            bool* unwound;
+            UnwindMe(bool* b):
+                unwound(b)
+            {}
+            ~UnwindMe() {
+                *unwound = true;
+            }
+        };
+        
+        // TASK
+        {
+            auto unwound = kit::make_unique<bool>(false);
+            bool* unwoundptr = unwound.get();
+            auto fut = mx[0].task<void>([unwoundptr]{
+                UnwindMe uw(unwoundptr);
+                throw kit::interrupt();
+            });
+            REQUIRE_THROWS(fut.get());
+            REQUIRE(*unwound);
+        }
+        // COROUTINE
+        {
+            auto unwound = kit::make_unique<bool>(false);
+            bool* unwoundptr = unwound.get();
+            auto fut = mx[0].coro<void>([unwoundptr]{
+                UnwindMe uw(unwoundptr);
+                throw kit::interrupt();
+            });
+            REQUIRE_THROWS(fut.get());
+            REQUIRE(*unwound);
+        }
+        
+        mx.finish();
+    }
 }
 
 TEST_CASE("async_wrap","[async_wrap]") {
