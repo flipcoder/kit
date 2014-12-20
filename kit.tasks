@@ -48,12 +48,8 @@
 * kit.h (util)
 
 * async
-    [>] exceptions seem completely broken
-        # happens in unit test for Coroutine unwinding
-        # feature is impl'ed, so this is definitely a bug
-        # looks like catch's REQUIRE_THROWS might be broken
+    [ ] fix helgrind-reported reporting race condition(s)
     [-] task() and when() return scoped connections instead of future?
-    [ ] helgrind reporting race condition(s)
 
 * log
     [ ] scoped log props are unusable across coroutines
