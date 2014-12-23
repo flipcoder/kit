@@ -12,7 +12,7 @@
         #define WIN32_LEAN_AND_MEAN
     #endif
     #include <windows.h>
-    #include <winsock2.h>
+    #include <winsock.h>
     typedef int socklen_t;
 #else
     #include <sys/types.h>
@@ -29,35 +29,38 @@
     typedef int SOCKET;
     #define SOCKET_ERROR -1
     #define INVALID_SOCKET -1
+    #define MTU 576
 #endif
 
 #include "../async/async.h"
 
-class Socket
+class TCPSocket
 {
     public:
-        enum Protocol {
-            TCP = 0,
-            UDP
-        };
-    protected:
-        SOCKET m_Socket;
-        bool m_bOpen = false;
         
-        Protocol m_Protocol = TCP;
-    public:
-        Socket() = default;
-        Socket(Socket&& rhs):
+        TCPSocket() = default;
+        explicit TCPSocket(SOCKET rhs):
+            m_Socket(rhs),
+            m_bOpen(true)
+        {}
+        TCPSocket(TCPSocket&& rhs):
             m_Socket(rhs.m_Socket),
-            m_bOpen(rhs.m_bOpen),
-            m_Protocol(rhs.m_Protocol)
+            m_bOpen(rhs.m_bOpen)
         {
             rhs.m_bOpen = false;
         }
-        Socket(Protocol p):
-            m_Protocol(p)
-        {}
-        virtual ~Socket(){
+        TCPSocket& operator=(TCPSocket&& rhs) {
+            if(m_bOpen)
+                close();
+            m_Socket = std::move(rhs.m_Socket);
+            m_bOpen = rhs.m_bOpen;
+            rhs.m_bOpen = false;
+            return *this;
+        }
+        //TCPSocket(Protocol p):
+        //    m_Protocol(p)
+        //{}
+        virtual ~TCPSocket(){
             if(m_bOpen)
                 ::closesocket(m_Socket);
         }
@@ -67,25 +70,71 @@ class Socket
         void open() {
             if(m_bOpen)
                 close();
-            if(m_Protocol == TCP)
-                m_Socket = ::socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-            else if(m_Protocol == UDP)
-                m_Socket = ::socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+            
+            m_Socket = ::socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+            
+            unsigned long SOCKET_BLOCK = 1L;
+            int SOCKET_YES = 1;
+            ioctlsocket(m_Socket, FIONBIO, &SOCKET_BLOCK);
+            setsockopt(m_Socket, SOL_SOCKET, SO_REUSEADDR, (char*)&SOCKET_YES, sizeof(int));
+            
+            //else if(m_Protocol == UDP)
+                //m_Socket = ::socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
-            m_bOpen = (m_Socket != INVALID_SOCKET);
+            m_bOpen = m_Socket != INVALID_SOCKET;
+            if(not m_bOpen)
+                throw std::runtime_error(
+                    std::string("TCPSocket::open failed (")+
+                    std::to_string(errno)+")"
+                );
         }
         bool is_open() const {
             return m_bOpen;
         }
         void close() {
-            if(m_bOpen)
+            if(m_bOpen){
                 ::closesocket(m_Socket);
-            m_bOpen = false;
+                m_bOpen = false;
+            }
         }
         SOCKET socket() const { return m_Socket; }
-        Socket accept() { return Socket(); }
-        bool bind(short port = 0) {return true;}
-        bool connect(std::string ip, short port)
+        TCPSocket accept() {
+            SOCKET socket;
+            sockaddr_storage addr;
+            socklen_t addr_sz = sizeof(addr);
+            int r = ::accept(m_Socket, (struct sockaddr*)&addr, &addr_sz);
+            if(r == -1)
+            {
+                if(errno == EWOULDBLOCK)
+                    throw kit::yield_exception();
+                throw std::runtime_error(
+                    std::string("TCPSocket::accept failed (")+
+                    std::to_string(errno)+")"
+                );
+            }
+            return TCPSocket(socket);
+        }
+        void bind(unsigned short port = 0) {
+            sockaddr_in sAddr;
+
+            sAddr.sin_family = AF_INET;
+            sAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+            sAddr.sin_port = htons(port);
+            memset(sAddr.sin_zero, '\0', sizeof(sAddr.sin_zero));
+
+            if(::bind(m_Socket, (sockaddr*)&sAddr, sizeof(sAddr)) == SOCKET_ERROR)
+                throw std::runtime_error(
+                    std::string("TCPSocket::bind failed (")+std::to_string(errno)+")"
+                );
+        }
+        void listen(int backlog = 0) {
+            if(::listen(m_Socket, backlog) == -1)
+                throw std::runtime_error(
+                    std::string("TCPSocket::listen failed (")+
+                    std::to_string(errno)+")"
+                );
+        }
+        void connect(std::string ip, short port)
         {
             sockaddr_in destAddr;
             hostent* he;
@@ -110,8 +159,12 @@ class Socket
             memset(&(destAddr.sin_zero), '\0', sizeof(destAddr.sin_zero));
 
             if(::connect(m_Socket, (sockaddr*)&destAddr, sizeof(destAddr))==SOCKET_ERROR)
-                return false;
-            return true;
+                throw std::runtime_error(
+                    std::string("TCPSocket::connect failed (")+
+                    std::to_string(errno)+")"
+                );
+                //return false;
+            //return true;
         }
         
         // Async usage (inside coroutine or repeated circuit unit):
@@ -147,7 +200,79 @@ class Socket
 
             return (bool)FD_ISSET(m_Socket, &fds_read);
         }
+
+        void send(const uint8_t* buf, int sz) {
+            if(not m_bOpen)
+                throw std::runtime_error("TCPSocket::send socket not open");
+            int sent = 0;
+            int left = sz;
+            int n = 0;
+            while(sent < sz)
+            {
+                n = ::send(m_Socket, (char*)(buf + sent), left, 0);
+                if(n==SOCKET_ERROR)
+                    throw std::runtime_error(
+                        std::string("TCPSocket::send socket error (")+
+                        std::to_string(errno)+")"
+                    );
+                sent += n;
+                left -= n;
+            }
+        }
+        void send(const std::string& buf) {
+            send((const uint8_t*)buf.c_str(), (int)buf.size());
+        }
+        int recv(uint8_t* buf, int sz) {
+            if(sz <= 0)
+                throw std::runtime_error("TCPSocket::recv buffer has no space");
+            if(not m_bOpen)
+                throw std::runtime_error("TCPSocket::recv socket not open");
+            int n = 0;
+            n = ::recv(m_Socket, (char*)buf, sz, 0);
+            if(n==SOCKET_ERROR)
+                throw std::runtime_error(
+                    std::string("TCPSocket::send socket error (")+
+                    std::to_string(errno)+")"
+                );
+            else if(n==0)
+                m_bOpen = false;
+            return n;
+        }
+        std::string recv() {
+            uint8_t buf[1024] = {0};
+            int r = recv(buf, sizeof(buf)-1);
+            buf[r+1] = '\0';
+            return std::string((char*)buf);
+        }
+        
+    private:
+        
+#ifdef __WIN32__
+        struct WinSockIniter {
+            WinSockIniter() {
+                WSADATA wsaData;
+                if(WSAStartup(MAKEWORD(1,1), &wsaData) != 0) {
+                    cerr << "WinSock failed to intialize." << endl;
+                    exit(1);
+                }
+            }
+        };
+        struct WinSockInitOnce {
+            WinSockInitOnce() {
+                static WinSockIniter init_once;
+            }
+        } m_WinSockInit;
+#endif
+        
+    protected:
+        
+        SOCKET m_Socket;
+        bool m_bOpen = false;
 };
+
+//class UDPSocket
+//{
+//};
 
 #endif
 

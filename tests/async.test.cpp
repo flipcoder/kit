@@ -401,7 +401,7 @@ TEST_CASE("async_wrap","[async_wrap]") {
 }
 
 TEST_CASE("async_fstream","[async_fstream]") {
-    SECTION("file operations"){
+    SECTION("basic usage"){
         Multiplexer mx;
         {
             const std::string fn = "test.txt";
@@ -430,15 +430,12 @@ TEST_CASE("async_fstream","[async_fstream]") {
         }
         mx.finish();
     }
-    SECTION("file operations"){
-    }
 }
 
 TEST_CASE("Temp","[temp]") {
     SECTION("Some quick tests for debugging"){
         Multiplexer mx;
         mx.finish();
-        REQUIRE(true);
     }
 }
 

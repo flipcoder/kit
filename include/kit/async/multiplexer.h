@@ -35,13 +35,15 @@ typedef boost::coroutines::coroutine<void>::push_type push_coro_t;
 #define AWAIT(EXPR) AWAIT_MX(MX, EXPR)
 
 // async await a condition (continously yield until condition is true)
-#define YIELD_UNTIL_MX(MUX, EXPR) \
+#define YIELD_WHILE_MX(MUX, EXPR) \
     [&]{\
-        while(not (EXPR)){\
+        while((EXPR)){\
             MUX.yield();\
         }\
     }()
-#define YIELD_UNTIL(EXPR) AWAIT_MX(MX, EXPR)
+#define YIELD_WHILE(EXPR) YIELD_WHILE_MX(MX, EXPR)
+#define YIELD_UNTIL_MX(MUX, EXPR) YIELD_WHILE_MX(MUX, not (EXPR))
+#define YIELD_UNTIL(EXPR) YIELD_WHILE_MX(MX, not (EXPR))
 
 #define YIELD_MX(MUX) MUX.yield();
 #define YIELD() YIELD_MX(MX)
