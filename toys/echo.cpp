@@ -9,7 +9,9 @@ int main(int argc, char** argv)
 {
     unsigned short port = 1337;
     if(argc > 1)
+    try{
         port = boost::lexical_cast<short>(argv[1]);
+    }catch(...){}
     
     auto server = make_shared<TCPSocket>();
     server->open();
@@ -19,14 +21,9 @@ int main(int argc, char** argv)
     auto fut = MX[0].coro<void>([server]{
         for(;;)
         {
-            LOG("awaiting connection");
             auto client = make_shared<TCPSocket>(AWAIT(server->accept()));
-            LOG("connected");
             MX[0].coro<void>([client]{
-                LOG("waiting on client");
-                auto msg = client->recv();
-                client->send(msg);
-                LOG("goodbye client!");
+                client->send(client->recv());
             });
         }
     });
