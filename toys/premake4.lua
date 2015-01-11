@@ -1,7 +1,7 @@
 solution("kit")
     configurations {"debug", "release"}
 
-    targetdir("../bin")
+    targetdir("bin")
 
     configuration "debug"
         defines { "DEBUG" }

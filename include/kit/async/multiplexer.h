@@ -236,8 +236,11 @@ class Multiplexer:
                         }
                     );
                     unsigned idx = 0;
-                    while(next(idx)) {}
+                    while(next(idx)){}
                 });
+                //#ifdef __WIN32__
+                //    SetThreadPriority(m_Thread.native_handle(), THREAD_PRIORITY_BELOW_NORMAL);
+                //#endif
             }
             void forever() {
                 if(m_Thread.joinable()) {
@@ -313,12 +316,13 @@ class Multiplexer:
                 //if(l.try_lock())
                 // wait until task queued or thread interrupt
                 while(true){
-                    boost::this_thread::interruption_point();
                     if(not m_Units.empty())
                         break;
                     else if(m_Finish) // finished AND empty
                         return false;
                     m_CondVar.wait(lck);
+                    boost::this_thread::interruption_point();
+                    boost::this_thread::yield();
                     continue;
                 }
                 
