@@ -75,8 +75,6 @@ typedef boost::coroutines::coroutine<void>::push_type push_coro_t;
 
 class Multiplexer:
     public kit::singleton<Multiplexer>
-    //public IAsync
-    //virtual public kit::freezable
 {
     public:
 
