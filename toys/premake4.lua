@@ -24,8 +24,8 @@ solution("kit")
             "jsoncpp"
         }
         files {
-            "**.cpp",
-            "**.h",
+            "src/**.cpp",
+            "src/**.h",
             "../include/**.cpp",
             "../include/**.inl"
         }
