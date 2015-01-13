@@ -50,6 +50,11 @@ class Args
 
         bool empty() const { return m_Args.empty(); }
 
+        bool any(const std::vector<std::string>& v) const {
+            for(auto&& s: v)
+                return kit::has(m_Args, s);
+            return false;
+        }
         bool has(const std::string& s) const {
             return kit::has(m_Args, s);
         }

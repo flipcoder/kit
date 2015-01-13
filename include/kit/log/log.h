@@ -189,11 +189,14 @@ public:
         auto l = lock();
         std::ostringstream oss;
         auto& captured = this_log().m_Captured;
-        for(auto line: captured)
-            oss << line << std::endl;
+        for(auto&& line: captured)
+            oss << line << "\n";
         captured.clear();
         optimize();
-        return oss.str();
+        std::string s = oss.str();
+        if(boost::ends_with(s, "\n"))
+            s.pop_back();
+        return s;
     }
     void clear_capture() {
         auto l = lock();
