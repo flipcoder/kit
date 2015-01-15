@@ -65,8 +65,13 @@ TEST_CASE("Log","[log]") {
         REQUIRE(Log::consume_prefix("(blah): ") == "");
         REQUIRE(Log::consume_prefix("(blah:123): ") == "");
         REQUIRE(Log::consume_prefix("(blah): data") == "data");
+        REQUIRE(Log::consume_prefix("(:::): data") == "data");
         
         // multi-line
+        REQUIRE(Log::consume_prefix("(): \n(): ") == "\n");
+        REQUIRE(Log::consume_prefix("(): \n\n(): ") == "\n\n");
+        REQUIRE(Log::consume_prefix("(): foo\n(): bar") == "foo\nbar");
+        REQUIRE(Log::consume_prefix("foo\n(): \n(): \nbar") == "foo\n\n\nbar");
     }
 }
 

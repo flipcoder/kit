@@ -77,7 +77,7 @@ std::string Log :: consume_prefix(std::string s)
 {
     vector<string> lines_in;
     vector<string> lines_out;
-    boost::split(lines_in, s, boost::is_any_of("\r\n"), boost::token_compress_on);
+    boost::split(lines_in, s, boost::is_any_of("\n"));
     for(auto&& line: lines_in)
     {
         if(boost::starts_with(line, "("))
