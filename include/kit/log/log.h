@@ -298,6 +298,8 @@ public:
         #endif
     }
 
+    static std::string consume_prefix(std::string s);
+    
 private:
     
     void optimize() {

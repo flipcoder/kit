@@ -15,8 +15,8 @@
 
 #define DEG2RAD(X) ((X)*K_TAU/360.0)
 #define RAD2DEG(X) ((X)*360.0/K_TAU)
-#define DEG2RADf(X) ((X)*(float)K_TAU/360.0f)
-#define RAD2DEGf(X) ((X)*360.0f/(float)K_TAU)
+#define DEG2RADf(X) ((X)*((float)K_TAU)/360.0f)
+#define RAD2DEGf(X) ((X)*360.0f/((float)K_TAU))
 
 inline float sin_deg(float theta){
     return (sinf(theta*((float)K_TAU/360.0f)));

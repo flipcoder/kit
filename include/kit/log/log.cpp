@@ -73,3 +73,22 @@ void Log::write(std::string s, Log::Message::eLoggingLevel lev)
     //}
 }
 
+std::string Log :: consume_prefix(std::string s)
+{
+    vector<string> lines_in;
+    vector<string> lines_out;
+    boost::split(lines_in, s, boost::is_any_of("\r\n"), boost::token_compress_on);
+    for(auto&& line: lines_in)
+    {
+        if(boost::starts_with(line, "("))
+        {
+            const std::string end_prefix = "): ";
+            auto itr = line.find(end_prefix);
+            if(itr != string::npos)
+                line = line.substr(itr + end_prefix.length());
+        }
+        lines_out.push_back(line);
+    }
+    return boost::join(lines_out, "\n");
+}
+

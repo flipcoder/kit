@@ -47,5 +47,26 @@ TEST_CASE("Log","[log]") {
         //LOG("hello");
         //REQUIRE(Log::get().emit() == "hello");
     }
+    SECTION("consume prefix"){
+        // purpose
+        REQUIRE(Log::consume_prefix("(example.cpp:123): data") == "data");
+
+        // incomplete prefixes
+        REQUIRE(Log::consume_prefix("(") == "(");
+        REQUIRE(Log::consume_prefix("()") == "()");
+        REQUIRE(Log::consume_prefix("():") == "():");
+        REQUIRE(Log::consume_prefix("(blah):") == "(blah):");
+        REQUIRE(Log::consume_prefix("(blah:123):") == "(blah:123):");
+        
+        // complex prefix
+        REQUIRE(Log::consume_prefix("(): ") == "");
+
+        // nested colons are kept
+        REQUIRE(Log::consume_prefix("(blah): ") == "");
+        REQUIRE(Log::consume_prefix("(blah:123): ") == "");
+        REQUIRE(Log::consume_prefix("(blah): data") == "data");
+        
+        // multi-line
+    }
 }
 
