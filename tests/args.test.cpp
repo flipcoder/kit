@@ -16,12 +16,12 @@ TEST_CASE("Args","[args]") {
         REQUIRE(not args.has("foobar"));
         
         // single arg
-        args = Args({"foobar"});
+        args = Args(vector<string>{"foobar"});
         REQUIRE(args.has("foobar"));
         REQUIRE(not args.has("foo"));
         
         // multiple args
-        args = Args({"foo", "bar"});
+        args = Args(vector<string>{"foo", "bar"});
         REQUIRE(args.has("foo"));
         REQUIRE(args.has("bar"));
         REQUIRE(not args.has("baz"));
@@ -29,10 +29,10 @@ TEST_CASE("Args","[args]") {
         // switches
         args = Args();
         REQUIRE(not args.has('v', "verbose"));
-        args = Args({"--verbose"});
+        args = Args(vector<string>{"--verbose"});
         REQUIRE(args.has('v', "verbose"));
         REQUIRE(not args.has('n', "nope"));
-        args = Args({"-v"});
+        args = Args(vector<string>{"-v"});
     }
 }
 
