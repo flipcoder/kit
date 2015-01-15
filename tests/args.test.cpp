@@ -9,6 +9,30 @@ TEST_CASE("Args","[args]") {
         REQUIRE(args.empty());
         REQUIRE(args.size() == 0);
     }
+    
+    SECTION("has") {
+        // empty
+        Args args;
+        REQUIRE(not args.has("foobar"));
+        
+        // single arg
+        args = Args({"foobar"});
+        REQUIRE(args.has("foobar"));
+        REQUIRE(not args.has("foo"));
+        
+        // multiple args
+        args = Args({"foo", "bar"});
+        REQUIRE(args.has("foo"));
+        REQUIRE(args.has("bar"));
+        REQUIRE(not args.has("baz"));
 
+        // switches
+        args = Args();
+        REQUIRE(not args.has('v', "verbose"));
+        args = Args({"--verbose"});
+        REQUIRE(args.has('v', "verbose"));
+        REQUIRE(not args.has('n', "nope"));
+        args = Args({"-v"});
+    }
 }
 

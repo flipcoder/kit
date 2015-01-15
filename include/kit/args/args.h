@@ -15,8 +15,10 @@ class Args
 {
     public:
         Args() = default;
-        Args(const Args& args) = default;
-        Args& operator=(const Args& args) = default;
+        Args(const Args&) = default;
+        Args(Args&&) = default;
+        Args& operator=(const Args&) = default;
+        Args& operator=(Args&&) = default;
 
         Args(const std::vector<std::string>& args):
             m_Args(args)
@@ -215,6 +217,25 @@ class Args
                 return std::string();
             }
         }
+
+        // tests for a switch and its associated char
+        bool has(char c, std::string s) const {
+            assert(not boost::starts_with(s, "--"));
+            return has(c) || has(s);
+        }
+        bool has(char c) const {
+            std::string chs = chars();
+            return chs.find(c) != std::string::npos;
+        }
+        // returns string containing all provided char switches
+        std::string chars() const {
+            std::string r;
+            for(auto&& a: m_Args)
+                if(boost::starts_with(a, "-") && not boost::starts_with(a, "--"))
+                    r += a.substr(1);
+            return r;
+        }
+        
         //std::string after(std::string s, unsigned offset) {
         //}
         //std::string before(std::string s, unsigned offset) {
