@@ -1,5 +1,6 @@
 #include <catch.hpp>
 #include "../include/kit/args/args.h"
+#include "../include/kit/log/log.h"
 using namespace std;
 
 TEST_CASE("Args","[args]") {
@@ -48,7 +49,10 @@ TEST_CASE("Args","[args]") {
         REQUIRE(not args.has("--foo"));
         REQUIRE(args.has("-f"));
         
-        REQUIRE_THROWS(args = Args(vector<string>{"--invalid"}, "-f --foo"));
+        {
+            Log::Silencer ls;
+            REQUIRE_THROWS(args = Args(vector<string>{"--invalid"}, "-f --foo"));
+        }
     }
 }
 

@@ -1,6 +1,7 @@
 #include "args.h"
 #include "../log/log.h"
 #include "../kit.h"
+#include <boost/filesystem.hpp>
 using namespace std;
 
 void Args :: analyze()
@@ -80,8 +81,41 @@ void Args :: validate() const
         // compare against schema
         if(arg == "--") // sep
             break; // allow everything else
-        if(boost::starts_with(arg, "-") && not kit::has(m_Schema->allowed, arg))
-            throw std::invalid_argument("");
+        else if(arg == "-") // ?
+        {
+            string fn = boost::filesystem::basename(m_Filename);
+            ERRORf(GENERAL,
+                "%s: unrecognized argument '%s'\nTry '%s --help for more information.'",
+                fn % arg % fn
+            );
+        }
+        else if(boost::starts_with(arg, "--"))
+        {
+            if(not kit::has(m_Schema->allowed, arg))
+            {
+                string fn = boost::filesystem::basename(m_Filename);
+                ERRORf(GENERAL,
+                    "%s: unrecognized argument '%s'\nTry '%s --help for more information.'",
+                    fn % arg % fn
+                );
+            }
+        }
+        else if(boost::starts_with(arg, "-"))
+        {
+            for(size_t i=0; i<arg.size(); ++i)
+            {
+                if(0 == i) continue;
+                char letter = arg[i];
+                if(not kit::has(m_Schema->allowed, string("-")+letter))
+                {
+                    string fn = boost::filesystem::basename(m_Filename);
+                    ERRORf(GENERAL,
+                        "%s: unrecognized argument '-%s'\nTry '%s --help for more information.'",
+                        fn % letter % fn
+                    );
+                }
+            }
+        }
     }
 }
 
