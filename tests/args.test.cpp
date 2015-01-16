@@ -34,5 +34,21 @@ TEST_CASE("Args","[args]") {
         REQUIRE(not args.has('n', "nope"));
         args = Args(vector<string>{"-v"});
     }
+    
+    SECTION("schemas") {
+        Args args;
+        
+        REQUIRE_NOTHROW(args = Args(vector<string>{"--foo"}, "-f --foo"));
+        REQUIRE(args.has('f',"foo"));
+        REQUIRE(args.has("--foo"));
+        REQUIRE(not args.has("-f"));
+        
+        REQUIRE_NOTHROW(args = Args(vector<string>{"-f"}, "-f --foo"));
+        REQUIRE(args.has('f',"foo"));
+        REQUIRE(not args.has("--foo"));
+        REQUIRE(args.has("-f"));
+        
+        REQUIRE_THROWS(args = Args(vector<string>{"--invalid"}, "-f --foo"));
+    }
 }
 

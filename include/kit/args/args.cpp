@@ -39,3 +39,49 @@ void Args :: analyze()
     }
 }
 
+void Args :: schema(std::string docstring)
+{
+    if(docstring.empty())
+    {
+        m_Schema = boost::optional<Schema>();
+        return;
+    }
+    
+    m_Schema = Schema();
+    
+    vector<string> lines;
+    boost::split(lines, docstring, boost::is_any_of("\n"));
+    for(auto&& line: lines)
+    {
+        boost::trim(line);
+
+        // tokenize each switch as space-seperated values
+        // until non-prefixed token (or EOL)
+        if(boost::starts_with(line, "-"))
+        {
+            vector<string> tokens;
+            boost::split(tokens, line, boost::is_any_of(" \t"));
+            for(auto&& tok: tokens)
+                if(boost::starts_with(line, "-"))
+                    m_Schema->allowed.push_back(tok);
+                else
+                    break;
+        }
+    }
+}
+
+void Args :: validate() const
+{
+    if(not m_Schema)
+        return;
+    
+    for(auto&& arg: m_Args)
+    {
+        // compare against schema
+        if(arg == "--") // sep
+            break; // allow everything else
+        if(boost::starts_with(arg, "-") && not kit::has(m_Schema->allowed, arg))
+            throw std::invalid_argument("");
+    }
+}
+

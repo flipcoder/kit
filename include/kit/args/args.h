@@ -20,29 +20,37 @@ class Args
         Args& operator=(const Args&) = default;
         Args& operator=(Args&&) = default;
 
-        Args(const std::vector<std::string>& args):
+        Args(const std::vector<std::string>& args, std::string docstring = ""):
             m_Args(args)
         {
             analyze();
+            schema(docstring);
+            validate();
         }
 
-        Args(std::vector<std::string>&& args):
+        Args(std::vector<std::string>&& args, std::string docstring = ""):
             m_Args(args)
         {
             analyze();
+            schema(docstring);
+            validate();
         }
 
-        Args(const std::string& lines):
+        Args(const std::string& lines, std::string docstring = ""):
             m_Args(kit::lines(lines))
         {
             analyze();
+            schema(docstring);
+            validate();
         }
 
-        Args(int argc, const char** argv):
+        Args(int argc, const char** argv, std::string docstring = ""):
             m_Filename(argv[0]),
             m_Args(argv+1, argv+argc)
         {
             analyze();
+            schema(docstring);
+            validate();
         }
 
         std::vector<std::string>& get() { return m_Args; }
@@ -262,12 +270,20 @@ class Args
 
     private:
 
+        struct Schema
+        {
+            std::vector<std::string> allowed;
+        };
+        
         void analyze();
-
+        void schema(std::string docstring);
+        void validate() const;
+        
         std::vector<std::string> m_Args;
         //std::vector<std::pair<std::string, std::string>> m_Values;
         std::map<std::string, std::string> m_Values;
         std::string m_Filename;
+        boost::optional<Schema> m_Schema;
 };
 
 #endif
