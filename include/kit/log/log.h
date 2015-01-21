@@ -1,5 +1,5 @@
-#ifndef _LOG_H
-#define _LOG_H
+#ifndef LOG_H_AB4CGIE6
+#define LOG_H_AB4CGIE6
 
 #include <string>
 #include <fstream>

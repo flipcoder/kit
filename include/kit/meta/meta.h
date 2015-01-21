@@ -10,7 +10,7 @@
 #include <boost/variant.hpp>
 #include <boost/scope_exit.hpp>
 #include <boost/thread.hpp>
-#include <jsoncpp/json/json.h>
+#include <json/json.h>
 //#ifndef BSON_BYTE_ORDER
 //#define BSON_BYTE_ORDER BSON_LITTLE_ENDIAN
 //#endif

@@ -177,7 +177,7 @@ class Args
         }
         std::string value_or(
             const std::string& key,
-            const std::string& def
+            const std::string& def = std::string()
         ) const {
             try{
                 return m_Values.at(key);
