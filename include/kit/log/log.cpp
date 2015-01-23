@@ -29,7 +29,6 @@ void Log::write(std::string s, Log::Message::eLoggingLevel lev)
         {
             for(unsigned i=0;i<th.m_Indents;++i)
                 line << "  ";
-            //line << "[ERROR] " << s;
             line << s;
             if(!(th.m_SilenceFlags & Log::Silencer::ERRORS))
                 cerr << line.str() << endl;

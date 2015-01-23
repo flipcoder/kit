@@ -267,6 +267,10 @@ class MetaBase:
     public:
         using mutex_type = Mutex;
         friend class MetaElement;
+
+        enum DeserializeFlags {
+            F_CREATE = kit::bit(0)
+        };
         //typedef Mutex mutex_type;
         
         //struct Iterator
@@ -386,7 +390,7 @@ class MetaBase:
         MetaBase(int argc, const char** argv){
             from_args(std::vector<std::string>(argv+1, argv+argc));
         }
-        MetaBase(const std::string& fn);
+        MetaBase(const std::string& fn, unsigned flags = 0);
         MetaBase(MetaFormat fmt, const std::string& data);
 
         MetaBase(MetaBase&&)= delete;
@@ -1198,11 +1202,12 @@ class MetaBase:
             const std::string& pth = std::string()
         );
         
-        void deserialize() {
+        void deserialize(unsigned flags = 0) {
             auto l = this->lock();
-            deserialize(m_Filename);
+            deserialize(m_Filename, flags);
         }
-        void deserialize(const std::string& fn);
+        
+        void deserialize(const std::string& fn, unsigned flags = 0);
 
         static MetaFormat filename_to_format(const std::string& fn);
 

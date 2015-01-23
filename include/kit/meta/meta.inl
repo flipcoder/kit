@@ -5,10 +5,10 @@
 #include "../kit.h"
 
 template<class Mutex>
-MetaBase<Mutex> :: MetaBase(const std::string& fn):
+MetaBase<Mutex> :: MetaBase(const std::string& fn, unsigned flags):
     m_Filename(fn)
 {
-    deserialize();
+    deserialize(flags);
 }
 
 template<class Mutex>
@@ -489,15 +489,30 @@ void MetaBase<Mutex> :: deserialize(MetaFormat fmt, std::istream& data, const st
 }
 
 template<class Mutex>
-void MetaBase<Mutex> :: deserialize(const std::string& fn)
+void MetaBase<Mutex> :: deserialize(const std::string& fn, unsigned flags)
 {
     auto l = this->lock();
     //assert(!frozen());
     if(fn.empty())
         ERROR(READ, "no filename specified");
 
+    if(flags & Meta::F_CREATE)
+    {
+        if(not boost::filesystem::exists(fn))
+        {
+            boost::filesystem::create_directories(
+                boost::filesystem::path(fn).parent_path()
+            );
+            std::fstream file(fn, std::fstream::out); // create
+            if(not file.good())
+                ERROR(READ, fn);
+            file << "{}\n";
+            file.flush();
+        }
+    }
+        
     std::ifstream file(fn);
-    if(!file.good())
+    if(not file.good())
         ERROR(READ, fn);
 
     // TODO: subdocument path
