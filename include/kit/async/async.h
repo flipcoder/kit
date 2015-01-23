@@ -2,7 +2,7 @@
 #define ASYNC_H_TIBVELUE
 
 #include "task.h"
-#include "multiplexer.h"
+#include "mx.h"
 #include "channel.h"
 
 template<class T>

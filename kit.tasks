@@ -48,7 +48,18 @@
 * kit.h (util)
 
 * async
+    [ ] allow minimum frequency for circuits (idle by default)
+        # this is to prevent circuit with only low frequency events from 
+        # blowing up cpu usage to 100%
+        # Each loop, the max value of each units' min frequency is held
+        # and a sleep() is used afterwards to slow this down
+    [ ] allow (optional) additional circuits
+        # usage: disk-specific, blocking checks (low latency)
+        # adding circuits will create contention on ThreadID->Circuit map,
+        #   so this is for long-running bg threads
+        # or maybe: adding additional map for more circuits
     [ ] fix helgrind-reported reporting race condition(s)
+        # may be false positive ^
     [-] task() and when() return scoped connections instead of future?
 
 * log

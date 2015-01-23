@@ -330,7 +330,7 @@ class Multiplexer:
                 auto& task = m_Units[idx];
                 if(!task.m_Ready || task.m_Ready()) {
                     lck.unlock();
-                    m_pCurrentUnit = &m_Units[idx]; // TODO: fix this garbage
+                    m_pCurrentUnit = &m_Units[idx];
                     try{
                         task.m_Func();
                     }catch(...){
@@ -432,6 +432,7 @@ class Multiplexer:
         const unsigned m_Concurrency;
         std::vector<std::tuple<std::unique_ptr<Circuit>, CacheLinePadding>> m_Circuits;
 
+        // read-write mutex might be more optimal here
         kit::mutex_wrap<std::map<boost::thread::id, unsigned>> m_ThreadToCircuit;
 };
 
