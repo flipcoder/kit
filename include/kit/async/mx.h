@@ -322,7 +322,10 @@ class Multiplexer:
                             (now - m_Clock).count() * 0.001f;
                         if(elapsed < inv_freq) // in seconds
                         {
-                            std::this_thread::sleep_for(std::chrono::milliseconds(
+                            auto lck = this->lock<boost::unique_lock<boost::mutex>>(boost::defer_lock);
+                            if(not lck.try_lock())
+                                break;
+                            m_CondVar.timed_wait(lck, boost::posix_time::milliseconds(
                                 int((inv_freq - elapsed)*1000.0f)
                             ));
                         }

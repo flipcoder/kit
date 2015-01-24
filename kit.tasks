@@ -49,8 +49,8 @@
 
 * async
     [x] stabilization of "idle" tasks (no CPU revving)
-    [ ] change sleep() -> CondVar.wait_for()
-        # stabilization won't increase latency of non-idle tasks on same circuit
+    [x] change sleep() -> CondVar.wait_for()
+        # because: stabilization should't increase latency of non-idle tasks on same circuit
     [ ] allow (optional) additional circuits
         # usage: disk-specific, blocking checks (low latency)
         # adding circuits will create contention on ThreadID->Circuit map,
