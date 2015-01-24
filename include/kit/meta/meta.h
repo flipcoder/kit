@@ -321,8 +321,10 @@ class MetaBase:
         {
             public:
                 Serializable() = default;
-                explicit Serializable(const std::string& fn):
-                    m_Cached(std::make_shared<MetaBase<Mutex>>(fn))
+                
+                // flags: DeserializeFlags
+                explicit Serializable(const std::string& fn, unsigned flags = 0):
+                    m_Cached(std::make_shared<MetaBase<Mutex>>(fn, flags))
                 {}
                 explicit Serializable(const std::shared_ptr<MetaBase<Mutex>>& m):
                     m_Cached(m)
@@ -364,6 +366,10 @@ class MetaBase:
                 virtual void deserialize(
                     const std::shared_ptr<MetaBase<Mutex>>& meta
                 ) = 0;
+                
+                std::shared_ptr<MetaBase<Mutex>> serialization() {
+                    return m_Cached;
+                }
 
                 /*
                  * Check file modification dates

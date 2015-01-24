@@ -73,6 +73,8 @@ typedef boost::coroutines::coroutine<void>::push_type push_coro_t;
 
 #define AWAIT_HINT(HINT, EXPR) AWAIT_HINT_MX(MUX, HINT, EXPR)
 
+#define MX_EPSILON 0.00001
+
 class Multiplexer:
     public kit::singleton<Multiplexer>
 {
@@ -306,11 +308,18 @@ class Multiplexer:
             
             Unit* this_unit() { return m_pCurrentUnit; }
             
+            // expressed in maximum acceptable ticks per second when idle
+            void frequency(float freq) {
+                auto lck = this->lock<boost::unique_lock<boost::mutex>>();
+                m_Frequency = freq;
+            }
+            
         private:
             
             void stabilize()
             {
-                if(0 == m_Frequency)
+                // WARNING: lock is assumed
+                if(m_Frequency <= MX_EPSILON)
                     return; // no stabilization
                 const float inv_freq = 1.0f / m_Frequency;
                 if(m_Clock != std::chrono::time_point<std::chrono::system_clock>())
@@ -379,10 +388,6 @@ class Multiplexer:
                 }
                 return true;
             }
-
-            void frequency(unsigned freq) {
-                m_Frequency = freq;
-            }
             
             Unit* m_pCurrentUnit = nullptr;
             std::deque<Unit> m_Units;
@@ -393,7 +398,7 @@ class Multiplexer:
             unsigned m_Index=0;
             boost::condition_variable m_CondVar;
             std::chrono::time_point<std::chrono::system_clock> m_Clock;
-            unsigned m_Frequency = 120;
+            float m_Frequency = 60.0f;
         };
         
         friend class Circuit;
