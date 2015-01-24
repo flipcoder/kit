@@ -307,7 +307,32 @@ class Multiplexer:
             Unit* this_unit() { return m_pCurrentUnit; }
             
         private:
-
+            
+            void stabilize()
+            {
+                if(0 == m_Frequency)
+                    return; // no stabilization
+                const float inv_freq = 1.0f / m_Frequency;
+                if(m_Clock != std::chrono::time_point<std::chrono::system_clock>())
+                {
+                    while(true)
+                    {
+                        auto now = std::chrono::system_clock::now();
+                        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>
+                            (now - m_Clock).count() * 0.001f;
+                        if(elapsed < inv_freq) // in seconds
+                        {
+                            std::this_thread::sleep_for(std::chrono::milliseconds(
+                                int((inv_freq - elapsed)*1000.0f)
+                            ));
+                        }
+                        else
+                            break;
+                    }
+                }
+                m_Clock = std::chrono::system_clock::now();
+            }
+            
             // returns false only on empty() && m_Finish
             virtual bool next(unsigned& idx) {
                 auto lck = this->lock<boost::unique_lock<boost::mutex>>();
@@ -324,8 +349,10 @@ class Multiplexer:
                     continue;
                 }
                 
-                if(idx >= m_Units.size())
+                if(idx >= m_Units.size()) {
+                    stabilize();
                     idx = 0;
+                }
                 
                 auto& task = m_Units[idx];
                 if(!task.m_Ready || task.m_Ready()) {
@@ -337,8 +364,10 @@ class Multiplexer:
                         lck.lock();
                         const size_t sz = m_Units.size();
                         idx = std::min<unsigned>(idx+1, sz);
-                        if(idx == sz)
+                        if(idx == sz) {
+                            stabilize();
                             idx = 0;
+                        }
                         return true;
                     }
                     m_pCurrentUnit = nullptr;
@@ -346,6 +375,10 @@ class Multiplexer:
                     m_Units.erase(m_Units.begin() + idx);
                 }
                 return true;
+            }
+
+            void frequency(unsigned freq) {
+                m_Frequency = freq;
             }
             
             Unit* m_pCurrentUnit = nullptr;
@@ -356,6 +389,8 @@ class Multiplexer:
             Multiplexer* m_pMultiplexer;
             unsigned m_Index=0;
             boost::condition_variable m_CondVar;
+            std::chrono::time_point<std::chrono::system_clock> m_Clock;
+            unsigned m_Frequency = 120;
         };
         
         friend class Circuit;

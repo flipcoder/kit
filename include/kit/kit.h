@@ -16,7 +16,6 @@
 #include <boost/bimap.hpp>
 #include <boost/any.hpp>
 #include <boost/logic/tribool.hpp>
-#include <boost/signals2.hpp>
 
 // lazy range for entire container
 #define ENTIRE(blah) (blah).begin(), (blah).end()

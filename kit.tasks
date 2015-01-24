@@ -48,11 +48,9 @@
 * kit.h (util)
 
 * async
-    [ ] allow minimum frequency for circuits (idle by default)
-        # this is to prevent circuit with only low frequency events from 
-        # blowing up cpu usage to 100%
-        # Each loop, the max value of each units' min frequency is held
-        # and a sleep() is used afterwards to slow this down
+    [x] stabilization of "idle" tasks (no CPU revving)
+    [ ] change sleep() -> CondVar.wait_for()
+        # stabilization won't increase latency of non-idle tasks on same circuit
     [ ] allow (optional) additional circuits
         # usage: disk-specific, blocking checks (low latency)
         # adding circuits will create contention on ThreadID->Circuit map,
@@ -71,4 +69,7 @@
         # for async's sleep mechanism
     [L] Longer scheduling (days, months) would be nice
     [L] Persistent timelines and alarms using serialization
+
+* reactive
+    [ ] scoped slot removal
 
