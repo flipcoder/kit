@@ -209,7 +209,6 @@ TEST_CASE("Meta","[meta]") {
             REQUIRE(m->at<int>("one") == 1);
             
             string data = m->serialize(MetaFormat::JSON);
-            // BUG: 1 serialized as "null" here!?
             m->clear();
             REQUIRE(m->empty());
             m->deserialize(MetaFormat::JSON,data);
@@ -218,10 +217,13 @@ TEST_CASE("Meta","[meta]") {
         }
 
         SECTION("arrays") {
-            //auto m = make_shared<Meta>(MetaFormat::JSON,"{[1,2,3]}");
-            //auto a = m->at<std::shared_ptr<Meta>>(0);
-            //REQUIRE(a);
-            //REQUIRE(a->size() == 3);
+            auto m = make_shared<Meta>(MetaFormat::JSON,"{\"numbers\":[1,2,3]}");
+            auto a = m->at<std::shared_ptr<Meta>>(0);
+            REQUIRE(a);
+            REQUIRE(a->size() == 3);
+            REQUIRE(a->at<int>(0) == 1);
+            REQUIRE(a->at<int>(1) == 2);
+            REQUIRE(a->at<int>(2) == 3);
         }
 
         SECTION("overwriting") {
