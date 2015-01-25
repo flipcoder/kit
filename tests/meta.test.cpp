@@ -226,13 +226,23 @@ TEST_CASE("Meta","[meta]") {
             REQUIRE(a->at<int>(2) == 3);
         }
 
-        SECTION("overwriting") {
-            auto m = make_shared<Meta>(MetaFormat::JSON,"{\"one\":1}");
-            REQUIRE(m->at<int>("one") == 1);
-            m->deserialize(MetaFormat::JSON,"{\"two\":2}");
-            //REQUIRE(m->size() == 1); // decide this behavior (flag?)
-            //REQUIRE_THROWS_AS(m->at<int>("one"), std::out_of_range);
-            REQUIRE(m->at<int>("two") == 2);
+        SECTION("deserialization flags"){
+            
+            {
+                // no deserialize flags
+                auto m = make_shared<Meta>(MetaFormat::JSON,"{\"one\":1}");
+                m->deserialize(MetaFormat::JSON,"{\"two\":2}");
+                REQUIRE(m->size() == 1); // no flags should clear prior data
+            }
+            
+            {
+                // same as above, but with F_MERGE flag
+                auto m = make_shared<Meta>(MetaFormat::JSON,"{\"one\":1}");
+                m->deserialize(MetaFormat::JSON,"{\"two\":2}",
+                    Meta::F_MERGE // <-- new flag
+                );
+                REQUIRE(m->size() == 2); // old data is preserved
+            }
         }
 
         SECTION("nested") {

@@ -269,7 +269,8 @@ class MetaBase:
         friend class MetaElement;
 
         enum DeserializeFlags {
-            F_CREATE = kit::bit(0)
+            F_CREATE = kit::bit(0),
+            F_MERGE = kit::bit(1)
         };
         //typedef Mutex mutex_type;
         
@@ -397,7 +398,7 @@ class MetaBase:
             from_args(std::vector<std::string>(argv+1, argv+argc));
         }
         MetaBase(const std::string& fn, unsigned flags = 0);
-        MetaBase(MetaFormat fmt, const std::string& data);
+        MetaBase(MetaFormat fmt, const std::string& data, unsigned flags = 0);
 
         MetaBase(MetaBase&&)= delete;
         
@@ -1188,31 +1189,30 @@ class MetaBase:
             serialize(m_Filename, flags);
         }
 
-        // use enforce flags instead
-        //enum DeserializeFlag {
-            /*
-             * Detect [key,value] arrays are treat them as keys
-             */
-        //    DETECT_KEYS = kit::bit(0)
-        //};
         void deserialize(
             MetaFormat fmt,
             const std::string& data,
             const std::string& fn = std::string(),
-            const std::string& pth = std::string()
+            const std::string& pth = std::string(),
+            unsigned flags = 0
         );
         void deserialize(
             MetaFormat fmt,
             std::istream& data,
             const std::string& fn = std::string(),
-            const std::string& pth = std::string()
+            const std::string& pth = std::string(),
+            unsigned flags = 0
         );
         
         void deserialize(unsigned flags = 0) {
             auto l = this->lock();
             deserialize(m_Filename, flags);
         }
-        
+        void deserialize(
+            MetaFormat fmt,
+            const std::string& data,
+            unsigned flags
+        );
         void deserialize(const std::string& fn, unsigned flags = 0);
 
         static MetaFormat filename_to_format(const std::string& fn);

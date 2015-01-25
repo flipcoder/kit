@@ -12,12 +12,6 @@ MetaBase<Mutex> :: MetaBase(const std::string& fn, unsigned flags):
 }
 
 template<class Mutex>
-MetaBase<Mutex> :: MetaBase(MetaFormat fmt, const std::string& data)
-{
-    deserialize(fmt, data);
-}
-
-template<class Mutex>
 MetaBase<Mutex> :: MetaBase(const std::shared_ptr<MetaBase<Mutex>>& rhs)
 {
     clear();
@@ -401,10 +395,37 @@ std::string MetaBase<Mutex> :: serialize(MetaFormat fmt, unsigned flags) const
 }
 
 template<class Mutex>
-void MetaBase<Mutex> :: deserialize(MetaFormat fmt, const std::string& data, const std::string& fn, const std::string& pth)
+MetaBase<Mutex> :: MetaBase(MetaFormat fmt, const std::string& data, unsigned flags)
+{
+    deserialize(
+        fmt,
+        data,
+        std::string(), // fn
+        std::string(), // pth
+        flags
+    );
+}
+
+template<class Mutex>
+void MetaBase<Mutex> :: deserialize(
+    MetaFormat fmt,
+    const std::string& data,
+    unsigned flags
+){
+    deserialize(
+        fmt,
+        data,
+        std::string(), // fn
+        std::string(), // pth
+        flags
+    );
+}
+
+template<class Mutex>
+void MetaBase<Mutex> :: deserialize(MetaFormat fmt, const std::string& data, const std::string& fn, const std::string& pth, unsigned flags)
 {
     std::istringstream iss(data);
-    deserialize(fmt, iss, fn, pth);
+    deserialize(fmt, iss, fn, pth, flags);
 }
 
 template<class Mutex>
@@ -447,10 +468,13 @@ void MetaBase<Mutex> :: deserialize_json(
 }
 
 template<class Mutex>
-void MetaBase<Mutex> :: deserialize(MetaFormat fmt, std::istream& data, const std::string& fn, const std::string& pth)
+void MetaBase<Mutex> :: deserialize(MetaFormat fmt, std::istream& data, const std::string& fn, const std::string& pth, unsigned flags)
 {
     auto l = this->lock();
 
+    if(not (flags & Meta::F_MERGE))
+        clear();
+    
     if(fmt == MetaFormat::JSON) 
     {
         Json::Value root;
@@ -522,7 +546,7 @@ void MetaBase<Mutex> :: deserialize(const std::string& fn, unsigned flags)
        pth = fn.substr(ofs+1);
     
     // may throw, but dont catch
-    deserialize(filename_to_format(fn), file, fn, pth);
+    deserialize(filename_to_format(fn), file, fn, pth, flags);
 
     //if(not pth.empty())
     //{
