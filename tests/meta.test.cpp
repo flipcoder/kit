@@ -19,6 +19,17 @@ TEST_CASE("Meta","[meta]") {
         REQUIRE(*m);
         REQUIRE(!m->empty());
         REQUIRE(m->size() == 1);
+        
+        // range checking
+        REQUIRE_THROWS_AS(m->at<int>(2), std::out_of_range);
+        // out_of_range check happens before any_type checking
+        REQUIRE_THROWS_AS(m->at<nullptr_t>(2), std::out_of_range);
+        
+        // type checking
+        REQUIRE_NOTHROW(m->at<int>(0));
+        REQUIRE_THROWS_AS(m->at<nullptr_t>(0), boost::bad_any_cast);
+        REQUIRE_THROWS_AS(m->meta(0), boost::bad_any_cast);
+        
 
         m->set<string>("two", "2");
         REQUIRE(m->size() == 2);
@@ -232,7 +243,12 @@ TEST_CASE("Meta","[meta]") {
             REQUIRE(a->size() == 3);
             REQUIRE(a->meta(0)->size() == 0);
             REQUIRE(a->meta(1)->size() == 1);
+            REQUIRE(a->meta(1)->meta(0)->size() == 0);
+            REQUIRE_THROWS_AS(a->meta(1)->meta(1), std::out_of_range);
             REQUIRE(a->meta(2)->size() == 2);
+            REQUIRE(a->meta(2)->meta(0)->size() == 0);
+            REQUIRE(a->meta(2)->meta(1)->size() == 0);
+            REQUIRE_THROWS_AS(a->meta(2)->meta(2), std::out_of_range);
         }
 
         SECTION("deserialization flags"){
