@@ -746,6 +746,19 @@ class MetaBase:
             }
         }
 
+        std::shared_ptr<MetaBase<Mutex>> meta(unsigned idx) {
+            auto l = this->lock();
+            return boost::any_cast<std::shared_ptr<MetaBase<Mutex>>>(
+                m_Elements.at(idx).value
+            );
+        }
+        std::shared_ptr<const MetaBase<Mutex>> meta(unsigned idx) const {
+            auto l = this->lock();
+            return boost::any_cast<std::shared_ptr<MetaBase<Mutex>>>(
+                m_Elements.at(idx).value
+            );
+        }
+
         std::shared_ptr<MetaBase<Mutex>> meta(const std::string& key) {
             auto l = this->lock();
             return boost::any_cast<std::shared_ptr<MetaBase<Mutex>>>(

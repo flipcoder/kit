@@ -224,6 +224,15 @@ TEST_CASE("Meta","[meta]") {
             REQUIRE(a->at<int>(0) == 1);
             REQUIRE(a->at<int>(1) == 2);
             REQUIRE(a->at<int>(2) == 3);
+            
+            // nested
+            m = make_shared<Meta>(MetaFormat::JSON,"{\"numbers\":[[],[[]],[[],[]]]}");
+            a = m->at<std::shared_ptr<Meta>>(0);
+            REQUIRE(a);
+            REQUIRE(a->size() == 3);
+            REQUIRE(a->meta(0)->size() == 0);
+            REQUIRE(a->meta(1)->size() == 1);
+            REQUIRE(a->meta(2)->size() == 2);
         }
 
         SECTION("deserialization flags"){
