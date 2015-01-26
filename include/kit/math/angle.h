@@ -41,8 +41,8 @@ class Angle
         static Angle radians(float rad) {
             return Angle(rad, RADIANS);
         }
-        static Angle turns(float tau) {
-            return Angle(tau/360.0f, DEGREES);
+        static Angle turns(float t) {
+            return Angle(t * 360.0f, DEGREES);
         }
 
         void wrap()

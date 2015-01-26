@@ -55,7 +55,10 @@ struct MetaType {
             id = ID::STRING;
         else if(boost::is_integral<T>::value)
         {
-            id = ID::INT;
+            if(typeid(val) == typeid(bool))
+                id = ID::BOOL;
+            else
+                id = ID::INT;
             if(boost::is_signed<T>::value)
                 flags |= SIGN;
         }
@@ -66,10 +69,6 @@ struct MetaType {
         else if(typeid(val) == typeid(std::nullptr_t))
         {
             id = ID::EMPTY;
-        }
-        else if(typeid(val) == typeid(bool))
-        {
-            id = ID::BOOL;
         }
         else if(kit::is_vector<T>::value)
             flags |= CONTAINER;

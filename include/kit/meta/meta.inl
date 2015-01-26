@@ -231,24 +231,11 @@ Json::Value MetaElement::serialize_json(
         //}
     }
     else if(type.id == MetaType::ID::REAL)
-    {
-        //if(type.storage == Type::Storage::STACK) {
-            v = Json::Value(boost::any_cast<double>(value));
-        //}
-    }
+        v = Json::Value(boost::any_cast<double>(value));
     else if(type.id == MetaType::ID::STRING)
-    {
-        //if(type.storage == MetaType::Storage::STACK) {
-            v = Json::Value(boost::any_cast<std::string>(value));
-        //}
-    }
+        v = Json::Value(boost::any_cast<std::string>(value));
     else if(type.id == MetaType::ID::BOOL)
-    {
-        //if(type.storage == MetaType::Storage::STACK) {
-            v = Json::Value(boost::any_cast<bool>(value));
-        //}
-    }
-
+        v = Json::Value(boost::any_cast<bool>(value));
     else if(type.id == MetaType::ID::EMPTY)
         v = Json::Value();
 
