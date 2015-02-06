@@ -65,16 +65,16 @@ typedef boost::coroutines::coroutine<void>::push_type push_coro_t;
                 return (EXPR);\
             }catch(const kit::yield_exception&){\
                 if(not once) {\
-                    Multiplexer::get().this_circuit().this_unit().cond = [=]{\
+                    MUX.this_circuit().this_unit().cond = [=]{\
                         return (HINT);\
                     };\
                     once = true;\
                 }\
-                MX.yield();\
+                MUX.yield();\
             }\
             if(once)\
             {\
-                kit::clear(Multiplexer::get().this_circuit().this_unit().cond);\
+                kit::clear(MUX.this_circuit().this_unit().cond);\
             }\
         }\
     }()
