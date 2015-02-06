@@ -34,6 +34,16 @@ TEST_CASE("Args","[args]") {
         REQUIRE(args.has('v', "verbose"));
         REQUIRE(not args.has('n', "nope"));
         args = Args(vector<string>{"-v"});
+
+        // multiple char switches
+        args = Args(vector<string>{"-abc"}, "-a -b -c");
+        REQUIRE(args.has('a', "achar"));
+        REQUIRE(args.has('b', "bchar"));
+        REQUIRE(args.has('c', "cchar"));
+        args = Args(vector<string>{"-ac"}, "-a -b -c");
+        REQUIRE(args.has('a', "achar"));
+        REQUIRE(not args.has('b', "bchar"));
+        REQUIRE(args.has('c', "cchar"));
     }
     
     SECTION("schemas") {
@@ -53,6 +63,14 @@ TEST_CASE("Args","[args]") {
             Log::Silencer ls;
             REQUIRE_THROWS(args = Args(vector<string>{"--invalid"}, "-f --foo"));
         }
+        
+        REQUIRE_NOTHROW(Args(vector<string>{"-ab"}, "-a -b"));
+        {
+            Log::Silencer ls;
+            // -c invalid
+            REQUIRE_THROWS(Args(vector<string>{"-abc"}, "-a -b"));
+        }
+
     }
 }
 

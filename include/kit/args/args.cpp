@@ -63,10 +63,19 @@ void Args :: schema(std::string docstring)
             vector<string> tokens;
             boost::split(tokens, line, boost::is_any_of(" \t"));
             for(auto&& tok: tokens)
-                if(boost::starts_with(line, "-"))
+            {
+                if(boost::starts_with(tok, "--"))
+                {
                     m_Schema->allowed.push_back(tok);
+                }
+                else if(boost::starts_with(tok, "-"))
+                {
+                    for(unsigned i=1;i<tok.size();++i)
+                        m_Schema->allowed.push_back(string("-")+tok[i]);
+                }
                 else
                     break;
+            }
         }
     }
 }
@@ -106,11 +115,12 @@ void Args :: validate() const
             {
                 if(0 == i) continue;
                 char letter = arg[i];
+                
                 if(not kit::has(m_Schema->allowed, string("-")+letter))
                 {
                     string fn = boost::filesystem::basename(m_Filename);
                     ERRORf(GENERAL,
-                        "%s: unrecognized argument '-%s'\nTry '%s --help for more information.'",
+                        "%s: unrecognized argument '-%s'\nTry '%s' --help for more information.",
                         fn % letter % fn
                     );
                 }
