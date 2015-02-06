@@ -342,6 +342,12 @@ namespace kit
             return lhs.data == rhs;
         }
         
+        mutex_wrap& operator=(T&& rhs){
+            auto l = this->lock();
+            data = rhs;
+            return *this;
+        }
+        
         template<class R = void>
         R with(std::function<R(T&)> cb) {
             auto l = this->lock();
@@ -942,6 +948,7 @@ namespace kit
     }
     
     #define TRY(expr) try{ expr; } catch(...) {}
+    #define TRY_OR(expr, alt) [&]{try{ return expr; } catch(...) {return alt;}}()
 
     //template<class T>
     //class local_singleton

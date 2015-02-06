@@ -45,8 +45,8 @@ class Args
         }
 
         Args(int argc, const char** argv, std::string docstring = ""):
-            m_Filename(argv[0]),
-            m_Args(argv+1, argv+argc)
+            m_Args(argv+1, argv+argc),
+            m_Filename(argv[0])
         {
             analyze();
             schema(docstring);

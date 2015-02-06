@@ -311,7 +311,7 @@ void MetaBase<Mutex> :: deserialize_json(
     const Json::Value& v
 ){
     //unsigned flags = empty() ? 0 : AddFlag::UNIQUE;
-    unsigned flags = 0;
+    //unsigned flags = 0;
 
     for(auto i = v.begin();
         i != v.end();

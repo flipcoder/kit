@@ -265,7 +265,7 @@ class MetaBase:
 {
     public:
         using mutex_type = Mutex;
-        friend class MetaElement;
+        friend struct MetaElement;
 
         enum DeserializeFlags {
             F_CREATE = kit::bit(0),
@@ -413,7 +413,7 @@ class MetaBase:
         // recursive converter between MetaBases of diff mutex types
         template<class Mutex2>
         static std::shared_ptr<MetaBase<Mutex>> convert(
-            std::shared_ptr<Mutex2> meta
+            std::shared_ptr<Mutex2>
         ){
             // TODO: impl
             return std::shared_ptr<Mutex>();

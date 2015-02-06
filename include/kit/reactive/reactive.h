@@ -77,13 +77,13 @@ namespace kit
             
             lazy() = default;
             lazy(const lazy&) = default;
-            lazy(const std::function<T()>& rhs):
+            lazy(std::function<T()>&& rhs):
                 m_Getter(rhs)
             {}
             lazy(lazy&&) = default;
             lazy& operator=(const lazy&) = default;
             lazy& operator=(lazy&&) = default;
-            lazy& operator=(const std::function<T()>& rhs)
+            lazy& operator=(std::function<T()>&& rhs)
             {
                 m_Value = boost::optional<T>();
                 m_Getter = rhs;
@@ -130,6 +130,11 @@ namespace kit
                 ensure();
                 return *m_Value;
             }
+            T&& move() {
+                ensure();
+                return std::move(*m_Value);
+            }
+
 
             void getter(std::function<T()> func){
                 m_Getter = func;

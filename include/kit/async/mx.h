@@ -14,6 +14,14 @@
 
 #define MX Multiplexer::get()
 
+#ifndef MX_THREADS
+#define MX_THREADS 0
+#endif
+
+#ifndef MX_FREQ
+#define MX_FREQ 60
+#endif
+
 #ifndef CACHE_LINE_SIZE
 #define CACHE_LINE_SIZE 64
 #endif
@@ -398,13 +406,16 @@ class Multiplexer:
             unsigned m_Index=0;
             boost::condition_variable m_CondVar;
             std::chrono::time_point<std::chrono::system_clock> m_Clock;
-            float m_Frequency = 60.0f;
+            float m_Frequency = 1.0f * MX_FREQ;
         };
         
         friend class Circuit;
         
         Multiplexer(bool init_now=true):
-            m_Concurrency(std::max<unsigned>(1U,boost::thread::hardware_concurrency()))
+            m_Concurrency(std::max<unsigned>(1U,
+                MX_THREADS ? MX_THREADS :
+                    boost::thread::hardware_concurrency()
+            ))
         {
             if(init_now)
                 init();
