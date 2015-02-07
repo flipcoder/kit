@@ -6,7 +6,7 @@ Copyright (c) 2013 Grady O'Connell
 ## async
 - Stackful coroutines
 - System of task separation strands/cores, called "circuits"
-- Easy per-circuit YIELD()
+- Coroutine-friendly YIELD(), AWAIT(), and SLEEP()
 - Task Scheduler (Similiar to boost asio, but simpler)
 - Intercircuit task transfering
 - (Go-style) buffered and unbuffered async channels, compatible with YIELD() statement
