@@ -81,6 +81,9 @@ typedef boost::coroutines::coroutine<void>::push_type push_coro_t;
 
 #define AWAIT_HINT(HINT, EXPR) AWAIT_HINT_MX(MUX, HINT, EXPR)
 
+// coroutine async sleep()
+#define SLEEP(TIME) Multiplexer::sleep(TIME);
+
 #define MX_EPSILON 0.00001
 
 class Multiplexer:
@@ -457,6 +460,22 @@ class Multiplexer:
                 throw kit::yield_exception();
             }
         }
+
+        static void sleep(std::chrono::milliseconds ms) {
+            if(ms == std::chrono::milliseconds(0))
+                return;
+            auto t0 = std::chrono::steady_clock::now();
+            while(true) {
+                auto t1 = std::chrono::steady_clock::now();
+                if(std::chrono::duration_cast<std::chrono::milliseconds>(
+                    t1 - t0
+                ) >= ms) {
+                    break;
+                }
+                YIELD();
+            }
+        }
+        
         Circuit& this_circuit(){
             return *m_ThreadToCircuit.with<Circuit*>(
                 [this](std::map<boost::thread::id, unsigned>& m
