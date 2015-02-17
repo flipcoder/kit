@@ -2,6 +2,7 @@
 My personal C++11 toolset
 
 Open-source under MIT License
+
 Copyright (c) 2013 Grady O'Connell
 
 ## async
