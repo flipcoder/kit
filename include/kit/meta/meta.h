@@ -994,7 +994,6 @@ class MetaBase:
             unsigned offset,
             T&& val
         ){
-            // Should really check type compatibility here...
             auto l = this->lock();
 
             try{

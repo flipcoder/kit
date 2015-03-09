@@ -341,6 +341,20 @@ private:
     #define DEBUG_OPTIONAL(X)
 #endif
 
+//#define TRACE(X) {\
+//    auto msg = (TRACE_FORMAT %\
+//        DEBUG_OPTIONAL(__FILE__ % __LINE__ %)\
+//        std::string(X)\
+//    ).str();\
+//    Log::get().write(msg);\
+//}
+//#define TRACEf(X,Y) {\
+//    auto msg = (TRACE_FORMAT  %\
+//        DEBUG_OPTIONAL(__FILE__ % __LINE__ %)\
+//        (boost::format(X) % Y).str()\
+//    ).str();\
+//    Log::get().write(msg);\
+//}
 #define LOG(X) {\
     auto msg = (LOG_FORMAT %\
         DEBUG_OPTIONAL(__FILE__ % __LINE__ %)\
