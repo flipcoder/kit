@@ -1,6 +1,8 @@
 # kit
 My personal C++11 toolset
 
+Open-source under MIT License
+
 Copyright (c) 2013 Grady O'Connell
 
 ## async
@@ -37,7 +39,6 @@ Common stuff used by other modules, including:
 - bit() and mask()
 - null_ptr_exception
 - scoped_unlock
-- scoped_dtor: deprecated in favor of BOOST_SCOPE_EXIT_ALL()
 - thread-safe singleton
 - timed function auto-retry
 - index data structures w/ unused ID approximation
