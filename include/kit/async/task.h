@@ -2,6 +2,7 @@
 #define TASK_H_HAPEX5Z1
 
 #include <boost/noncopyable.hpp>
+#include <boost/coroutine/all.hpp>
 #include <future>
 #include <stdexcept>
 #include "../kit.h"
@@ -70,6 +71,8 @@ class Task<void(Args...)>
             try{
                 m_Func(std::forward<T>(t)...);
                 m_Promise.set_value();
+            //}catch(const boost::coroutines::detail::forced_unwind& e){
+            //    throw e;
             }catch(const kit::yield_exception& e){
                 throw e;
             }catch(...){

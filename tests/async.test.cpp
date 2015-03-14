@@ -347,7 +347,7 @@ TEST_CASE("Coroutines","[coroutines]") {
         // see if all the numbers got through the channel
         REQUIRE((nums_fut.get() == vector<int>{1,2,3}));
     }
-    SECTION("Exceptions"){
+    SECTION("Exceptions and stack unwinding"){
         Multiplexer mx;
         
         struct UnwindMe {
@@ -366,7 +366,7 @@ TEST_CASE("Coroutines","[coroutines]") {
             bool* unwoundptr = unwound.get();
             auto fut = mx[0].task<void>([unwoundptr]{
                 UnwindMe uw(unwoundptr);
-                throw kit::interrupt();
+                throw kit::interrupt(); // example exception
             });
             REQUIRE_THROWS(fut.get());
             REQUIRE(*unwound);
@@ -377,13 +377,53 @@ TEST_CASE("Coroutines","[coroutines]") {
             bool* unwoundptr = unwound.get();
             auto fut = mx[0].coro<void>([unwoundptr]{
                 UnwindMe uw(unwoundptr);
-                throw kit::interrupt();
+                throw kit::interrupt(); // example exception
             });
             REQUIRE_THROWS(fut.get());
             REQUIRE(*unwound);
         }
         
         mx.finish();
+    }
+    SECTION("Stopping empty"){
+        Multiplexer mx;
+        mx.stop();
+    }
+    SECTION("Finishing empty"){
+        Multiplexer mx;
+        mx.finish();
+    }
+    SECTION("Stopping tasks"){
+        Multiplexer mx;
+        bool done = false;
+        mx[0].task<void>([&mx, &done]{
+            YIELD_MX(mx); // retries func when not in coro (see task above)
+            done = true;
+        });
+        boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
+        mx.stop();
+        REQUIRE(done == false);
+    }
+    SECTION("Stopping coroutines"){
+        Multiplexer mx;
+        bool done = false;
+        std::atomic<bool> ready = ATOMIC_VAR_INIT(false);
+        mx[0].coro<void>([&mx, &ready, &done]{
+            try{
+                for(;;){
+                    YIELD_MX(mx);
+                    ready = true;
+                }
+            }catch(...){
+                done = true;
+                throw;
+            }
+        });
+        // wait for at least one yield to pass
+        while(not ready){}
+        // the coroutine should unwind, setting done to true
+        mx.stop();
+        REQUIRE(done == true);
     }
 }
 

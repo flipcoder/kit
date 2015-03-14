@@ -112,6 +112,10 @@ class Multiplexer:
                 m_Ready(rdy),
                 m_Func(func)
             {}
+
+            bool is_coroutine() const {
+                return m_pPull;
+            }
             
             // only a hint, assume ready if functor is 'empty'
             std::function<bool()> m_Ready; 
@@ -247,17 +251,21 @@ class Multiplexer:
                         }
                     );
                     unsigned idx = 0;
-                    while(next(idx)){}
+                    try{
+                        while(next(idx)){}
+                    }catch(const boost::thread_interrupted&){
+                        m_Units.clear(); // this will unwind coros immediately
+                    }
                 });
                 //#ifdef __WIN32__
                 //    SetThreadPriority(m_Thread.native_handle(), THREAD_PRIORITY_BELOW_NORMAL);
                 //#endif
             }
-            void forever() {
-                if(m_Thread.joinable()) {
-                    m_Thread.join();
-                }
-            }
+            //void forever() {
+            //    if(m_Thread.joinable()) {
+            //        m_Thread.join();
+            //    }
+            //}
             void finish_nojoin() {
                 m_Finish = true;
                 {
@@ -362,12 +370,12 @@ class Multiplexer:
                 //if(l.try_lock())
                 // wait until task queued or thread interrupt
                 while(true){
+                    boost::this_thread::interruption_point();
                     if(not m_Units.empty())
                         break;
                     else if(m_Finish) // finished AND empty
                         return false;
                     m_CondVar.wait(lck);
-                    boost::this_thread::interruption_point();
                     boost::this_thread::yield();
                     continue;
                 }
@@ -383,7 +391,7 @@ class Multiplexer:
                     m_pCurrentUnit = &m_Units[idx];
                     try{
                         task.m_Func();
-                    }catch(...){
+                    }catch(const kit::yield_exception&){
                         lck.lock();
                         const size_t sz = m_Units.size();
                         idx = std::min<unsigned>(idx+1, sz);

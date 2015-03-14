@@ -50,11 +50,12 @@
     [x] change sleep() -> CondVar.wait_for()
         # because: stabilization should't increase latency of non-idle tasks on same circuit
     [ ] allow (optional) additional circuits
+        # socket-specific (for select() call optimization)
         # usage: disk-specific, blocking checks (low latency)
         # adding circuits will create contention on ThreadID->Circuit map,
         #   so this is for long-running bg threads
         # or maybe: adding additional map for more circuits
-    [ ] fix helgrind-reported reporting race condition(s)
+    [-] fix helgrind-reported reporting race condition(s)
         # may be false positive ^
     [-] task() and when() return scoped connections instead of future?
 

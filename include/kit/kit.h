@@ -321,7 +321,7 @@ namespace kit
     struct mutex_wrap:
         kit::mutexed<Mutex>
     {
-        T data;
+        T data = T();
 
         mutex_wrap():
             data(T())
@@ -332,6 +332,11 @@ namespace kit
         mutex_wrap(const T& v):
             data(std::forward(v))
         {}
+
+        T get() {
+            auto l = this->lock();
+            return data;
+        }
 
         friend bool operator==(const mutex_wrap& rhs, const T& lhs){
             auto l = rhs.lock();
