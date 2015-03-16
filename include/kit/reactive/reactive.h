@@ -2,12 +2,14 @@
 #define REACTIVE_H_GQBDAQXV
 
 #include <boost/optional.hpp>
+#include <boost/signals2.hpp>
 #include "../kit.h"
 #include "signal.h"
 
 namespace kit
 {
-    template<class T>
+    //template<class T, class Signal=kit::signal<void(const T&)>>
+    template<class T, class Signal=boost::signals2::signal<void(const T&)>>
     class reactive
     {
         public:
@@ -37,10 +39,13 @@ namespace kit
                 return m_Data;
             }
 
-            T& operator*() {
+            T operator*() {
                 return m_Data;
             }
             const T& operator*() const {
+                return m_Data;
+            }
+            operator T() const {
                 return m_Data;
             }
             T& get() {
@@ -61,8 +66,8 @@ namespace kit
                 //on_change.disconnect_all_slots();
                 //on_destroy.disconnect_all_slots();
             }
-            
-            kit::signal<void(const T&)> on_change;
+
+            Signal on_change;
             //boost::signals2::signal<void()> on_destroy;
             
         private:
@@ -115,7 +120,7 @@ namespace kit
             }
             
             void ensure() {
-                if(K_UNLIKELY(!m_Value))
+                if(!m_Value)
                     m_Value = m_Getter();
             }
             
@@ -150,6 +155,12 @@ namespace kit
     };
 
 }
+
+#define KIT_REACTIVE_SIGNAL(FUNC, MEMBER) \
+    template<class Func> \
+    boost::signals2::connection FUNC(Func&& func){ \
+        return MEMBER.on_change.connect(func); \
+    }
 
 #endif
 
