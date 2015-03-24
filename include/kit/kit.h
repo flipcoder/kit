@@ -953,7 +953,8 @@ namespace kit
     }
     
     #define TRY(expr) try{ expr; } catch(...) {}
-    #define TRY_OR(expr, alt) [&]{try{ return expr; } catch(...) {return alt;}}()
+    #define TRY_OR(expr, alt) [&]{try{ return (expr); } catch(...) {return (alt);}}()
+    #define IF_OR(expr, alt) [&]{try{ auto r = (expr);if(r)return r; } catch(...) {}return (alt);}()
 
     //template<class T>
     //class local_singleton
@@ -966,6 +967,24 @@ namespace kit
     //        }
     //};
 
+    #define K_GET(TYPE, NAME, MEMBER) \
+        TYPE NAME() const { return MEMBER; }
+    #define K_SET(TYPE, NAME, MEMBER) \
+        void NAME(TYPE val) { MEMBER = val; }
+    #define K_GET_SET(TYPE, NAME, MEMBER) \
+        TYPE NAME() const { return MEMBER; } \
+        void NAME(TYPE val) { MEMBER = val; }
+    #define K_GETR(TYPE, NAME, MEMBER) \
+        TYPE& NAME() { return MEMBER; } \
+        const TYPE& NAME() const { return MEMBER; }
+    #define K_CGETR(TYPE, NAME, MEMBER) \
+        const TYPE& NAME() const { return MEMBER; }
+    #define K_GETR_SET(TYPE, NAME, MEMBER) \
+        K_GETR(TYPE, NAME, MEMBER) \
+        K_SET(TYPE, NAME, MEMBER)
+    #define K_CGETR_SET(TYPE, NAME, MEMBER) \
+        K_CGETR(TYPE, NAME, MEMBER) \
+        K_SET(TYPE, NAME, MEMBER)
 }
 
 #endif
