@@ -220,10 +220,10 @@ Json::Value MetaElement::serialize_json(
     // TODO: boost::any -> value (and key?)
     else if(type.id == MetaType::ID::INT) {
         //if(type.storage == Type::Storage::STACK) {
-            if(type.flags & MetaType::Flag::SIGN)
+            //if(type.flags & MetaType::Flag::SIGN)
                 v = Json::Int(boost::any_cast<int>(value));
-            else
-                v = Json::Int(boost::any_cast<unsigned>(value));
+            //else
+            //    v = Json::Int(boost::any_cast<unsigned>(value));
         //} else if(type.storage == MetaType::Storage::SHARED) {
         //    v = Json::Int(
         //        *kit::safe_ptr(boost::any_cast<std::shared_ptr<int>>(value))
@@ -336,15 +336,19 @@ void MetaBase<Mutex> :: deserialize_json(
 
         if(e.isNull())
             set<std::nullptr_t>(k, nullptr);
-        if(e.isInt())
+        //if(e.isInt())
+        else if(e.type() == Json::intValue)
             set<int>(k, e.asInt());
-        else if(e.isUInt())
-            set<unsigned>(k, e.asUInt());
-        else if(e.isString())
+        //else if(e.isUInt())
+        //    set<unsigned>(k, e.asUInt());
+        else if(e.type() == Json::stringValue)
+        //else if(e.isString())
             set<std::string>(k, e.asString());
-        else if(e.isBool())
+        else if(e.type() == Json::booleanValue)
+        //else if(e.isBool())
             set<bool>(k, e.asBool());
-        else if(e.isDouble())
+        else if(e.type() == Json::realValue)
+        //else if(e.isDouble())
             set<double>(k, e.asDouble());
         else
             WARNINGf("unparsable value at key = %s", k);

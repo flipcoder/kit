@@ -59,8 +59,8 @@ struct MetaType {
                 id = ID::BOOL;
             else
                 id = ID::INT;
-            if(boost::is_signed<T>::value)
-                flags |= SIGN;
+            //if(boost::is_signed<T>::value)
+            //    flags |= SIGN;
         }
         else if(boost::is_floating_point<T>::value)
             id = ID::REAL;
@@ -104,7 +104,7 @@ struct MetaType {
     };
 
     enum Flag {
-        SIGN = kit::bit(0),
+        //SIGN = kit::bit(0),
         CONTAINER = kit::bit(1),
         MASK = kit::mask(2)
     };
@@ -987,23 +987,23 @@ class MetaBase:
         /*
          * Set (update) element already at index (offset)
          *
-         * Returns bool indicating success
+         * Throws out_of_range on invalid offset
          */
         template<class T>
-        bool set(
+        void set(
             unsigned offset,
             T&& val
         ){
             auto l = this->lock();
 
-            try{
+            //try{
                 auto& e = m_Elements.at(offset);
                 e.value = val;
                 e.trigger();
-            }catch(...){
-                return false;
-            }
-            return true;
+            //}catch(...){
+            //    return false;
+            //}
+            //return true;
         }
 
         boost::signals2::connection on_change(

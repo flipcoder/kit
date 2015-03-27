@@ -1,5 +1,7 @@
 #include <catch.hpp>
+#include "../include/kit/kit.h"
 #include "../include/kit/meta/meta.h"
+#include "../include/kit/math/common.h"
 using namespace std;
 
 TEST_CASE("Meta","[meta]") {
@@ -274,6 +276,12 @@ TEST_CASE("Meta","[meta]") {
             
         }
 
+        SECTION("correct types") {
+            // make sure doubles with trailing .0 don't serialize as ints
+            auto m = make_shared<Meta>(MetaFormat::JSON,"{\"one\":1.0}");
+            REQUIRE_THROWS_AS(m->at<int>("one"), boost::bad_any_cast);
+            REQUIRE(floatcmp(m->at<double>("one"), 1.0));
+        }
     }
 }
 
