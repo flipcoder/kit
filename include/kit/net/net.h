@@ -34,6 +34,17 @@
 
 #include "../async/async.h"
 
+class socket_exception:
+    public std::runtime_error
+{
+    public:
+        socket_exception(const std::string& msg):
+            std::runtime_error(msg)
+        {}
+        virtual ~socket_exception() throw() {}
+};
+    
+
 class TCPSocket
 {
     public:
@@ -49,6 +60,7 @@ class TCPSocket
         {
             rhs.m_bOpen = false;
         }
+        TCPSocket(const TCPSocket& rhs) = delete;
         TCPSocket& operator=(TCPSocket&& rhs) {
             if(m_bOpen)
                 close();
@@ -57,6 +69,7 @@ class TCPSocket
             rhs.m_bOpen = false;
             return *this;
         }
+        TCPSocket& operator=(const TCPSocket& rhs) = delete;
         //TCPSocket(Protocol p):
         //    m_Protocol(p)
         //{}
@@ -83,7 +96,7 @@ class TCPSocket
 
             m_bOpen = m_Socket != INVALID_SOCKET;
             if(not m_bOpen)
-                throw std::runtime_error(
+                throw socket_exception(
                     std::string("TCPSocket::open failed (")+
                     std::to_string(errno)+")"
                 );
@@ -102,12 +115,12 @@ class TCPSocket
             SOCKET socket;
             sockaddr_storage addr;
             socklen_t addr_sz = sizeof(addr);
-            int r = ::accept(m_Socket, (struct sockaddr*)&addr, &addr_sz);
-            if(r == -1)
+            socket = ::accept(m_Socket, (struct sockaddr*)&addr, &addr_sz);
+            if(socket == INVALID_SOCKET)
             {
-                if(errno == EWOULDBLOCK)
+                if(errno == EWOULDBLOCK || errno == EAGAIN)
                     throw kit::yield_exception();
-                throw std::runtime_error(
+                throw socket_exception(
                     std::string("TCPSocket::accept failed (")+
                     std::to_string(errno)+")"
                 );
@@ -123,13 +136,13 @@ class TCPSocket
             memset(sAddr.sin_zero, '\0', sizeof(sAddr.sin_zero));
 
             if(::bind(m_Socket, (sockaddr*)&sAddr, sizeof(sAddr)) == SOCKET_ERROR)
-                throw std::runtime_error(
+                throw socket_exception(
                     std::string("TCPSocket::bind failed (")+std::to_string(errno)+")"
                 );
         }
         void listen(int backlog = 0) {
             if(::listen(m_Socket, backlog) == -1)
-                throw std::runtime_error(
+                throw socket_exception(
                     std::string("TCPSocket::listen failed (")+
                     std::to_string(errno)+")"
                 );
@@ -159,7 +172,7 @@ class TCPSocket
             memset(&(destAddr.sin_zero), '\0', sizeof(destAddr.sin_zero));
 
             if(::connect(m_Socket, (sockaddr*)&destAddr, sizeof(destAddr))==SOCKET_ERROR)
-                throw std::runtime_error(
+                throw socket_exception(
                     std::string("TCPSocket::connect failed (")+
                     std::to_string(errno)+")"
                 );
@@ -203,7 +216,7 @@ class TCPSocket
 
         void send(const uint8_t* buf, int sz) {
             if(not m_bOpen)
-                throw std::runtime_error("TCPSocket::send socket not open");
+                throw socket_exception("TCPSocket::send socket not open");
             int sent = 0;
             int left = sz;
             int n = 0;
@@ -211,7 +224,7 @@ class TCPSocket
             {
                 n = ::send(m_Socket, (char*)(buf + sent), left, 0);
                 if(n==SOCKET_ERROR)
-                    throw std::runtime_error(
+                    throw socket_exception(
                         std::string("TCPSocket::send socket error (")+
                         std::to_string(errno)+")"
                     );
@@ -224,24 +237,37 @@ class TCPSocket
         }
         int recv(uint8_t* buf, int sz) {
             if(sz <= 0)
-                throw std::runtime_error("TCPSocket::recv buffer has no space");
+                throw socket_exception("TCPSocket::recv buffer has no space");
             if(not m_bOpen)
-                throw std::runtime_error("TCPSocket::recv socket not open");
+                throw socket_exception("TCPSocket::recv socket not open");
             int n = 0;
             n = ::recv(m_Socket, (char*)buf, sz, 0);
-            if(n==SOCKET_ERROR)
-                throw std::runtime_error(
-                    std::string("TCPSocket::send socket error (")+
-                    std::to_string(errno)+")"
-                );
-            else if(n==0)
+            if(n == SOCKET_ERROR){
+                auto err = errno;
+                if(err == EWOULDBLOCK || err == EAGAIN)
+                {
+                    throw kit::yield_exception();
+                }
+                else
+                {
+                    throw socket_exception(
+                        std::string("TCPSocket::recv socket error (")+
+                        std::to_string(err)+")"
+                    );
+                }
+            }
+            else if(n==0){
                 m_bOpen = false;
+                throw socket_exception(
+                    "TCPSocket::send disconnected"
+                );
+            }
             return n;
         }
         std::string recv() {
-            uint8_t buf[1024] = {0};
-            int r = recv(buf, sizeof(buf)-1);
-            buf[r+1] = '\0';
+            uint8_t buf[1024];
+            int r = recv(buf, sizeof(buf) - 1);
+            buf[r] = '\0';
             return std::string((char*)buf);
         }
         
