@@ -30,13 +30,8 @@ int main(int argc, char** argv)
                 LOGf("client %s connected", client_id);
                 ++num_clients;
                 try{
-                    string msg;
                     for(;;)
-                    {
-                        msg = AWAIT(client->recv());
-                        cout << msg << endl;
-                        client->send(msg);
-                    }
+                        client->send(AWAIT(client->recv()));
                 }catch(const socket_exception& e){
                     LOGf("client %s disconnected (%s)", client_id % e.what());
                 }
