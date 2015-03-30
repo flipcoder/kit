@@ -18,24 +18,22 @@ int main(int argc, char** argv)
     server->bind(port);
     server->listen();
 
-    int num_clients = 0;
+    int client_ids = 0;
 
-    auto fut = MX[0].coro<void>([&num_clients, server]{
+    auto fut = MX[0].coro<void>([&]{
         for(;;)
         {
             LOG("awaiting connection");
             auto client = make_shared<TCPSocket>(AWAIT(server->accept()));
-            MX[0].coro<void>([&num_clients, client]{
-                int client_id = num_clients;
+            MX[0].coro<void>([&, client]{
+                int client_id = client_ids++;
                 LOGf("client %s connected", client_id);
-                ++num_clients;
                 try{
                     for(;;)
-                        client->send(AWAIT(client->recv()));
+                        AWAIT(client->send(AWAIT(client->recv())));
                 }catch(const socket_exception& e){
                     LOGf("client %s disconnected (%s)", client_id % e.what());
                 }
-                --num_clients;
             });
         }
     });

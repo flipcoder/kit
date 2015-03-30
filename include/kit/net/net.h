@@ -223,11 +223,15 @@ class TCPSocket
             while(sent < sz)
             {
                 n = ::send(m_Socket, (char*)(buf + sent), left, 0);
-                if(n==SOCKET_ERROR)
-                    throw socket_exception(
-                        std::string("TCPSocket::send socket error (")+
-                        std::to_string(errno)+")"
-                    );
+                if(n==SOCKET_ERROR){
+                    if(errno == EWOULDBLOCK || errno == EAGAIN)
+                        throw kit::yield_exception();
+                    else
+                        throw socket_exception(
+                            std::string("TCPSocket::send socket error (")+
+                            std::to_string(errno)+")"
+                        );
+                }
                 sent += n;
                 left -= n;
             }
@@ -243,18 +247,13 @@ class TCPSocket
             int n = 0;
             n = ::recv(m_Socket, (char*)buf, sz, 0);
             if(n == SOCKET_ERROR){
-                auto err = errno;
-                if(err == EWOULDBLOCK || err == EAGAIN)
-                {
+                if(errno == EWOULDBLOCK || errno == EAGAIN)
                     throw kit::yield_exception();
-                }
                 else
-                {
                     throw socket_exception(
                         std::string("TCPSocket::recv socket error (")+
-                        std::to_string(err)+")"
+                        std::string(strerror(errno))+")"
                     );
-                }
             }
             else if(n==0){
                 m_bOpen = false;
