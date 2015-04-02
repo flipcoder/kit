@@ -51,7 +51,6 @@ int main(int argc, char** argv)
     server->listen();
     
     vector<shared_ptr<Client>> clients;
-    int next_client_id = 0;
 
     auto fut = MX[0].coro<void>([&]{
         for(;;)

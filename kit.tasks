@@ -7,13 +7,6 @@
         [ ] use pure flag for json hint (serialize as [] vs. {}?)
         [.] fast type check instead of branching -- use typeid as offset
         [.] containers (vectors, maps?)
-    [-] treespace locks
-        # update: don't actually need this anymore with weak-locking system
-        # optional read-writer lock on the entire treespace would be useful
-        # treespace isn't all the data, just the hierarchy of Metas
-        # for more complicated nested scenarios
-        # only happens if Meta is associated with a treespace
-        # another option would be to cache the root
     [-] faster index-in-parent look-up, possibly cached
         # update: don't actually need this anymore with weak-locking system
         # ---
