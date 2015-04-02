@@ -105,9 +105,9 @@ namespace Axis{
     const glm::vec3 XY(1.0f, 1.0f, 0.0f);
     const glm::vec3 YZ(0.0f, 1.0f, 1.0f);
     const glm::vec3 XZ(1.0f, 0.0f, 1.0f);
-    const glm::vec3 nX(1.0f, 0.0f, 0.0f);
-    const glm::vec3 nY(0.0f, 1.0f, 0.0f);
-    const glm::vec3 nZ(0.0f, 0.0f, 1.0f);
+    const glm::vec3 nX(-1.0f, 0.0f, 0.0f);
+    const glm::vec3 nY(0.0f, -1.0f, 0.0f);
+    const glm::vec3 nZ(0.0f, 0.0f, -1.0f);
 }
 
 #include "matrixops.h"
