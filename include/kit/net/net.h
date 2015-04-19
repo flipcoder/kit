@@ -45,7 +45,44 @@ class socket_exception:
 };
     
 
-class TCPSocket
+class ISocket
+{
+    public:
+        virtual ~ISocket() {}
+
+        virtual operator bool() const = 0;
+        virtual void open() = 0;
+        virtual void close() = 0;
+        virtual SOCKET socket() = 0;
+        virtual void connect(std::string ip, short port) = 0;
+        virtual bool select() const = 0;
+        virtual void send(const uint8_t* buf, int sz) = 0;
+        virtual void send(std::string buf) = 0;
+        virtual int recv(uint8_t* buf, int sz) = 0;
+        virtual std::string recv() = 0;
+
+    private:
+        
+        #ifdef __WIN32__
+            struct WinSockIniter {
+                WinSockIniter() {
+                    WSADATA wsaData;
+                    if(WSAStartup(MAKEWORD(1,1), &wsaData) != 0) {
+                        cerr << "WinSock failed to intialize." << endl;
+                        exit(1);
+                    }
+                }
+            };
+            struct WinSockInitOnce {
+                WinSockInitOnce() {
+                    static WinSockIniter init_once;
+                }
+            } m_WinSockInit;
+        #endif
+};
+
+class TCPSocket:
+    public ISocket
 {
     public:
         
@@ -77,10 +114,10 @@ class TCPSocket
             if(m_bOpen)
                 ::closesocket(m_Socket);
         }
-        operator bool() const {
+        virtual operator bool() const override {
             return m_bOpen;
         }
-        void open() {
+        virtual void open() override {
             if(m_bOpen)
                 close();
             
@@ -101,16 +138,13 @@ class TCPSocket
                     std::to_string(errno)+")"
                 );
         }
-        bool is_open() const {
-            return m_bOpen;
-        }
-        void close() {
+        virtual void close() override {
             if(m_bOpen){
                 ::closesocket(m_Socket);
                 m_bOpen = false;
             }
         }
-        SOCKET socket() const { return m_Socket; }
+        virtual SOCKET socket() override { return m_Socket; }
         TCPSocket accept() {
             SOCKET socket;
             sockaddr_storage addr;
@@ -147,7 +181,7 @@ class TCPSocket
                     std::to_string(errno)+")"
                 );
         }
-        void connect(std::string ip, short port)
+        virtual void connect(std::string ip, short port) override
         {
             sockaddr_in destAddr;
             hostent* he;
@@ -182,7 +216,7 @@ class TCPSocket
         
         // Async usage (inside coroutine or repeated circuit unit):
         //      YIELD_UNTIL(socket.select());
-        bool select() const
+        virtual bool select() const override
         {
             fd_set fds_read;
             int fdscount = 0;
@@ -214,7 +248,7 @@ class TCPSocket
             return (bool)FD_ISSET(m_Socket, &fds_read);
         }
 
-        void send(const uint8_t* buf, int sz) {
+        virtual void send(const uint8_t* buf, int sz) override {
             if(not m_bOpen)
                 throw socket_exception("TCPSocket::send socket not open");
             int sent = 0;
@@ -236,10 +270,10 @@ class TCPSocket
                 left -= n;
             }
         }
-        void send(const std::string& buf) {
+        virtual void send(std::string buf) override {
             send((const uint8_t*)buf.c_str(), (int)buf.size());
         }
-        int recv(uint8_t* buf, int sz) {
+        virtual int recv(uint8_t* buf, int sz) override {
             if(sz <= 0)
                 throw socket_exception("TCPSocket::recv buffer has no space");
             if(not m_bOpen)
@@ -263,31 +297,12 @@ class TCPSocket
             }
             return n;
         }
-        std::string recv() {
+        virtual std::string recv() override {
             uint8_t buf[1024];
             int r = recv(buf, sizeof(buf) - 1);
             buf[r] = '\0';
-            return std::string((char*)buf);
+            return std::string((char*)buf, r);
         }
-        
-    private:
-        
-#ifdef __WIN32__
-        struct WinSockIniter {
-            WinSockIniter() {
-                WSADATA wsaData;
-                if(WSAStartup(MAKEWORD(1,1), &wsaData) != 0) {
-                    cerr << "WinSock failed to intialize." << endl;
-                    exit(1);
-                }
-            }
-        };
-        struct WinSockInitOnce {
-            WinSockInitOnce() {
-                static WinSockIniter init_once;
-            }
-        } m_WinSockInit;
-#endif
         
     protected:
         
@@ -295,9 +310,107 @@ class TCPSocket
         bool m_bOpen = false;
 };
 
-//class UDPSocket
-//{
-//};
+class UDPSocket:
+    public ISocket
+{
+    public:
+        UDPSocket() = default;
+        explicit UDPSocket(SOCKET rhs):
+            m_Socket(rhs),
+            m_bOpen(true)
+        {}
+        UDPSocket(UDPSocket&& rhs):
+            m_Socket(rhs.m_Socket),
+            m_bOpen(rhs.m_bOpen)
+        {
+            rhs.m_bOpen = false;
+        }
+        UDPSocket(const UDPSocket& rhs) = delete;
+        UDPSocket& operator=(UDPSocket&& rhs) {
+            if(m_bOpen)
+                close();
+            m_Socket = std::move(rhs.m_Socket);
+            m_bOpen = rhs.m_bOpen;
+            rhs.m_bOpen = false;
+            return *this;
+        }
+        UDPSocket& operator=(const UDPSocket& rhs) = delete;
+        //UDPSocket(Protocol p):
+        //    m_Protocol(p)
+        //{}
+        virtual ~UDPSocket(){
+            if(m_bOpen)
+                ::closesocket(m_Socket);
+        }
+        virtual void connect(std::string ip, short port) override {}
+        virtual operator bool() const override {
+            return m_bOpen;
+        }
+
+        virtual void close() override {
+            if(m_bOpen)
+            {
+                ::closesocket(m_Socket);
+                m_bOpen = false;
+            }
+        }
+        virtual SOCKET socket() override { return m_Socket; }
+        virtual void connect(std::string ip, short port) override
+        {
+            
+        }
+        virtual bool select() const override
+        {
+            fd_set fds_read;
+            int fdscount = 0;
+
+            timeval tv = {0,0};
+            //tv.tv_sec = 0;
+            //tv.tv_usec = 0;
+
+            FD_ZERO(&fds_read);
+            FD_SET(m_Socket, &fds_read);
+
+            #ifndef __WIN32__
+                fdscount = m_Socket + 1;
+            #endif
+
+            switch(::select(fdscount, &fds_read, (fd_set*)0, (fd_set*)0, &tv))
+            {
+                case 0:
+                    return false;
+                    break;
+                case SOCKET_ERROR:
+                    // TODO: throw socket select error
+                    return false;
+                default:
+                    //return true;
+                    break;
+            }
+
+            return (bool)FD_ISSET(m_Socket, &fds_read);
+        }
+        virtual void send(const uint8_t* buf, int sz) override
+        {
+        }
+        virtual void send(std::string buf) override {
+            send((const uint8_t*)buf.c_str(), (int)buf.size());
+        }
+        virtual int recv(uint8_t* buf, int sz) override
+        {
+        }
+        virtual std::string recv() override {
+            uint8_t buf[1024];
+            int r = recv(buf, sizeof(buf) - 1);
+            buf[r] = '\0';
+            return std::string((char*)buf, r);
+        }
+        
+    protected:
+        
+        SOCKET m_Socket;
+        bool m_bOpen = false;
+};
 
 #endif
 
