@@ -1,5 +1,7 @@
 #include <catch.hpp>
 #include "../include/kit/net/net.h"
+#include <string>
+using namespace std;
 
 TEST_CASE("Socket","[socket]") {
     SECTION("tcp server"){
@@ -62,6 +64,11 @@ TEST_CASE("Socket","[socket]") {
     }
     SECTION("addresses"){
         Address addr;
+        
+        addr = Address("1.2.3.4:5");
+        REQUIRE(addr.ip() == "1.2.3.4");
+        REQUIRE(addr.port() == 5);
+        REQUIRE(string(addr) == "1.2.3.4:5");
     }
 }
 

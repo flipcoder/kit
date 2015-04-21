@@ -227,7 +227,7 @@ class TCPSocket:
                 );
         }
         void listen(int backlog = 5) {
-            if(::listen(m_Socket, backlog) == -1)
+            if(::listen(m_Socket, backlog) == SOCKET_ERROR)
                 throw socket_exception(
                     std::string("TCPSocket::listen failed (")+
                     std::to_string(errno)+")"
