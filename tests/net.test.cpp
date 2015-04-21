@@ -3,7 +3,9 @@
 
 TEST_CASE("Socket","[socket]") {
     SECTION("tcp server"){
-        // TODO: initiate mock client
+        // TODO: initiate mock client with netcat
+        // warn and stop if netcat does not exist
+        
         //TCPSocket server;
         
         //REQUIRE(not server);
@@ -47,7 +49,7 @@ TEST_CASE("Socket","[socket]") {
         // TODO: initiate mock server process
         //TCPSocket s;
     }
-    SECTION("udp"){
+    SECTION("udp server"){
         //UDPSocket s;
         //REQUIRE(not s);
         //REQUIRE_NOTHROW(s.open());
@@ -55,6 +57,11 @@ TEST_CASE("Socket","[socket]") {
         ////REQUIRE(not s.select());
         //REQUIRE_NOTHROW(s.close());
         //REQUIRE(not s);
+    }
+    SECTION("udp client"){
+    }
+    SECTION("addresses"){
+        Address addr;
     }
 }
 
