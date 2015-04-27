@@ -19,7 +19,7 @@
 #endif
 
 #ifndef MX_FREQ
-#define MX_FREQ 60
+#define MX_FREQ 0
 #endif
 
 #ifndef CACHE_LINE_SIZE
