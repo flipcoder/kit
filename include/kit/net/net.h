@@ -32,6 +32,7 @@
     #define MTU 576
 #endif
 
+#include <boost/lexical_cast.hpp>
 #include "../async/async.h"
 
 class socket_exception:
@@ -54,7 +55,7 @@ class ISocket
         virtual void open() = 0;
         virtual void close() = 0;
         virtual SOCKET socket() = 0;
-        virtual void connect(std::string ip, short port) = 0;
+        virtual void connect(std::string ip, uint16_t port) = 0;
         virtual bool select() const = 0;
         virtual void send(const uint8_t* buf, int sz) = 0;
         virtual void send(std::string buf) = 0;
@@ -79,6 +80,60 @@ class ISocket
                 }
             } m_WinSockInit;
         #endif
+};
+
+class Address
+{
+    public:
+        Address() {
+            clear();
+        }
+        explicit Address(const sockaddr_in& info) {
+            m_Addr.sin_family = info.sin_family;
+            m_Addr.sin_addr.s_addr = info.sin_addr.s_addr;
+            m_Addr.sin_port = info.sin_port;
+            memset(m_Addr.sin_zero, '\0', sizeof(m_Addr.sin_zero));
+        }
+        Address(const Address&) = default;
+        Address(Address&&) = default;
+        Address& operator=(const Address&) = default;
+        Address& operator=(Address&&) = default;
+        Address(std::string ip_and_port) {
+            std::vector<std::string> tokens;
+            boost::split(tokens, ip_and_port, boost::is_any_of(":"));
+            if(tokens.size() != 2)
+                throw std::out_of_range("unable to parse address");
+            m_Addr.sin_addr.s_addr = inet_addr(tokens.at(0).c_str());
+            m_Addr.sin_port = htons(boost::lexical_cast<uint16_t>(tokens.at(1)));
+        }
+        Address(std::string ip, uint16_t port) {
+            m_Addr.sin_addr.s_addr = inet_addr(ip.c_str());
+            m_Addr.sin_port = htons(port);
+        }
+        ~Address() {}
+        
+        std::string ip() const {
+            return std::string(inet_ntoa(m_Addr.sin_addr));
+        }
+        uint16_t port() const { return ntohs(m_Addr.sin_port); }
+        operator std::string() const {
+            return ip() + ":" + std::to_string(port());
+        }
+        
+        socklen_t size() const {
+            return sizeof(m_Addr);
+        }
+        void clear()
+        {
+            memset(&m_Addr, 0, sizeof(m_Addr));
+            m_Addr.sin_family = AF_INET;
+            memset(m_Addr.sin_zero, '\0', sizeof(m_Addr.sin_zero));
+        }
+        sockaddr_in* address() const {
+            return &m_Addr;
+        }
+    private:
+        mutable sockaddr_in m_Addr;
 };
 
 class TCPSocket:
@@ -128,9 +183,6 @@ class TCPSocket:
             ioctlsocket(m_Socket, FIONBIO, &SOCKET_BLOCK);
             setsockopt(m_Socket, SOL_SOCKET, SO_REUSEADDR, (char*)&SOCKET_YES, sizeof(int));
             
-            //else if(m_Protocol == UDP)
-                //m_Socket = ::socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
-
             m_bOpen = m_Socket != INVALID_SOCKET;
             if(not m_bOpen)
                 throw socket_exception(
@@ -161,7 +213,7 @@ class TCPSocket:
             }
             return TCPSocket(socket);
         }
-        void bind(unsigned short port = 0) {
+        void bind(uint16_t port = 0) {
             sockaddr_in sAddr;
 
             sAddr.sin_family = AF_INET;
@@ -169,49 +221,35 @@ class TCPSocket:
             sAddr.sin_port = htons(port);
             memset(sAddr.sin_zero, '\0', sizeof(sAddr.sin_zero));
 
-            if(::bind(m_Socket, (sockaddr*)&sAddr, sizeof(sAddr)) == SOCKET_ERROR)
+            if(::bind(m_Socket, (struct sockaddr*)&sAddr, sizeof(sAddr)) == SOCKET_ERROR)
                 throw socket_exception(
                     std::string("TCPSocket::bind failed (")+std::to_string(errno)+")"
                 );
         }
-        void listen(int backlog = 0) {
-            if(::listen(m_Socket, backlog) == -1)
+        void listen(int backlog = 5) {
+            if(::listen(m_Socket, backlog) == SOCKET_ERROR)
                 throw socket_exception(
                     std::string("TCPSocket::listen failed (")+
                     std::to_string(errno)+")"
                 );
         }
-        virtual void connect(std::string ip, short port) override
+        virtual void connect(std::string ip, uint16_t port) override
         {
             sockaddr_in destAddr;
             hostent* he;
             char* connectip;
             char* ipp = (char*)ip.c_str();
 
-            //he = gethostbyname(ipp);
-            //if(not he)
-            //{
-            //    // use normal IP
-            //    connectip = ipp;
-            //}
-            //else
-            //{
-            //    // use hostname IP
-            //    //connectip = (char*)inet_ntoa(*(in_addr*)he->h_addr);
-            //}
-
             destAddr.sin_family = AF_INET;
             destAddr.sin_port = htons(port);
             destAddr.sin_addr.s_addr = inet_addr(ipp);
             memset(&(destAddr.sin_zero), '\0', sizeof(destAddr.sin_zero));
 
-            if(::connect(m_Socket, (sockaddr*)&destAddr, sizeof(destAddr))==SOCKET_ERROR)
+            if(::connect(m_Socket, (struct sockaddr*)&destAddr, sizeof(destAddr))==SOCKET_ERROR)
                 throw socket_exception(
                     std::string("TCPSocket::connect failed (")+
                     std::to_string(errno)+")"
                 );
-                //return false;
-            //return true;
         }
         
         // Async usage (inside coroutine or repeated circuit unit):
@@ -342,7 +380,42 @@ class UDPSocket:
             if(m_bOpen)
                 ::closesocket(m_Socket);
         }
-        virtual void connect(std::string ip, short port) override {}
+        virtual void open() override {
+            if(m_bOpen)
+                close();
+            
+            m_Socket = ::socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+            
+            unsigned long SOCKET_BLOCK = 1L;
+            int SOCKET_YES = 1;
+            ioctlsocket(m_Socket, FIONBIO, &SOCKET_BLOCK);
+            setsockopt(m_Socket, SOL_SOCKET, SO_REUSEADDR, (char*)&SOCKET_YES, sizeof(int));
+            
+            m_bOpen = m_Socket != INVALID_SOCKET;
+            if(not m_bOpen)
+                throw socket_exception(
+                    std::string("UDPSocket::open failed (")+
+                    std::to_string(errno)+")"
+                );
+        }
+        virtual void connect(std::string ip, uint16_t port) override {
+            sockaddr_in destAddr;
+            hostent* he;
+            char* connectip;
+            char* ipp = (char*)ip.c_str();
+
+            destAddr.sin_family = AF_INET;
+            destAddr.sin_port = htons(port);
+            destAddr.sin_addr.s_addr = inet_addr(ipp);
+            memset(&(destAddr.sin_zero), '\0', sizeof(destAddr.sin_zero));
+
+            if(::connect(m_Socket, (struct sockaddr*)&destAddr, sizeof(destAddr))==SOCKET_ERROR)
+                throw socket_exception(
+                    std::string("UDPSocket::connect failed (")+
+                    std::to_string(errno)+")"
+                );
+
+        }
         virtual operator bool() const override {
             return m_bOpen;
         }
@@ -355,10 +428,6 @@ class UDPSocket:
             }
         }
         virtual SOCKET socket() override { return m_Socket; }
-        virtual void connect(std::string ip, short port) override
-        {
-            
-        }
         virtual bool select() const override
         {
             fd_set fds_read;
@@ -390,14 +459,113 @@ class UDPSocket:
 
             return (bool)FD_ISSET(m_Socket, &fds_read);
         }
+        void send_to(const Address& addr, const uint8_t* buf, int sz)
+        {
+            if(not m_bOpen)
+                throw socket_exception("UDPSocket::send socket not open");
+            int sent = 0;
+            int left = sz;
+            int n = 0;
+            while(sent < sz)
+            {
+                n = ::sendto(
+                        m_Socket, (char*)(buf + sent), left, 0,
+                        (struct sockaddr*)addr.address(),
+                        addr.size()
+                    );
+                if(n==SOCKET_ERROR){
+                    if(errno == EWOULDBLOCK || errno == EAGAIN)
+                        throw kit::yield_exception();
+                    else
+                        throw socket_exception(
+                            std::string("UDPSocket::send socket error (")+
+                            std::to_string(errno)+")"
+                        );
+                }
+                sent += n;
+                left -= n;
+            }
+
+        }
         virtual void send(const uint8_t* buf, int sz) override
         {
+            if(not m_bOpen)
+                throw socket_exception("UDPSocket::send socket not open");
+            int sent = 0;
+            int left = sz;
+            int n = 0;
+            while(sent < sz)
+            {
+                n = ::send(m_Socket, (char*)(buf + sent), left, 0);
+                if(n==SOCKET_ERROR){
+                    if(errno == EWOULDBLOCK || errno == EAGAIN)
+                        throw kit::yield_exception();
+                    else
+                        throw socket_exception(
+                            std::string("UDPSocket::send socket error (")+
+                            std::to_string(errno)+")"
+                        );
+                }
+                sent += n;
+                left -= n;
+            }
         }
         virtual void send(std::string buf) override {
             send((const uint8_t*)buf.c_str(), (int)buf.size());
         }
-        virtual int recv(uint8_t* buf, int sz) override
-        {
+        int recv_from(Address& addr, uint8_t* buf, int sz) {
+            if(sz <= 0)
+                throw socket_exception("UDPSocket::recv buffer has no space");
+            if(not m_bOpen)
+                throw socket_exception("UDPSocket::recv socket not open");
+            int n = 0;
+            socklen_t addr_len = addr.size();
+            n = ::recvfrom(
+                    m_Socket, (char*)buf, sz, 0,
+                    (struct sockaddr*)addr.address(),
+                    &addr_len
+                );
+            if(n == SOCKET_ERROR){
+                if(errno == EWOULDBLOCK || errno == EAGAIN)
+                    throw kit::yield_exception();
+                else
+                    throw socket_exception(
+                        std::string("UDPSocket::recv socket error (")+
+                        std::string(strerror(errno))+")"
+                    );
+            }
+            else if(n==0){
+                m_bOpen = false;
+                throw socket_exception(
+                    "UDPSocket::send disconnected"
+                );
+            }
+            return n;
+        }
+
+        virtual int recv(uint8_t* buf, int sz) override {
+            if(sz <= 0)
+                throw socket_exception("UDPSocket::recv buffer has no space");
+            if(not m_bOpen)
+                throw socket_exception("UDPSocket::recv socket not open");
+            int n = 0;
+            n = ::recv(m_Socket, (char*)buf, sz, 0);
+            if(n == SOCKET_ERROR){
+                if(errno == EWOULDBLOCK || errno == EAGAIN)
+                    throw kit::yield_exception();
+                else
+                    throw socket_exception(
+                        std::string("UDPSocket::recv socket error (")+
+                        std::string(strerror(errno))+")"
+                    );
+            }
+            else if(n==0){
+                m_bOpen = false;
+                throw socket_exception(
+                    "UDPSocket::send disconnected"
+                );
+            }
+            return n;
         }
         virtual std::string recv() override {
             uint8_t buf[1024];
