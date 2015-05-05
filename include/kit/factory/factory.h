@@ -23,7 +23,7 @@ template<
     class Class,
     class T,
     class ClassName=std::string,
-    class Mutex=kit::optional_mutex<std::recursive_mutex>
+    class Mutex=std::recursive_mutex
 >
 class Factory:
     public IFactory,
@@ -166,14 +166,14 @@ class Factory:
             return m_Transformer(t);
         }
         
-        void share_config(std::shared_ptr<MetaBase<Mutex>> cfg){
-            auto l = this->lock();
-            m_pConfig = cfg;
-        }
-        std::shared_ptr<MetaBase<Mutex>> share_config() {
-            auto l = this->lock();
-            return m_pConfig;
-        }
+        //void share_config(std::shared_ptr<MetaBase<Mutex>> cfg){
+        //    //auto l = this->lock();
+        //    m_pConfig = cfg;
+        //}
+        //std::shared_ptr<MetaBase<Mutex>> share_config() {
+        //    //auto l = this->lock();
+        //    return m_pConfig;
+        //}
 
         //std::vector<std::shared_ptr<Class>> create_all(
         //    const std::vector<T>& object_list

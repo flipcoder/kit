@@ -7,7 +7,7 @@
 #include "../kit.h"
 #include "icache.h"
 
-template<class Class, class T, class Mutex=kit::optional_mutex<std::recursive_mutex>>
+template<class Class, class T, class Mutex=std::recursive_mutex>
 class Cache:
     public Factory<Class, std::tuple<T, ICache*>, std::string, Mutex>,
     public ICache,
