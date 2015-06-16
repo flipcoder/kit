@@ -254,7 +254,7 @@ enum class MetaSerialize : unsigned {
      * separate map {key: value}.
      */
     STORE_KEY = kit::bit(0),
-    MINIMIZE = kit::bit(1) 
+    MINIMIZE = kit::bit(1)
 }; 
 
 template<class Mutex=kit::dummy_mutex>
