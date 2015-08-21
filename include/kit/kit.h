@@ -329,9 +329,9 @@ namespace kit
         mutex_wrap(T&& v):
             data(v)
         {}
-        mutex_wrap(const T& v):
-            data(std::forward(v))
-        {}
+        //mutex_wrap(const T& v):
+        //    data(std::forward(v))
+        //{}
 
         T get() {
             auto l = this->lock();
@@ -347,12 +347,12 @@ namespace kit
             return lhs.data == rhs;
         }
         
-        mutex_wrap& operator=(T&& rhs){
-            auto l = this->lock();
-            data = rhs;
-            return *this;
-        }
-        
+        //mutex_wrap& operator=(T&& rhs){
+        //    auto l = this->lock();
+        //    data = rhs;
+        //    return *this;
+        //}
+
         template<class R = void>
         R with(std::function<R(T&)> cb) {
             auto l = this->lock();
@@ -362,6 +362,11 @@ namespace kit
         R with(std::function<R(const T&)> cb) const {
             auto l = this->lock();
             return cb(data);
+        }
+        
+        void set(T val){
+            auto l = this->lock();
+            data = val;
         }
     };
 
