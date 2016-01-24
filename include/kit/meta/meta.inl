@@ -320,8 +320,8 @@ void MetaBase<Mutex> :: deserialize_json(
         auto&& e = *i;
 
         std::string k;
-        if(i.memberName())
-            k = i.memberName();
+        if(not i.name().empty())
+            k = i.name();
 
         // TODO: move this stuff to Element::deserialize_json()
         if(e.isArray() || e.isObject())
@@ -437,8 +437,8 @@ void MetaBase<Mutex> :: deserialize_json(
         auto&& e = *i;
 
         std::string k;
-        if(i.memberName())
-            k = i.memberName();
+        if(not i.name().empty())
+            k = i.name();
 
         if(/*e.isArray() || */e.isObject())
         {

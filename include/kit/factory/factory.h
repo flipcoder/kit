@@ -23,7 +23,7 @@ template<
     class Class,
     class T,
     class ClassName=std::string,
-    class Mutex=std::recursive_mutex
+    class Mutex=kit::dummy_mutex
 >
 class Factory:
     public IFactory,

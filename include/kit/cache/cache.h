@@ -7,7 +7,7 @@
 #include "../kit.h"
 #include "icache.h"
 
-template<class Class, class T, class Mutex=std::recursive_mutex>
+template<class Class, class T, class Mutex=kit::dummy_mutex>
 class Cache:
     public Factory<Class, std::tuple<T, ICache*>, std::string, Mutex>,
     public ICache,
@@ -43,7 +43,7 @@ class Cache:
                 return m_Resources.at(arg);
             }catch(const std::out_of_range&){
                 return (m_Resources[arg] =
-                    Factory<Class, std::tuple<T, ICache*>>::create(
+                    Factory<Class, std::tuple<T, ICache*>, std::string, Mutex>::create(
                         std::tuple<T, ICache*>(arg, this)
                     )
                 );
@@ -98,6 +98,7 @@ class Cache:
         }
 
         T transform(const T& t){
+            auto l = this->lock();
             return m_Transformer(t);
         }
         void register_transformer(std::function<T(const T&)> f) {

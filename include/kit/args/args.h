@@ -252,6 +252,7 @@ class Args
         //}
         //unsigned find(std::string s) {}
 
+        std::string at(unsigned idx) const { return m_Args.at(idx); }
         typedef std::vector<std::string>::iterator iterator;
         iterator begin() { return m_Args.begin(); }
         iterator end() { return m_Args.end(); }
