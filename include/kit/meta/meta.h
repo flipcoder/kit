@@ -848,7 +848,6 @@ class MetaBase:
                 set(std::string(), std::move(val));
         }
 
-
         enum PathFlags {
             ABSOLUTE_PATH = kit::bit(0),
             REPLACE_ON_CONFLICT = kit::bit(1), // default behavior for now
