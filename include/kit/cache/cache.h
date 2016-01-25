@@ -39,6 +39,11 @@ class Cache:
         
         virtual std::shared_ptr<Class> cache_raw(const T& arg) {
             auto l = this->lock();
+            if(m_Preserve && m_Preserve(arg)) {
+                return Factory<Class, std::tuple<T, ICache*>, std::string, Mutex>::create(
+                    std::tuple<T, ICache*>(arg, this)
+                );
+            }
             try{
                 return m_Resources.at(arg);
             }catch(const std::out_of_range&){
@@ -52,8 +57,7 @@ class Cache:
         
         virtual std::shared_ptr<Class> cache(T arg) {
             auto l = this->lock();
-            if(m_Transformer)
-                arg = m_Transformer(arg);
+            arg = transform(arg);
             return cache_raw(arg);
         }
 
@@ -64,8 +68,7 @@ class Cache:
         template<class Cast>
         std::shared_ptr<Cast> cache_as(T arg) {
             auto l = this->lock();
-            if(m_Transformer)
-                arg = m_Transformer(arg);
+            arg = transform(arg);
             std::shared_ptr<Cast> p;
             try{
                 p = std::dynamic_pointer_cast<Cast>(cache_raw(arg));
@@ -99,17 +102,26 @@ class Cache:
 
         T transform(const T& t){
             auto l = this->lock();
-            return m_Transformer(t);
+            if(m_Transformer)
+                return m_Transformer(t);
+            else
+                return t;
         }
         void register_transformer(std::function<T(const T&)> f) {
             auto l = this->lock();
             m_Transformer=f;
         }
         
+        void register_preserver(std::function<bool(const T&)> f) {
+            auto l = this->lock();
+            m_Preserve = f;
+        }
+        
     private:
 
         std::unordered_map<T, std::shared_ptr<Class>> m_Resources;
         std::function<T(const T&)> m_Transformer;
+        std::function<bool(const T&)> m_Preserve; // cache this?
 };
 
 #endif
