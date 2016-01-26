@@ -161,6 +161,11 @@ public:
             m_ulAlarmTime += t.ms();
             return *this;
         }
+        
+        void reset() {
+            m_ulAlarmTime = 0L;
+            m_ulStartTime = 0L;
+        }
 
         bool has_timer() const { return (m_pTimer!=NULL); }
         
