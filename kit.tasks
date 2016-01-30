@@ -1,6 +1,6 @@
 * meta
     [ ] BUG: see "correct types" test case
-    [>] some arrays still not being serialized/deserialized correctly
+    [?] some arrays still not being serialized/deserialized correctly
     [-] switch keys to bimap for faster removal key changes
         # may need to do some research first... (drop-in won't work)
     [|] json serialization (recursive)
@@ -35,11 +35,13 @@
     [L] input stream errors are vague and should include filename
 
 * args
-    [ ] .meta() -- create metaobject based on args
+    [x] Test cases for single-char switches
+    [L] .meta() -- create metaobject based on args
     
 * kit.h (util)
 
 * async
+    [ ] event lib + wakeup
     [x] stabilization of "idle" tasks (no CPU revving)
     [x] change sleep() -> CondVar.wait_for()
         # because: stabilization should't increase latency of non-idle tasks on same circuit

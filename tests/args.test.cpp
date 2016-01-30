@@ -31,9 +31,11 @@ TEST_CASE("Args","[args]") {
         args = Args();
         REQUIRE(not args.has('v', "verbose"));
         args = Args(vector<string>{"--verbose"});
-        REQUIRE(args.has('v', "verbose"));
+        REQUIRE(args.has('v', "verbose")); // full word
         REQUIRE(not args.has('n', "nope"));
         args = Args(vector<string>{"-v"});
+        REQUIRE(args.has('v', "verbose")); // single char
+        REQUIRE(not args.has('n', "nope"));
 
         // multiple char switches
         args = Args(vector<string>{"-abc"}, "-a -b -c");

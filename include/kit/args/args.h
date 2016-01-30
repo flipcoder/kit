@@ -229,8 +229,7 @@ class Args
         // tests for a switch and its associated char
         bool has(char c, std::string s) const {
             assert(not boost::starts_with(s, "--"));
-            //return has(c) || has(std::string("--")+s);
-            return has(std::string("--")+s);
+            return has(c) || has(std::string("--")+s);
         }
         bool has(char c) const {
             std::string chs = chars();

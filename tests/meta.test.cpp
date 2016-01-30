@@ -237,6 +237,14 @@ TEST_CASE("Meta","[meta]") {
             REQUIRE(a->at<int>(0) == 1);
             REQUIRE(a->at<int>(1) == 2);
             REQUIRE(a->at<int>(2) == 3);
+
+            // strings
+            m = make_shared<Meta>(MetaFormat::JSON,"{ \"a\": [\"b\",\"c\"] }");
+            a = m->at<std::shared_ptr<Meta>>(0);
+            REQUIRE(a);
+            REQUIRE(a->size() == 2);
+            REQUIRE(a->at<string>(0) == "b");
+            REQUIRE(a->at<string>(1) == "c");
             
             // nested
             m = make_shared<Meta>(MetaFormat::JSON,"{\"numbers\":[[],[[]],[[],[]]]}");
