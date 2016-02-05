@@ -105,19 +105,23 @@ class Cache:
             auto l = this->lock();
             arg = transform(arg);
             std::shared_ptr<Cast> p;
-            try{
+            //try{
                 p = std::dynamic_pointer_cast<Cast>(cache_raw(arg));
-            }catch(...){
-                typename std::unordered_map<T, std::shared_ptr<Class>>::iterator itr;
-                try{
-                    itr = m_Resources.find(arg);
-                }catch(const std::out_of_range&){
-                    throw;
-                }
-                if(itr->second.unique())
-                    m_Resources.erase(itr);
-                throw;
-            }
+                if(!p)
+                    throw std::out_of_range("resource cast failed");
+            //}catch(...){
+            //    typename std::unordered_map<T, std::shared_ptr<Class>>::iterator itr;
+            //    try{
+            //        itr = m_Resources.find(arg);
+            //    }catch(const std::out_of_range&){
+            //        throw;
+            //    }
+            //    if(itr == m_Resources.end())
+            //        throw std::out_of_range("no such resource");
+            //    //if(itr->second.unique())
+            //    //    m_Resources.erase(itr);
+            //    throw;
+            //}
             return p;
         }
         
