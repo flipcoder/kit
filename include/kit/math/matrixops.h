@@ -152,6 +152,11 @@ namespace Matrix {
         return m == glm::mat4(0.0f);
     }
     
+    inline glm::vec3 mult(const glm::mat4& m, const glm::vec4& v)
+    {
+        auto r = m * v;
+        return glm::vec3(r.x, r.y, r.z);
+    }
     inline glm::vec3 mult(const glm::vec4& v, const glm::mat4& m)
     {
         auto r = v * m;
