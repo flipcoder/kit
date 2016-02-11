@@ -990,6 +990,9 @@ namespace kit
     #define K_CGETR_SET(TYPE, NAME, MEMBER) \
         K_CGETR(TYPE, NAME, MEMBER) \
         K_SET(TYPE, NAME, MEMBER)
+    #define K_S_GET_SET(TYPE, NAME, MEMBER) \
+        static TYPE NAME() { return MEMBER; } \
+        static void NAME(TYPE val) { MEMBER = val; }
 }
 
 #endif

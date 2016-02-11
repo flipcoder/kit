@@ -107,6 +107,13 @@ public:
                 m_ulPassedTime = 0L;
                 m_fSpeed = 1.0f;
             }
+
+            bool elapsed(Freq::Time value) {
+                return m_ulPassedTime > value.ms();
+            }
+            Freq::Time age() const {
+                return Freq::Time::ms(m_ulPassedTime);
+            }
     };
 
     // eventually migrate to chrono
