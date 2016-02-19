@@ -76,45 +76,32 @@ namespace Matrix {
         f[12]=f[13]=f[14]=0.0f;
     }
     inline void scale(glm::mat4& m, float v) {
-        float* f = glm::value_ptr(m);
         m *= v;
-        //f[0]*=v;
-        //f[5]*=v;
-        //f[10]*=v;
     }
     inline void rescale(glm::mat4& m, float v = 1.0f) {
-        float* f = glm::value_ptr(m);
-        f[0]=f[5]=f[10]=v;
-        f[15]=1.0f;
+        auto vec = glm::vec3(v,v,v);
+        auto pos = Matrix::translation(m);
+        m = glm::scale(vec);
+        Matrix::translate(m, pos * vec);
     }
     inline void scale(glm::mat4& m, glm::vec3 v) {
         float* f = glm::value_ptr(m);
         m *= glm::vec4(v, 1.0f);
-        //f[0]*=v[0];
-        //f[5]*=v[1];
-        //f[10]*=v[2];
     }
     inline void rescale(glm::mat4& m, glm::vec3 v = glm::vec3(1.0f)) {
-        float* f = glm::value_ptr(m);
-        f[0]=v[0];
-        f[5]=v[1];
-        f[10]=v[2];
-        f[15]=1.0f;
+        auto pos = Matrix::translation(m);
+        m = glm::scale(v);
+        Matrix::translate(m, pos * v);
     }
     
-    inline float uniform_scale(const glm::mat4& m) {
-        const float* f = glm::value_ptr(m);
-        return f[0];
-    }
+    //inline float uniform_scale(const glm::mat4& m) {
+    //    const float* f = glm::value_ptr(m);
+    //    return f[0];
+    //}
     inline glm::vec3 scale(const glm::mat4& m) {
         const float* f = glm::value_ptr(m);
         return glm::vec3(f[0], f[5], f[10]);
     }
-
-    //inline float average_scale(glm::mat4& m) {
-    //    float* f = glm::value_ptr(m);
-    //    return (f[0] + f[5] + f[10]) / 3.0f;
-    //}
 
     inline glm::vec3 up(const glm::mat4& m) {
         const float* f = glm::value_ptr(m);
