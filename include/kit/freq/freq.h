@@ -39,6 +39,10 @@ public:
             value += t.internal();
             return *this;
         }
+        bool operator>(Time t) const { return value > t.internal(); }
+        bool operator<(Time t) const { return value < t.internal(); }
+        bool operator>=(Time t) const { return value >= t.internal(); }
+        bool operator<=(Time t) const { return value <= t.internal(); }
 
         float s() const { return value / 1000.0f; }
         float seconds() const { return value / 1000.0f; }

@@ -356,50 +356,50 @@ private:
 //    Log::get().write(msg);\
 //}
 #define LOG(X) {\
-    auto msg = (LOG_FORMAT %\
+    auto _msg = (LOG_FORMAT %\
         DEBUG_OPTIONAL(__FILE__ % __LINE__ %)\
         std::string(X)\
     ).str();\
-    Log::get().write(msg);\
+    Log::get().write(_msg);\
 }
 #define LOGf(X,Y) {\
-    auto msg = (LOG_FORMAT  %\
+    auto _msg = (LOG_FORMAT  %\
         DEBUG_OPTIONAL(__FILE__ % __LINE__ %)\
         (boost::format(X) % Y).str()\
     ).str();\
-    Log::get().write(msg);\
+    Log::get().write(_msg);\
 }
 #define WARNING(X) {\
-    auto msg = (LOG_FORMAT %\
+    auto _msg = (LOG_FORMAT %\
         DEBUG_OPTIONAL(__FILE__ % __LINE__ %)\
         std::string(X)\
     ).str();\
-    Log::get().warn(msg);\
+    Log::get().warn(_msg);\
 }
 #define WARNINGf(X,Y) {\
-    auto msg = (LOG_FORMAT %\
+    auto _msg = (LOG_FORMAT %\
         DEBUG_OPTIONAL(__FILE__ % __LINE__ %)\
         (boost::format(X) % Y).str()\
     ).str();\
-    Log::get().warn(msg);\
+    Log::get().warn(_msg);\
 }
 #define ERROR(CODE,X) {\
-    auto msg = (ERR_FORMAT %\
+    auto _msg = (ERR_FORMAT %\
         g_ErrorString[(unsigned)ErrorCode::CODE] %\
         DEBUG_OPTIONAL(__FILE__ % __LINE__ %)\
         std::string(X)\
     ).str();\
-    Log::get().error(msg);\
-    throw Error(ErrorCode::CODE, msg);\
+    Log::get().error(_msg);\
+    throw Error(ErrorCode::CODE, _msg);\
 }
 #define ERRORf(CODE,X,Y) {\
-    auto msg = (ERR_FORMAT %\
+    auto _msg = (ERR_FORMAT %\
         g_ErrorString[(unsigned)ErrorCode::CODE] %\
         DEBUG_OPTIONAL(__FILE__ % __LINE__ %)\
         (boost::format(X) % Y).str()\
     ).str();\
-    Log::get().error(msg);\
-    throw Error(ErrorCode::CODE, msg);\
+    Log::get().error(_msg);\
+    throw Error(ErrorCode::CODE, _msg);\
 }
 
 //#ifdef DEBUG
