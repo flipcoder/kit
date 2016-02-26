@@ -422,6 +422,18 @@ namespace kit
                 while(m_Group.find(m_Unused++) != m_Group.end()) {}
                 return m_Unused-1;
             }
+            
+            // WARNING: obtain lock before iterating
+            typedef typename std::map<unsigned, T>::const_iterator
+                const_iterator;
+            typedef typename std::map<unsigned, T>::iterator
+                iterator;
+            iterator begin() { return m_Group.begin(); }
+            iterator end() { return m_Group.end(); }
+            const_iterator begin() const { return m_Group.begin(); }
+            const_iterator end() const { return m_Group.end(); }
+            const_iterator cbegin() const { return m_Group.begin(); }
+            const_iterator cend() const { return m_Group.end(); }
 
         private:
             unsigned m_Unused=0;
@@ -949,12 +961,20 @@ namespace kit
             return maxval;
         return val;
     }
-
     
     template<class T>
     T saturate(T val)
     {
         return clamp(val, T(0.0), T(1.0));
+    }
+
+    inline int sign(int v)
+    {
+        if(v > 0)
+            return 1;
+        else if(v < 0)
+            return -1;
+        return 0;
     }
     
     #define TRY(expr) try{ expr; } catch(...) {}

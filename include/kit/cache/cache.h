@@ -47,7 +47,7 @@ class Cache:
         std::shared_ptr<Cast> cache_as(const T& arg) {
             auto l = this->lock();
             arg = transform(arg);
-            if(m_Preserve && m_Preserve(arg)) {
+            if(m_Preserve && not m_Preserve(arg)) {
                 return std::make_shared<Cast>(
                     std::tuple<T, ICache*>(arg, this)
                 );
@@ -68,7 +68,7 @@ class Cache:
          */
         virtual std::shared_ptr<Class> cache_raw(const T& arg) {
             auto l = this->lock();
-            if(m_Preserve && m_Preserve(arg)) {
+            if(m_Preserve && not m_Preserve(arg)) {
                 return Factory<Class, std::tuple<T, ICache*>, std::string, Mutex>::create(
                     std::tuple<T, ICache*>(arg, this)
                 );
@@ -98,7 +98,7 @@ class Cache:
         //}
         
         /*
-         * Cache resource and attempt to cast resource to a given base type
+         * Cache resource and attempt to cast resource to a given type
          */
         template<class Cast>
         std::shared_ptr<Cast> cache_cast(T arg) {
