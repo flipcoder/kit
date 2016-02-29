@@ -11,6 +11,21 @@ TEST_CASE("Args","[args]") {
         REQUIRE(args.size() == 0);
     }
     
+    SECTION("at") {
+        Args args;
+
+        args = Args(vector<string>{"a","b","c"});
+        
+        REQUIRE(args.at(0) == "a");
+        REQUIRE(args.at(1) == "b");
+        REQUIRE(args.at(2) == "c");
+        REQUIRE(args.at(3) == "");
+        REQUIRE(args.at(-1) == "c");
+        REQUIRE(args.at(-2) == "b");
+        REQUIRE(args.at(-3) == "a");
+        REQUIRE(args.at(-4) == "");
+    }
+    
     SECTION("has") {
         // empty
         Args args;
