@@ -14,60 +14,76 @@ Log::Log()
     //ios::sync_with_stdio(false);
 }
 
-void Log::write(std::string s, Log::Message::eLoggingLevel lev)
+void Log::write(std::string s, Log::Level lev)
 {
     auto l = lock();
-    auto& th = this_log();
-
-    if(th.m_SilenceFlags == Log::Silencer::ALL)
-        return;
-    
-    if(!th.m_bCapture)
+    std::function<void()> after_unlock;
     {
-        ostringstream line;
-        if(lev == Message::LL_ERROR)
-        {
-            for(unsigned i=0;i<th.m_Indents;++i)
-                line << "  ";
-            line << s;
-            if(!(th.m_SilenceFlags & Log::Silencer::ERRORS))
-                cerr << line.str() << endl;
-            if(th.m_bCapture)
-                th.m_Captured.push_back(line.str());
-            th.on_log(s, lev);
-        }
-        else
-        {
-            // apparently no capturing of non-error messages yet
-            if(lev == Message::LL_WARNING &&
-                (th.m_SilenceFlags & Log::Silencer::WARNINGS))
-                return;
-            
-            if(lev == Message::LL_INFO &&
-                (th.m_SilenceFlags & Log::Silencer::INFO))
-                return;
+        auto& th = this_log();
 
-            for(unsigned i=0;i<th.m_Indents;++i)
-                line << "  ";
-            if(lev == Message::LL_WARNING)
-                line << "[WARNING] ";
-            line << s;
-            cout << line.str() << endl;
-            th.on_log(s, lev);
+        if(th.m_SilenceFlags == Log::Silencer::ALL)
+            return;
+        
+        
+        if(!th.m_bCapture)
+        {
+            ostringstream line;
+            if(lev == Log::LL_ERROR)
+            {
+                for(unsigned i=0;i<th.m_Indents;++i)
+                    line << "  ";
+                line << s;
+                if(!(th.m_SilenceFlags & Log::Silencer::ERRORS))
+                    cerr << line.str() << endl;
+                if(th.m_bCapture)
+                    th.m_Captured.push_back(line.str());
+                th.on_log(s, lev);
+                auto _this = this;
+                after_unlock = [_this,s,lev]{
+                    _this->on_log(s,lev);
+                };
+            }
+            else
+            {
+                // apparently no capturing of non-error messages yet
+                if(lev == LL_WARNING &&
+                    (th.m_SilenceFlags & Log::Silencer::WARNINGS))
+                    return;
+                
+                if(lev == LL_INFO &&
+                    (th.m_SilenceFlags & Log::Silencer::INFO))
+                    return;
+
+                for(unsigned i=0;i<th.m_Indents;++i)
+                    line << "  ";
+                if(lev == LL_WARNING)
+                    line << "[WARNING] ";
+                line << s;
+                cout << line.str() << endl;
+                th.on_log(s, lev);
+                auto _this = this;
+                after_unlock = [_this,s,lev]{
+                    _this->on_log(s,lev);
+                };
+            }
         }
     }
-    //else if(lev == Message::LL_DEBUG)
+    
+    if(after_unlock)
+        after_unlock();
+    
+    //else if(lev == LL_DEBUG)
     //    cout << "[DEBUG] ";
 
     //if(m_LogFile.is_open())
     //{
     //    for(unsigned i=0;i<m_Indent;++i)
     //        m_LogFile << "  ";
-    //    if(lev == Message::LL_WARNING)
+    //    if(lev == LL_WARNING)
     //        m_LogFile << "[WARNING] ";
-    //    else if(lev == Message::LL_ERROR)
+    //    else if(lev == LL_ERROR)
     //        m_LogFile << "[ERROR] ";
-    //    //else if(lev == Message::LL_DEBUG)
+    //    //else if(lev == LL_DEBUG)
     //    //    m_LogFile << "[DEBUG] ";
     //    m_LogFile << s << endl;
     //}

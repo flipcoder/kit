@@ -23,13 +23,15 @@ class Log:
 {
 public:
 
+    enum Level { LL_BLANK, LL_INFO, LL_WARNING, LL_ERROR };
+    
     class Message
     {
     public:
         std::string sMessage;
-        enum eLoggingLevel { LL_BLANK, LL_INFO, LL_WARNING, LL_ERROR } eLevel;
-
-        Message(std::string message, eLoggingLevel level):
+        Level eLevel;
+        
+        Message(std::string message, Level level):
             sMessage(message),
             eLevel(level) {}
     };
@@ -38,7 +40,7 @@ public:
     class LogForwarder {
         public:
             LogForwarder(std::function<void(
-                std::string, Log::Message::eLoggingLevel
+                std::string, Log::Level
             )> cb) {
                 auto& th = Log::get().this_log();
                 con = th.on_log.connect(move(cb));
@@ -50,7 +52,7 @@ public:
     class LogThread {
         public:
             boost::signals2::signal<
-                void(std::string, Log::Message::eLoggingLevel)
+                void(std::string, Log::Level)
             > on_log;
             unsigned m_Indents = 0;
             unsigned m_SilenceFlags = 0;
@@ -185,6 +187,10 @@ public:
     Log();
     virtual ~Log() {}
 
+    boost::signals2::signal<
+        void(std::string, Log::Level)
+    > on_log;
+
     std::string emit() {
         auto l = lock();
         std::ostringstream oss;
@@ -239,9 +245,9 @@ public:
         #endif
     }
 
-    void write(std::string s, Message::eLoggingLevel lev = Message::LL_INFO);
-    void warn(std::string s) { write(s,Message::LL_WARNING); }
-    void error(std::string s) {write(s,Message::LL_ERROR);}
+    void write(std::string s, Level lev = LL_INFO);
+    void warn(std::string s) { write(s,LL_WARNING); }
+    void error(std::string s) {write(s,LL_ERROR);}
 
     //unsigned int size() const { return m_cbLog.size(); }
     //bool empty() const { return (size()==0); }

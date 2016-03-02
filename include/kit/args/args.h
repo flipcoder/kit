@@ -252,13 +252,13 @@ class Args
         //}
         //unsigned find(std::string s) {}
 
-        std::string at(int idx) const {
+        std::string at(int idx, std::string def="") const {
             try{
                 if(idx >= 0)
                     return m_Args.at(idx);
                 return m_Args.at(m_Args.size() + idx);
             }catch(const std::out_of_range&){
-                return "";
+                return def;
             }
         }
         typedef std::vector<std::string>::iterator iterator;

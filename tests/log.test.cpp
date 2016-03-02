@@ -73,5 +73,17 @@ TEST_CASE("Log","[log]") {
         REQUIRE(Log::consume_prefix("(): foo\n(): bar") == "foo\nbar");
         REQUIRE(Log::consume_prefix("foo\n(): \n(): \nbar") == "foo\n\n\nbar");
     }
+
+    SECTION("signals"){
+        int happened = 0;
+        {
+            auto connection = Log::get().on_log.connect([&](std::string, Log::Level lev){
+                ++happened;
+            });
+            LOG("test");
+        }
+        LOG("test2");
+        REQUIRE(happened == 1);
+    }
 }
 

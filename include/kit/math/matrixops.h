@@ -94,21 +94,23 @@ namespace Matrix {
         Matrix::translate(m, pos * v);
     }
     
-    //inline float uniform_scale(const glm::mat4& m) {
-    //    const float* f = glm::value_ptr(m);
-    //    return f[0];
-    //}
     inline glm::vec3 scale(const glm::mat4& m) {
         const float* f = glm::value_ptr(m);
-        return glm::vec3(f[0], f[5], f[10]);
+        glm::vec3 x = glm::vec3(f[0],f[1],f[2]);
+        glm::vec3 y = glm::vec3(f[4],f[5],f[6]);
+        glm::vec3 z = glm::vec3(f[8],f[9],f[10]);
+        return glm::vec3(glm::length(x),glm::length(y),glm::length(z));
     }
 
+    inline glm::vec3 right(const glm::mat4& m) {
+        const float* f = glm::value_ptr(m);
+        return glm::vec3(f[0], f[1], f[2]);
+    }
     inline glm::vec3 up(const glm::mat4& m) {
         const float* f = glm::value_ptr(m);
         return glm::vec3(f[4], f[5], f[6]);
     }
-    inline glm::vec3 heading(const glm::mat4& m)
-    {
+    inline glm::vec3 heading(const glm::mat4& m){
         const float* f = glm::value_ptr(m);
         return -glm::vec3(f[8], f[9], f[10]);
     }
