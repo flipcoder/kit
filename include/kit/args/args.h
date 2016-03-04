@@ -261,6 +261,16 @@ class Args
                 return def;
             }
         }
+        std::string filenames(int idx, std::string def="") const {
+            try{
+                if(idx >= 0)
+                    return m_Filenames.at(idx);
+                return m_Filenames.at(m_Filenames.size() + idx);
+            }catch(const std::out_of_range&){
+                return def;
+            }
+        }
+
         typedef std::vector<std::string>::iterator iterator;
         iterator begin() { return m_Args.begin(); }
         iterator end() { return m_Args.end(); }
@@ -289,6 +299,7 @@ class Args
         void validate() const;
         
         std::vector<std::string> m_Args;
+        std::vector<std::string> m_Filenames;
         //std::vector<std::pair<std::string, std::string>> m_Values;
         std::map<std::string, std::string> m_Values;
         std::string m_Filename;

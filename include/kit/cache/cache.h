@@ -44,7 +44,7 @@ class Cache:
          * Cache resource, force type
          */
         template<class Cast>
-        std::shared_ptr<Cast> cache_as(const T& arg) {
+        std::shared_ptr<Cast> cache_as(T arg) {
             auto l = this->lock();
             arg = transform(arg);
             if(m_Preserve && not m_Preserve(arg)) {

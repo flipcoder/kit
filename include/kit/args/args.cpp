@@ -37,6 +37,8 @@ void Args :: analyze()
                 }
             }
         }
+        else if(not boost::starts_with(arg, "-"))
+            m_Filenames.push_back(arg);
     }
 }
 
