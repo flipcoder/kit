@@ -396,6 +396,7 @@ namespace kit
             template<class... Args>
             unsigned emplace_hint(unsigned hint, Args&&... args) {
                 m_Group[hint] = T(std::forward<Args>(args)...);
+                return hint;
             }
             template<class... Args>
             unsigned emplace(Args&&... args) {

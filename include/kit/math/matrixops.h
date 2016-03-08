@@ -82,7 +82,7 @@ namespace Matrix {
         auto vec = glm::vec3(v,v,v);
         auto pos = Matrix::translation(m);
         m = glm::scale(vec);
-        Matrix::translate(m, pos * vec);
+        Matrix::translate(m, pos);
     }
     inline void scale(glm::mat4& m, glm::vec3 v) {
         float* f = glm::value_ptr(m);
