@@ -81,5 +81,37 @@ TEST_CASE("Animation","[animation]") {
         REQUIRE(x > 0.70f);
         REQUIRE(x < 0.71f);
     }
+
+    SECTION("callbacks")
+    {
+        bool callback = false;
+        Animation<float> anim;
+        auto restart = [&anim, &callback]{
+            callback = false;
+            anim.frame(Frame<float>(
+                1.0f,
+                Freq::Time::seconds(1),
+                INTERPOLATE(linear<float>),
+                [&callback]{
+                    callback = true;
+                }
+            ));
+        };
+        
+        restart();
+        REQUIRE(not callback);
+        anim.finish();
+        REQUIRE(callback);
+        
+        restart();
+        REQUIRE(not callback);
+        anim.stop();
+        REQUIRE(not callback);
+
+        restart();
+        REQUIRE(not callback);
+        anim.abort();
+        REQUIRE(not callback);
+    }
 }
 

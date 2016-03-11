@@ -77,7 +77,7 @@ TEST_CASE("Log","[log]") {
     SECTION("signals"){
         int happened = 0;
         {
-            auto connection = Log::get().on_log.connect([&](std::string, Log::Level lev){
+            boost::signals2::scoped_connection connection = Log::get().on_log.connect([&](std::string, Log::Level lev){
                 ++happened;
             });
             LOG("test");

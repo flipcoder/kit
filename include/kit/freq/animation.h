@@ -290,20 +290,25 @@ class Animation:
             m_Current = get();
             m_Frames.clear();
         }
+        
+        void do_callbacks()
+        {
+            for(auto&& frame: m_Frames)
+            {
+                auto cb = frame.callback();
+                if(cb) (*cb)();
+            }
+        }
         void finish(){
             if(!m_Frames.empty()) {
                 auto current = m_Frames.front().value();
                 process();
-                for(auto&& frame: m_Frames)
-                {
-                    auto cb = frame.callback();
-                    if(cb) (*cb)();
-                }
+                do_callbacks();
                 m_Frames.clear();
                 m_Current = current;
             }
         }
-        void stop(T position) {
+        void stop(T position = T()) {
             m_Current = position;
             m_Frames.clear();
         }
