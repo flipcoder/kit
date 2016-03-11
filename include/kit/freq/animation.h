@@ -292,8 +292,13 @@ class Animation:
         }
         void finish(){
             if(!m_Frames.empty()) {
-                auto current = m_Frames.back().value();
+                auto current = m_Frames.front().value();
                 process();
+                for(auto&& frame: m_Frames)
+                {
+                    auto cb = frame.callback();
+                    if(cb) (*cb)();
+                }
                 m_Frames.clear();
                 m_Current = current;
             }
@@ -305,7 +310,8 @@ class Animation:
         void stop(
             T position,
             Freq::Time t,
-            std::function<T (T, T, float)> easing
+            std::function<T (T, T, float)> easing,
+            std::function<void()> cb = std::function<void()>()
         ){
             m_Current = t.ms() ? get() : position;
             m_Frames.clear();
@@ -314,6 +320,8 @@ class Animation:
             {
                 auto f = Frame<T>(position, t, easing);
                 f.timeline(&m_Timeline);
+                if(cb)
+                    f.connect(cb);
                 m_Frames.push_back(std::move(f));
                 reset();
             }
