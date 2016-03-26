@@ -72,6 +72,10 @@ class Factory:
             auto l = this->lock();
             return m_pConfig;
         }
+        void with(std::function<void()> cb){
+            auto l = this->lock();
+            cb();
+        }
         
         virtual ~Factory() {}
 

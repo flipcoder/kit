@@ -80,8 +80,11 @@ TEST_CASE("Log","[log]") {
             boost::signals2::scoped_connection connection = Log::get().on_log.connect([&](std::string, Log::Level lev){
                 ++happened;
             });
+            REQUIRE(happened == 0);
             LOG("test");
+            REQUIRE(happened == 1);
         }
+        REQUIRE(happened == 1);
         LOG("test2");
         REQUIRE(happened == 1);
     }
