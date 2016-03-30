@@ -43,6 +43,9 @@ public:
         bool operator<(Time t) const { return value < t.internal(); }
         bool operator>=(Time t) const { return value >= t.internal(); }
         bool operator<=(Time t) const { return value <= t.internal(); }
+        operator bool() const {
+            return value;
+        }
 
         float s() const { return value / 1000.0f; }
         float seconds() const { return value / 1000.0f; }
@@ -129,6 +132,7 @@ public:
         Timeline* m_pTimer;
         unsigned long m_ulAlarmTime;
         unsigned long m_ulStartTime;
+        bool m_bStarted = false;
 
         std::shared_ptr<boost::signals2::signal<void()>> m_pCallback =
             std::make_shared<boost::signals2::signal<void()>>();
@@ -176,6 +180,7 @@ public:
         void reset() {
             m_ulAlarmTime = 0L;
             m_ulStartTime = 0L;
+            m_bStarted = false;
         }
 
         bool has_timer() const { return (m_pTimer!=NULL); }
@@ -195,6 +200,7 @@ public:
             assert(m_pTimer);
             m_ulStartTime = m_pTimer->ms();
             m_ulAlarmTime = m_ulStartTime + t.ms();
+            m_bStarted = true;
         }
 
         void delay(Time t) {
@@ -241,6 +247,8 @@ public:
         
         bool elapsed() const
         {
+            if(not m_bStarted)
+                return false;
             assert(m_pTimer);
             return (m_pTimer->ms() >= m_ulAlarmTime);
         }
@@ -276,6 +284,10 @@ public:
             if(floatcmp(range, 0.0f))
                 return 0.0f;
             return (float)remaining / (float)range;
+        }
+
+        bool started() const {
+            return m_bStarted;
         }
 
         //unsigned long endTickTime() { return m_ulAlarmTime; }
