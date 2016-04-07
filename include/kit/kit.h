@@ -657,6 +657,53 @@ namespace kit
         c.erase(std::remove(ENTIRE(c), o), c.end());
     }
 
+    template<class Container>
+    Container slice(const Container& c, int start, int end, int step = 1)
+    {
+        if(start < 0)
+            start = std::max<int>(0,c.size() + start);
+        else
+            start = std::min<int>(c.size(), start);
+        
+        if(end < 0)
+            end = std::max<int>(0, c.size() + end);
+        else
+            end = std::min<int>(c.size(), end);
+        
+        if(end <= start)
+            return Container();
+        
+        auto r = Container(
+            c.begin() + start,
+            c.begin() + end
+        );
+        
+        if(step != 1){
+            int i = step;
+            kit::remove_if(r, [&i,step](const typename Container::value_type& v){
+                bool b = (i % step);
+                ++i;
+                return b;
+            });
+        }
+        return r;
+    }
+    
+    template<class Container>
+    Container slice(const Container& c, int start)
+    {
+        return slice(c, start, c.size());
+    }
+
+    template<class Container>
+    Container idx(const Container& c, int start)
+    {
+        if(start < 0)
+            c.at(c.size() + start);
+        return c.at(start);
+    }
+
+    
     template<class T, class ...Args>
     std::future<T> make_future(Args&&... args)
     {
