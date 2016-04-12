@@ -477,6 +477,22 @@ namespace kit
                 m_Unused = std::min(id, m_Unused);
                 return e;
             }
+            
+            unsigned remove_if(std::function<bool(const std::shared_ptr<T>&)> func)
+            {
+                unsigned count = 0;
+                for(auto itr = m_Group.begin();
+                    itr != m_Group.end();
+                ){
+                    if(func(itr->second)){
+                        itr = m_Group.erase(itr);
+                        ++count;
+                    }
+                    else
+                        ++itr;
+                }
+                return count;
+            }
             void clear() {
                 auto l = this->lock();
                 m_Unused=0;
