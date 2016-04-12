@@ -84,7 +84,7 @@ struct MetaType {
         }
         else
         {
-            WARNINGf("unserializable type: %s", typeid(T).name());
+            //WARNINGf("unserializable type: %s", typeid(T).name());
             id = ID::USER;
         }
     }
