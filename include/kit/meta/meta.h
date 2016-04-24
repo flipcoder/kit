@@ -726,6 +726,15 @@ class MetaBase:
             return boost::any_cast<T>(m_Elements.at(idx).value);
         }
         template<class T>
+        T at(unsigned idx, T def) const {
+            auto l = this->lock();
+            try{
+                return boost::any_cast<T>(m_Elements.at(idx).value);
+            }catch(...){
+                return def;
+            }
+        }
+        template<class T>
         T raw(unsigned idx) {
             auto l = this->lock();
             return m_Elements.at(idx).value;
