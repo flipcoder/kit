@@ -529,7 +529,9 @@ namespace kit
                 m_Reserved.insert(idx);
             }
             unsigned reserve_next() {
-                return reserve(next());
+                unsigned id = next();
+                reserve(id);
+                return id;
             }
             bool is_reserved(unsigned idx) const {
                 return m_Reserved.find(idx) != m_Reserved.end();
