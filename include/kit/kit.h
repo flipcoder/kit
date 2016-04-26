@@ -528,7 +528,7 @@ namespace kit
             void reserve(unsigned idx){
                 m_Reserved.insert(idx);
             }
-            void reserve_next() {
+            unsigned reserve_next() {
                 return reserve(next());
             }
             bool is_reserved(unsigned idx) const {
