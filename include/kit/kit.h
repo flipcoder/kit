@@ -465,7 +465,7 @@ namespace kit
             template<class... Args>
             unsigned emplace(Args&&... args) {
                 auto l = this->lock();
-                unsigned id = reserve();
+                unsigned id = next();
                 m_Group[id] = std::make_shared<T>(
                     std::forward<Args>(args)...
                 );
@@ -509,14 +509,30 @@ namespace kit
 
             void optimize() {
                 auto l = this->lock();
-                remove_if(m_Group, [](const std::shared_ptr<T>& i){
+                remove_if([](const std::shared_ptr<T>& i){
                     return !i || i.unique();
                 });
             }
-            unsigned reserve() {
+            unsigned next() {
                 auto l = this->lock();
-                while(m_Group.find(m_Unused++) != m_Group.end()) {}
+                while(m_Group.find(m_Unused) != m_Group.end() ||
+                    m_Reserved.find(m_Unused) != m_Reserved.end())
+                {
+                    ++m_Unused;
+                }
                 return m_Unused-1;
+            }
+            
+            unsigned reserve() { return next(); } // DEPRECATED
+            
+            void reserve(unsigned idx){
+                m_Reserved.insert(idx);
+            }
+            void reserve_next() {
+                return reserve(next());
+            }
+            bool is_reserved(unsigned idx) const {
+                return m_Reserved.find(idx) != m_Reserved.end();
             }
             
             // WARNING: obtain lock before iterating
@@ -534,7 +550,7 @@ namespace kit
         private:
             unsigned m_Unused=0;
             std::map<unsigned, std::shared_ptr<T>> m_Group;
-            
+            std::set<unsigned> m_Reserved;
     };
 
     /*
