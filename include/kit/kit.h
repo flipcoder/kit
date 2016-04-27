@@ -477,6 +477,17 @@ namespace kit
                 m_Unused = std::min(id, m_Unused);
                 return e;
             }
+
+            unsigned add(std::shared_ptr<T> val) {
+                unsigned id = next();
+                m_Group[id] = val;
+                return id;
+            }
+            
+            bool add(unsigned id, std::shared_ptr<T> val) {
+                m_Group[id] = val;
+                return true;
+            }
             
             unsigned remove_if(std::function<bool(const std::shared_ptr<T>&)> func)
             {
@@ -515,9 +526,13 @@ namespace kit
             }
             unsigned next() {
                 auto l = this->lock();
-                while(m_Group.find(m_Unused) != m_Group.end() ||
-                    m_Reserved.find(m_Unused) != m_Reserved.end())
-                {
+                while(true){
+                    if(m_Reserved.find(m_Unused) == m_Reserved.end() &&
+                        m_Group.find(m_Unused) == m_Group.end()
+                    ){
+                        ++m_Unused;
+                        break;
+                    }
                     ++m_Unused;
                 }
                 return m_Unused-1;
