@@ -551,6 +551,10 @@ namespace kit
             bool is_reserved(unsigned idx) const {
                 return m_Reserved.find(idx) != m_Reserved.end();
             }
+
+            bool has(unsigned idx) {
+                return m_Group.find(idx) != m_Group.end();
+            }
             
             // WARNING: obtain lock before iterating
             typedef typename std::map<unsigned, std::shared_ptr<T>>::const_iterator
