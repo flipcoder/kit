@@ -75,6 +75,14 @@ namespace Matrix {
         float* f = glm::value_ptr(m);
         f[12]=f[13]=f[14]=0.0f;
     }
+    inline glm::mat4 with_translation(glm::mat4 m, glm::vec3 t) {
+        float* f = glm::value_ptr(m);
+        f[12] = t[0];
+        f[13] = t[1];
+        f[14] = t[2];
+        return m;
+    }
+
     inline void scale(glm::mat4& m, float v) {
         m *= v;
     }
