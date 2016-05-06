@@ -479,18 +479,21 @@ namespace kit
             }
 
             unsigned add(std::shared_ptr<T> val) {
+                auto l = this->lock();
                 unsigned id = next();
                 m_Group[id] = val;
                 return id;
             }
             
             bool add(unsigned id, std::shared_ptr<T> val) {
+                auto l = this->lock();
                 m_Group[id] = val;
                 return true;
             }
             
             unsigned remove_if(std::function<bool(const std::shared_ptr<T>&)> func)
             {
+                auto l = this->lock();
                 unsigned count = 0;
                 for(auto itr = m_Group.begin();
                     itr != m_Group.end();
@@ -503,6 +506,15 @@ namespace kit
                         ++itr;
                 }
                 return count;
+            }
+            void clear(unsigned idx) {
+                auto l = this->lock();
+                try{
+                    m_Reserved.erase(idx);
+                }catch(const std::out_of_range&){}
+                try{
+                    erase(idx);
+                }catch(const std::out_of_range&){}
             }
             void clear() {
                 auto l = this->lock();
@@ -538,21 +550,28 @@ namespace kit
                 return m_Unused-1;
             }
             
-            unsigned reserve() { return next(); } // DEPRECATED
+            unsigned reserve() {
+                auto l = this->lock();
+                return next();
+            } // DEPRECATED
             
             void reserve(unsigned idx){
+                auto l = this->lock();
                 m_Reserved.insert(idx);
             }
             unsigned reserve_next() {
+                auto l = this->lock();
                 unsigned id = next();
                 reserve(id);
                 return id;
             }
             bool is_reserved(unsigned idx) const {
+                auto l = this->lock();
                 return m_Reserved.find(idx) != m_Reserved.end();
             }
 
             bool has(unsigned idx) {
+                auto l = this->lock();
                 return m_Group.find(idx) != m_Group.end();
             }
             
