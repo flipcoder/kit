@@ -95,7 +95,7 @@ void Args :: validate() const
         else if(arg == "-") // ?
         {
             string fn = boost::filesystem::basename(m_Filename);
-            ERRORf(GENERAL,
+            K_ERRORf(GENERAL,
                 "%s: unrecognized argument '%s'\nTry '%s --help for more information.'",
                 fn % arg % fn
             );
@@ -105,7 +105,7 @@ void Args :: validate() const
             if(not kit::has(m_Schema->allowed, arg))
             {
                 string fn = boost::filesystem::basename(m_Filename);
-                ERRORf(GENERAL,
+                K_ERRORf(GENERAL,
                     "%s: unrecognized argument '%s'\nTry '%s --help for more information.'",
                     fn % arg % fn
                 );
@@ -121,7 +121,7 @@ void Args :: validate() const
                 if(not kit::has(m_Schema->allowed, string("-")+letter))
                 {
                     string fn = boost::filesystem::basename(m_Filename);
-                    ERRORf(GENERAL,
+                    K_ERRORf(GENERAL,
                         "%s: unrecognized argument '-%s'\nTry '%s' --help for more information.",
                         fn % letter % fn
                     );

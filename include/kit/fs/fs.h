@@ -12,7 +12,7 @@ namespace fs {
         if(!homedir)
             homedir = getenv("HOMEPATH");
         if(!homedir)
-            ERROR(GENERAL, "Unable to locate home directory.");
+            K_ERROR(GENERAL, "Unable to locate home directory.");
         return homedir;
     }
 }

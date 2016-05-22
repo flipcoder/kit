@@ -62,7 +62,7 @@ void SchemaBase<Mutex> :: validate(const std::shared_ptr<MetaBase<TMutex>>& m) c
                     }
                 }
                 if(!valid_value)
-                    ERROR(PARSE, "schema validation failed");
+                    K_ERROR(PARSE, "schema validation failed");
                     
             //}catch(const boost::bad_any_cast&){
             }catch(const std::out_of_range&){

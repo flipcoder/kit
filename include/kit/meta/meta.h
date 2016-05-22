@@ -459,7 +459,7 @@ class MetaBase:
 
         enum Which {
             //RETURNED=0, // its a variant, won't need this
-            THIS=0,
+            SELF=0,
             OTHER=1,
             NEITHER=2,
             RECURSE=3 // force a recursion
@@ -482,7 +482,7 @@ class MetaBase:
             return m_Elements.empty();
         }
 
-        bool all_null() const {
+        bool all_empty() const {
             auto l = this->lock();
             for(auto&& e: elements_ref())
                 if(e.type.id != MetaType::ID::EMPTY)
@@ -1325,7 +1325,7 @@ class MetaBase:
             // all types in the meta are the same
             TYPED = kit::bit(1),
             // guarentee meta is value array OR purely key-value
-            PURE = kit::bit(2),
+            VALID = kit::bit(2),
             //// Merge when deserializing (force UNIQUE flag)
             //MERGE = kit::bit(3)
         };

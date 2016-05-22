@@ -389,7 +389,7 @@ private:
     ).str();\
     Log::get().warn(_msg);\
 }
-#define ERROR(CODE,X) {\
+#define K_ERROR(CODE,X) {\
     auto _msg = (ERR_FORMAT %\
         g_ErrorString[(unsigned)ErrorCode::CODE] %\
         DEBUG_OPTIONAL(__FILE__ % __LINE__ %)\
@@ -398,7 +398,7 @@ private:
     Log::get().error(_msg);\
     throw Error(ErrorCode::CODE, _msg);\
 }
-#define ERRORf(CODE,X,Y) {\
+#define K_ERRORf(CODE,X,Y) {\
     auto _msg = (ERR_FORMAT %\
         g_ErrorString[(unsigned)ErrorCode::CODE] %\
         DEBUG_OPTIONAL(__FILE__ % __LINE__ %)\

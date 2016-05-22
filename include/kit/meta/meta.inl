@@ -455,7 +455,7 @@ void MetaBase<Mutex> :: deserialize_json(
             }
         }
     }
-    ERROR(READ, "subpath");
+    K_ERROR(READ, "subpath");
 }
 
 template<class Mutex>
@@ -473,9 +473,9 @@ void MetaBase<Mutex> :: deserialize(MetaFormat fmt, std::istream& data, const st
 
         if(!reader.parse(data, root)) {
             if(fn.empty()) {
-                ERROR(PARSE, "MetaBase input stream data")
+                K_ERROR(PARSE, "MetaBase input stream data")
             } else {
-                ERROR(PARSE, fn);
+                K_ERROR(PARSE, fn);
             }
         }
         
@@ -509,7 +509,7 @@ void MetaBase<Mutex> :: deserialize(const std::string& fn, unsigned flags)
     auto l = this->lock();
     //assert(!frozen());
     if(fn.empty())
-        ERROR(READ, "no filename specified");
+        K_ERROR(READ, "no filename specified");
 
     if(flags & Meta::F_CREATE)
     {
@@ -520,7 +520,7 @@ void MetaBase<Mutex> :: deserialize(const std::string& fn, unsigned flags)
             );
             std::fstream file(fn, std::fstream::out); // create
             if(not file.good())
-                ERROR(READ, fn);
+                K_ERROR(READ, fn);
             file << "{}\n";
             file.flush();
         }
@@ -528,7 +528,7 @@ void MetaBase<Mutex> :: deserialize(const std::string& fn, unsigned flags)
         
     std::ifstream file(fn);
     if(not file.good())
-        ERROR(READ, fn);
+        K_ERROR(READ, fn);
 
     // TODO: subdocument path
     std::string pth;
@@ -548,12 +548,12 @@ void MetaBase<Mutex> :: deserialize(const std::string& fn, unsigned flags)
     //        bool created = false;
     //        m = path(pth, 0, &created);
     //        if(created)
-    //            ERROR(READ, fn);
+    //            K_ERROR(READ, fn);
     //        *this = std::move(*m);
     //        parent(par);
     //        m = std::make_shared<MetaBase<Mutex>>();
     //    }catch(...){
-    //        ERROR(READ, fn);
+    //        K_ERROR(READ, fn);
     //    }
     //}
 
@@ -566,7 +566,7 @@ void MetaBase<Mutex> :: serialize(const std::string& fn, unsigned flags) const
     auto l = this->lock();
 
     if(fn.empty())
-        ERROR(WRITE, "no filename specified");
+        K_ERROR(WRITE, "no filename specified");
 
     std::fstream file;
     file.open(
@@ -574,7 +574,7 @@ void MetaBase<Mutex> :: serialize(const std::string& fn, unsigned flags) const
         std::ios_base::in | std::ios_base::out | std::ios_base::trunc
     );
     if(!file.is_open() || file.bad())
-        ERROR(WRITE, fn);
+        K_ERROR(WRITE, fn);
 
     file << serialize(filename_to_format(fn), flags);
 }
@@ -743,7 +743,7 @@ void MetaBase<Mutex> :: merge(
                         // delete entire null trees in destructive merges
                         if(flags & (unsigned)MergeFlags::INCREMENTAL)
                         {
-                            if(m->all_null())
+                            if(m->all_empty())
                             {
                                 m->clear();
                                 e.nullify();
@@ -763,7 +763,7 @@ void MetaBase<Mutex> :: merge(
                             e.nullify();
                     }
 
-                    // TODO: other MetaBase::Which values (except Which::THIS,
+                    // TODO: other MetaBase::Which values (except Which::SELF,
                     //  that can be treated simply by continue; below)
                     // MetaBase::Which values have preference over flags below
                     // so we continue; here
@@ -797,7 +797,7 @@ void MetaBase<Mutex> :: merge(
             [](const MetaElement&,
             const MetaElement&
         ){
-            return Which::THIS;
+            return Which::SELF;
         }, flags);
 }
 
