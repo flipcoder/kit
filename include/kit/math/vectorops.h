@@ -21,6 +21,11 @@ namespace Vector
 //            return true;
 //        return false;
 //    }
+    inline std::string to_string(const glm::vec2& v) {
+        return std::string("(") +
+            std::to_string(v.x) + ", " +
+            std::to_string(v.y) + ")";
+    }
     inline std::string to_string(const glm::vec3& v) {
         return std::string("(") +
             std::to_string(v.x) + ", " +
