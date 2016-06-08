@@ -1096,6 +1096,11 @@ namespace kit
             return -1;
         return 0;
     }
+
+    template<class T>
+    T mix(T a, T b, float t) {
+        return a + (b-a)*t;
+    }
     
     #define TRY(expr) try{ expr; } catch(...) {}
     #define TRY_OR(expr, alt) [&]{try{ return (expr); } catch(...) {return (alt);}}()
