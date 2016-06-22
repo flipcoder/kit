@@ -1,7 +1,7 @@
 #include <catch.hpp>
-#include "../include/kit/kit.h"
-#include "../include/kit/async/async.h"
-#include "../include/kit/async/async_fstream.h"
+#include "../kit/kit.h"
+#include "../kit/async/async.h"
+#include "../kit/async/async_fstream.h"
 //#include "../include/kit/async/task.h"
 //#include "../include/kit/async/channel.h"
 //#include "../include/kit/async/multiplexer.h"

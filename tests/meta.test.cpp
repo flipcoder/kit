@@ -1,7 +1,7 @@
 #include <catch.hpp>
-#include "../include/kit/kit.h"
-#include "../include/kit/meta/meta.h"
-#include "../include/kit/math/common.h"
+#include "../kit/kit.h"
+#include "../kit/meta/meta.h"
+#include "../kit/math/common.h"
 using namespace std;
 
 TEST_CASE("Meta","[meta]") {

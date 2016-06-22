@@ -1,9 +1,9 @@
 #include <functional>
 #include <catch.hpp>
-#include "../include/kit/math/common.h"
-#include "../include/kit/log/log.h"
+#include "../kit/math/common.h"
+#include "../kit/log/log.h"
 #include <SDL2/SDL.h>
-#include "../include/kit/freq/animation.h"
+#include "../kit/freq/animation.h"
 using namespace std;
 
 TEST_CASE("Animation","[animation]") {

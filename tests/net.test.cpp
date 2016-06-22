@@ -1,5 +1,5 @@
 #include <catch.hpp>
-#include "../include/kit/net/net.h"
+#include "../kit/net/net.h"
 #include <string>
 using namespace std;
 

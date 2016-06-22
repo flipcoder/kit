@@ -1,6 +1,6 @@
 #include <catch.hpp>
-#include "../include/kit/reactive/reactive.h"
-#include "../include/kit/reactive/signal.h"
+#include "../kit/reactive/reactive.h"
+#include "../kit/reactive/signal.h"
 using namespace std;
 using namespace kit;
 

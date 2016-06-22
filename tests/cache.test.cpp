@@ -1,5 +1,5 @@
 #include <catch.hpp>
-#include "../include/kit/cache/cache.h"
+#include "../kit/cache/cache.h"
 using namespace std;
 
 struct Object

@@ -1,5 +1,5 @@
-#include "../../include/kit/async/async.h"
-#include "../../include/kit/log/log.h"
+#include "../../kit/async/async.h"
+#include "../../kit/log/log.h"
 #include <chrono>
 using namespace std;
 

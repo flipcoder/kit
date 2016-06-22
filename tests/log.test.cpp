@@ -1,6 +1,6 @@
 #include <catch.hpp>
 #include <thread>
-#include "../include/kit/log/log.h"
+#include "../kit/log/log.h"
 using namespace std;
 
 TEST_CASE("Log","[log]") {

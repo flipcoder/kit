@@ -1,5 +1,5 @@
-#include "../../include/kit/net/net.h"
-#include "../../include/kit/log/log.h"
+#include "../../kit/net/net.h"
+#include "../../kit/log/log.h"
 #include <iostream>
 #include <memory>
 #include <boost/lexical_cast.hpp>

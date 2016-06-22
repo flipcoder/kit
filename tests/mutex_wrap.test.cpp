@@ -1,5 +1,5 @@
 #include <catch.hpp>
-#include "../include/kit/kit.h"
+#include "../kit/kit.h"
 using namespace std;
 using namespace kit;
 

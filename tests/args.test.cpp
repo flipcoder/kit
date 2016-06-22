@@ -1,6 +1,6 @@
 #include <catch.hpp>
-#include "../include/kit/args/args.h"
-#include "../include/kit/log/log.h"
+#include "../kit/args/args.h"
+#include "../kit/log/log.h"
 using namespace std;
 
 TEST_CASE("Args","[args]") {

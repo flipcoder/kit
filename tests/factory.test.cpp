@@ -1,5 +1,5 @@
 #include <catch.hpp>
-#include "../include/kit/factory/factory.h"
+#include "../kit/factory/factory.h"
 using namespace std;
 
 TEST_CASE("Factory","[factory]") {
