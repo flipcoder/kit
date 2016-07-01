@@ -274,8 +274,8 @@ public:
             return Freq::Time(m_pTimer->ms() - m_ulAlarmTime);
         }
 
-        void connect(std::function<void()> cb) {
-            m_pCallback->connect(std::move(cb));
+        boost::signals2::connection connect(std::function<void()> cb) {
+            return m_pCallback->connect(std::move(cb));
         }
         bool poll() {
             if(elapsed()) {
