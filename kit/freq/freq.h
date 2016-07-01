@@ -169,6 +169,16 @@ public:
             //assert(m_pTimer);
             set(t);
         }
+        explicit Alarm(Time t, Timeline* timer, std::function<void()> func):
+            m_pTimer(timer),
+            m_pCallback(std::make_shared<boost::signals2::signal<void()>>())
+            //m_pTimer(timer ? timer : Freq::get().accumulator())
+        {
+            //assert(m_pTimer);
+            set(t);
+            m_pCallback->connect(func);
+        }
+
 
         virtual ~Alarm() {}
         
@@ -267,11 +277,13 @@ public:
         void connect(std::function<void()> cb) {
             m_pCallback->connect(std::move(cb));
         }
-        void poll() {
+        bool poll() {
             if(elapsed()) {
                 (*m_pCallback)();
                 m_pCallback->disconnect_all_slots();
+                return true;
             }
+            return false;
         }
         
         float fraction_left() const
