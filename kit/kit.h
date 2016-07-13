@@ -76,51 +76,51 @@ namespace kit
     //{
     //}
 
-    template<class T>
-    struct move_on_copy
-    {
-        public:
-            move_on_copy() = default;
+    //template<class T>
+    //struct move_on_copy
+    //{
+    //    public:
+    //        move_on_copy() = default;
             
-            move_on_copy(T&& rhs):
-                m_Data(std::forward<T>(rhs)) {}
+    //        move_on_copy(T&& rhs):
+    //            m_Data(std::forward<T>(rhs)) {}
             
-            move_on_copy(move_on_copy&& rhs):
-                m_Data(std::forward<T>(rhs.m_Data)) {}
+    //        move_on_copy(move_on_copy&& rhs):
+    //            m_Data(std::forward<T>(rhs.m_Data)) {}
             
-            move_on_copy(move_on_copy& rhs):
-                m_Data(std::move(rhs.m_Data)) {}
+    //        move_on_copy(move_on_copy& rhs):
+    //            m_Data(std::move(rhs.m_Data)) {}
 
-            move_on_copy& operator=(move_on_copy&& rhs){
-                m_Data = rhs.m_Data;
-                return *this;
-            }
+    //        move_on_copy& operator=(move_on_copy&& rhs){
+    //            m_Data = rhs.m_Data;
+    //            return *this;
+    //        }
 
-            T& get() const {
-                return m_Data;
-            }
-            //const T& get() const {
-            //    return m_Data;
-            //}
+    //        T& get() const {
+    //            return m_Data;
+    //        }
+    //        //const T& get() const {
+    //        //    return m_Data;
+    //        //}
             
-            T&& move() {
-                return std::move(m_Data);
-            }
+    //        T&& move() {
+    //            return std::move(m_Data);
+    //        }
 
-            const T& operator*() const {
-                return m_Data;
-            }
-            T& operator*() {
-                return m_Data;
-            }
+    //        const T& operator*() const {
+    //            return m_Data;
+    //        }
+    //        T& operator*() {
+    //            return m_Data;
+    //        }
 
-            operator T() const {
-                return m_Data;
-            }
+    //        operator T() const {
+    //            return m_Data;
+    //        }
 
-        private:
-            mutable T m_Data;
-    };
+    //    private:
+    //        mutable T m_Data;
+    //};
     
     struct dummy_mutex
     {
