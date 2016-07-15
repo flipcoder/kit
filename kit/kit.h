@@ -1,6 +1,7 @@
 #ifndef UTIL_H_SNIHUCWC
 #define UTIL_H_SNIHUCWC
 
+#include <set>
 #include <memory>
 #include <mutex>
 #include <vector>
