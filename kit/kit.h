@@ -18,6 +18,11 @@
 #include <boost/any.hpp>
 #include <boost/logic/tribool.hpp>
 
+// extended identifiers in msvc (and,or,not)
+#ifdef _MSC_VER
+#include <iso646.h>
+#endif
+
 // lazy range for entire container
 #define ENTIRE(blah) (blah).begin(), (blah).end()
 
