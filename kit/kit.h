@@ -1102,6 +1102,24 @@ namespace kit
             return -1;
         return 0;
     }
+    inline float sign(float v)
+    {
+        if(v > 0.0f)
+            return 1.0f;
+        else if(v < 0.0f)
+            return -1.0f;
+        return 0.0f;
+
+    }
+    inline double sign(double v)
+    {
+        if(v > 0.0)
+            return 1.0;
+        else if(v < 0.0)
+            return -1.0;
+        return 0.0;
+
+    }
 
     template<class T>
     T mix(T a, T b, float t) {
