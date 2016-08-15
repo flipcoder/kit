@@ -157,9 +157,9 @@ class Multiplexer:
                         if(!m_Buffered || m_Units.size() < m_Buffered) {
                             auto cbt = Task<T()>(std::move(cb));
                             auto fut = cbt.get_future();
-                            auto cbc = kit::move_on_copy<Task<T()>>(std::move(cbt));
+                            auto cbc = std::make_shared<Task<T()>>(std::move(cbt));
                             m_Units.emplace_back(cond, [cbc]() {
-                                cbc.get()();
+                                (*cbc)();
                             });
                             m_CondVar.notify_one();
                             return fut;
@@ -178,7 +178,7 @@ class Multiplexer:
                         if(!m_Buffered || m_Units.size() < m_Buffered) {
                             auto cbt = Task<T()>(std::move(cb));
                             auto fut = cbt.get_future();
-                            auto cbc = kit::move_on_copy<Task<T()>>(std::move(cbt));
+                            auto cbc = std::make_shared<Task<T()>>(std::move(cbt));
                             m_Units.emplace_back(
                                 std::function<bool()>(),
                                 std::function<void()>()
@@ -187,7 +187,7 @@ class Multiplexer:
                             m_Units.back().m_pPush = kit::make_unique<push_coro_t>(
                                 [cbc, pullptr](pull_coro_t& sink){
                                     *pullptr = &sink;
-                                    cbc.get()();
+                                    (*cbc)();
                                 }
                             );
                             auto* coroptr = m_Units.back().m_pPush.get();
@@ -230,13 +230,13 @@ class Multiplexer:
 
             template<class R, class T>
             std::future<R> when(std::future<T>& fut, std::function<R(std::future<T>&)> cb) {
-                kit::move_on_copy<std::future<T>> futc(std::move(fut));
+                auto futc = std::make_shared<std::future<T>>(std::move(fut));
                 
                 return task<void>([cb, futc]() {
-                    if(futc.get().wait_for(std::chrono::seconds(0)) ==
+                    if(futc->wait_for(std::chrono::seconds(0)) ==
                         std::future_status::ready)
                     {
-                        cb(futc.get());
+                        cb(*futc);
                     }
                     else
                         throw kit::yield_exception();

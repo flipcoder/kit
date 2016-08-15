@@ -30,8 +30,8 @@ solution("kit")
             --"toys/**.cpp",
             "tests/**.cpp",
             "tests/**.h",
-            "include/kit/**.cpp",
-            "include/kit/**.h"
+            "kit/**.cpp",
+            "kit/**.h"
         }
 
         --excludes {
