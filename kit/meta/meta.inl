@@ -1,4 +1,5 @@
 #include <boost/filesystem.hpp>
+#include <boost/lexical_cast.hpp>
 #include <sstream>
 #include "meta.h"
 #include "../log/log.h"
@@ -373,10 +374,27 @@ std::string MetaBase<Mutex> :: serialize(MetaFormat fmt, unsigned flags) const
         else
             return root.toStyledString();
     }
-    //else if (fmt == MetaFormat::BSON)
-    //{
-        
-    //}
+    else if (fmt == MetaFormat::INI)
+    {
+        for(auto&& e: m_Elements)
+        {
+            std::shared_ptr<Meta> m;
+            try{
+                m = boost::any_cast<std::shared_ptr<Meta>>(e.value);
+            }catch(boost::bad_any_cast&){}
+            if(m)
+            {
+                data += "["+e.key+"]\n";
+                for(auto&& j: *m)
+                    data += j.key + "=" + kit::any_to_string(j.value) + "\n";
+                data += "\n";
+            }
+            else
+            {
+                data += e.key + "=" + kit::any_to_string(e.value) + "\n";
+            }
+        }
+    }
     //else if (fmt == MetaFormat::HUMAN)
     //    assert(false);
     else
@@ -414,7 +432,7 @@ void MetaBase<Mutex> :: deserialize(
 
 template<class Mutex>
 void MetaBase<Mutex> :: deserialize(MetaFormat fmt, const std::string& data, const std::string& fn, const std::string& pth, unsigned flags)
-{
+{ 
     std::istringstream iss(data);
     deserialize(fmt, iss, fn, pth, flags);
 }
@@ -493,10 +511,51 @@ void MetaBase<Mutex> :: deserialize(MetaFormat fmt, std::istream& data, const st
         // human deserialization unsupported
         assert(false);
     }
-    //else if (fmt == MetaFormat::BSON)
-    //{
-        
-    //}
+    else if (fmt == MetaFormat::INI)
+    {
+        try{
+            MetaBase<Mutex>* m = this;
+            std::string line;
+            while(std::getline(data, line))
+            {
+                if(boost::starts_with(line, "["))
+                {
+                    auto m2 = std::make_shared<MetaBase<Mutex>>();
+                    set(line.substr(1, line.length()-2), m2);
+                    m = m2.get();
+                }
+                else if(not boost::starts_with(line,";") && line.length() > 1)
+                {
+                    std::vector<std::string> toks;
+                    boost::split(toks, line, boost::is_any_of("="));
+                    auto k = toks.at(0);
+                    auto v = toks.at(1);
+                    if(v.find(".") != std::string::npos){
+                        try{
+                            auto r = boost::lexical_cast<double>(v);
+                            m->set<double>(k,r);
+                            continue;
+                        }catch(...){}
+                    }
+                    try{
+                        auto r = boost::lexical_cast<int>(v);
+                        m->set<int>(k,r);
+                        continue;
+                    }catch(...){ }
+                    if(v=="false" || v=="true")
+                        m->set<bool>(k,v=="true");
+                    else
+                        m->set<std::string>(k,v);
+                }
+            }
+        }catch(...){
+            if(fn.empty()) {
+                K_ERROR(PARSE, "MetaBase input stream data")
+            } else {
+                K_ERROR(PARSE, fn);
+            }
+        }
+    }
     else
     {
         WARNING("Unknown serialization format");
@@ -521,7 +580,8 @@ void MetaBase<Mutex> :: deserialize(const std::string& fn, unsigned flags)
             std::fstream file(fn, std::fstream::out); // create
             if(not file.good())
                 K_ERROR(READ, fn);
-            file << "{}\n";
+            if(boost::ends_with(boost::to_lower_copy(fn), ".json"))
+                file << "{}\n";
             file.flush();
         }
     }
@@ -829,8 +889,10 @@ template<class Mutex>
 /*static*/ MetaFormat MetaBase<Mutex> :: filename_to_format(const std::string& fn)
 {
     boost::filesystem::path p(fn);
-    return p.extension().string() == ".json" ?
-        MetaFormat::JSON:
-        MetaFormat::UNKNOWN;
+    if(p.extension().string() == ".json")
+        return MetaFormat::JSON;
+    else if(p.extension().string() == ".ini")
+        return MetaFormat::INI;
+    return MetaFormat::UNKNOWN;
 }
 

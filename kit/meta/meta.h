@@ -236,6 +236,7 @@ struct MetaElement
 enum class MetaFormat : unsigned {
     UNKNOWN=0,
     JSON,
+    INI,
     HUMAN,
     //BSON
 };

@@ -227,6 +227,16 @@ TEST_CASE("Meta","[meta]") {
             m->deserialize(MetaFormat::JSON,data);
             REQUIRE(not m->empty());
             REQUIRE(m->at<int>("one") == 1);
+
+            m->set("test", make_shared<Meta>());
+            m->meta("test")->set("two", 2);
+            data = m->serialize(MetaFormat::INI);
+            m->clear();
+            REQUIRE(m->empty());
+            m->deserialize(MetaFormat::INI, data);
+            REQUIRE(not m->empty());
+            REQUIRE(m->at<int>("one") == 1);
+            REQUIRE(m->meta("test")->at<int>("two") == 2);
         }
 
         SECTION("arrays") {

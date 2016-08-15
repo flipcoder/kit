@@ -872,6 +872,21 @@ namespace kit
 
         throw std::runtime_error("unable to compare values");
     }
+
+    template<class T>
+    std::string any_to_string_type(const boost::any& a) {
+        try{
+            return std::to_string(boost::any_cast<T>(a));
+        }catch(...){}
+        return "";
+    }
+    
+    inline std::string any_to_string(const boost::any& a) {
+        std::string r;
+        {r = any_to_string_type<int>(a); if(not r.empty()) return r;}
+        
+        throw std::runtime_error("unable to cast value");
+    }
     
     inline void ensure_starts_with(std::string& s, std::string t){
         if(not boost::starts_with(s,t))
