@@ -537,15 +537,16 @@ void MetaBase<Mutex> :: deserialize(MetaFormat fmt, std::istream& data, const st
                             continue;
                         }catch(...){}
                     }
+                    if(v=="false" || v=="true"){
+                        m->set<bool>(k,v=="true");
+                        continue;
+                    }
                     try{
                         auto r = boost::lexical_cast<int>(v);
                         m->set<int>(k,r);
                         continue;
                     }catch(...){ }
-                    if(v=="false" || v=="true")
-                        m->set<bool>(k,v=="true");
-                    else
-                        m->set<std::string>(k,v);
+                    m->set<std::string>(k,v);
                 }
             }
         }catch(...){

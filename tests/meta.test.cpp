@@ -32,7 +32,6 @@ TEST_CASE("Meta","[meta]") {
         REQUIRE_THROWS_AS(m->at<nullptr_t>(0), boost::bad_any_cast);
         REQUIRE_THROWS_AS(m->meta(0), boost::bad_any_cast);
         
-
         m->set<string>("two", "2");
         REQUIRE(m->size() == 2);
         REQUIRE(m->key_count() == 2);
@@ -237,6 +236,13 @@ TEST_CASE("Meta","[meta]") {
             REQUIRE(not m->empty());
             REQUIRE(m->at<int>("one") == 1);
             REQUIRE(m->meta("test")->at<int>("two") == 2);
+
+            m->clear();
+            m->deserialize(MetaFormat::INI,
+                "[test]\none=1\nyes=true"
+            );
+            REQUIRE(m->meta("test")->at<bool>("yes"));
+            REQUIRE(boost::trim_copy(m->serialize(MetaFormat::INI))=="[test]\none=1\nyes=true");
         }
 
         SECTION("arrays") {

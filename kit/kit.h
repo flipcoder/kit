@@ -884,6 +884,13 @@ namespace kit
     inline std::string any_to_string(const boost::any& a) {
         std::string r;
         {r = any_to_string_type<int>(a); if(not r.empty()) return r;}
+        {r = any_to_string_type<double>(a); if(not r.empty()) return r;}
+        {r = any_to_string_type<bool>(a); if(not r.empty()) return r;}
+
+        try{
+            r = boost::any_cast<std::string>(a);
+            return r;
+        }catch(...){}
         
         throw std::runtime_error("unable to cast value");
     }

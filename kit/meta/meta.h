@@ -53,12 +53,12 @@ struct MetaType {
         }
         else if(typeid(val) == typeid(std::string))
             id = ID::STRING;
+        else if(typeid(val) == typeid(bool)){
+            id = ID::BOOL;
+        }
         else if(boost::is_integral<T>::value)
         {
-            if(typeid(val) == typeid(bool))
-                id = ID::BOOL;
-            else
-                id = ID::INT;
+            id = ID::INT;
             //if(boost::is_signed<T>::value)
             //    flags |= SIGN;
         }
