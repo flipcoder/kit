@@ -706,10 +706,19 @@ namespace kit
         return (int)( (r > 0.0f) ? floor(r + 0.5f) : ceil(r - 0.5f) );
     }
     inline unsigned int round_uint(double r){
-        return (int)( (r > 0.0f) ? floor(r + 0.5f) : ceil(r - 0.5f) );
+        if(r < 0.0f)
+            return 0;
+        return (unsigned)(r + 0.5f);
     }
     inline unsigned int round_uint(float r){
-        return (int)( (r > 0.0f) ? floor(r + 0.5f) : ceil(r - 0.5f) );
+        if(r < 0.0f)
+            return 0;
+        return (unsigned)(r + 0.5f);
+    }
+    template<class T=float>
+    inline float random()
+    {
+        return static_cast<T>(std::rand()) / static_cast<T>(RAND_MAX);
     }
 
     template<class T>
@@ -1147,7 +1156,7 @@ namespace kit
     T mix(T a, T b, float t) {
         return a + (b-a)*t;
     }
-    
+
     #define TRY(expr) try{ expr; } catch(...) {}
     #define TRY_OR(expr, alt) [&]{try{ return (expr); } catch(...) {return (alt);}}()
     #define IF_OR(expr, alt) [&]{try{ auto r = (expr);if(r)return r; } catch(...) {}return (alt);}()

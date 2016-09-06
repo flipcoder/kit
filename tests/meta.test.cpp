@@ -242,7 +242,7 @@ TEST_CASE("Meta","[meta]") {
                 "[test]\none=1\nyes=true"
             );
             REQUIRE(m->meta("test")->at<bool>("yes"));
-            REQUIRE(boost::trim_copy(m->serialize(MetaFormat::INI))=="[test]\none=1\nyes=true");
+            CHECK(boost::trim_copy(m->serialize(MetaFormat::INI))=="[test]\none=1\nyes=true");
         }
 
         SECTION("arrays") {
