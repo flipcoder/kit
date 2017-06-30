@@ -1089,7 +1089,8 @@ class MetaBase:
             // TODO: remove hooks too?
             if(!m_Elements.at(id).key.empty())
                 remove(m_Elements[id].key);
-            m_Elements.erase(m_Elements.begin() + id);
+            else
+                m_Elements.erase(m_Elements.begin() + id);
         }
 
         void pop_back() {
@@ -1113,15 +1114,14 @@ class MetaBase:
 
             auto l = this->lock();
             unsigned idx = m_Keys.at(key);
+            assert(idx < m_Elements.size());
+            
+            // TODO: not super efficient, might be better to flag out of date indices somehow
+            for (unsigned i = idx + 1; i<m_Elements.size(); ++i)
+                m_Keys[m_Elements[i].key] = i - 1;
+
             m_Elements.erase(m_Elements.begin() + idx);
             m_Keys.erase(key);
-            //kit::remove_if(m_Elements, [&](Element& e){
-            //    // TODO: remove key from hooks
-            //    bool b = e.key == key;
-            //    if(b)
-            //        m_Keys.erase(key);
-            //    return b;
-            //});
         }
 
         // Copying internal MetaBase::Element into an existing element of type key

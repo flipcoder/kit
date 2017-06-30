@@ -12,7 +12,7 @@
         #define WIN32_LEAN_AND_MEAN
     #endif
     #include <windows.h>
-    #include <winsock.h>
+    #include <winsock2.h>
     typedef int socklen_t;
 #else
     #include <sys/types.h>
@@ -69,7 +69,7 @@ class ISocket
                 WinSockIniter() {
                     WSADATA wsaData;
                     if(WSAStartup(MAKEWORD(1,1), &wsaData) != 0) {
-                        cerr << "WinSock failed to intialize." << endl;
+                        std::cerr << "WinSock failed to intialize." << std::endl;
                         exit(1);
                     }
                 }

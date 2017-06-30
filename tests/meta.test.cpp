@@ -116,7 +116,10 @@ TEST_CASE("Meta","[meta]") {
             REQUIRE_THROWS_AS(m->at<int>("two"), std::out_of_range);
             REQUIRE(m->at<int>(0) == 1);
             REQUIRE(m->at<int>(1) == 3);
+            REQUIRE(m->id("one") == 0);
+            REQUIRE(m->id("three") == 1);
             m->remove("one");
+            REQUIRE(m->id("three") == 0);
             m->remove("three");
             REQUIRE_THROWS_AS(m->remove("two"), std::out_of_range);
             REQUIRE_THROWS_AS(m->remove("four"), std::out_of_range);

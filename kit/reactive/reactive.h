@@ -2,6 +2,7 @@
 #define REACTIVE_H_GQBDAQXV
 
 #include <boost/optional.hpp>
+#include <boost/optional/optional_io.hpp>
 #include <boost/signals2.hpp>
 #include "../kit.h"
 #include "signal.h"
