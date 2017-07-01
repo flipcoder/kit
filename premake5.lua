@@ -21,7 +21,6 @@ workspace("kit")
         -- Release Config
         configuration "Release"
             defines { "NDEBUG" }
-            flags { "OptimizeSpeed" }
             optimize "speed"
             targetname("kit_dist")
 
