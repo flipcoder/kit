@@ -8,9 +8,8 @@
 #endif
 
 #ifdef __WIN32__
-    #ifndef WIN32_LEAN_AND_MEAN
-        #define WIN32_LEAN_AND_MEAN
-    #endif
+    #define WIN32_LEAN_AND_MEAN
+    #define NOMINMAX
     #include <windows.h>
     #include <winsock2.h>
     typedef int socklen_t;
