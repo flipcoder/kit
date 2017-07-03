@@ -3,7 +3,7 @@ workspace("kit")
     
     configurations {"Debug", "Release"}
 
-        defines { "GLM_FORCE_RADIANS", "DO_NOT_USE_WMAIN" }
+        defines { "GLM_FORCE_RADIANS", "DO_NOT_USE_WMAIN", "NOMINMAX" }
         
         -- Debug Config
         configuration "Debug"
