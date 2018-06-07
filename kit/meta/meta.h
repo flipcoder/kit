@@ -1280,8 +1280,8 @@ class MetaBase:
         typedef std::vector<MetaElement>::const_iterator const_iterator;
         const_iterator cbegin() const { return m_Elements.cbegin(); }
         const_iterator cend() const { return m_Elements.cend(); }
-        iterator begin() const { return m_Elements.begin(); }
-        iterator end() const { return m_Elements.end(); }
+        //iterator begin() const { return m_Elements.begin(); }
+        //iterator end() const { return m_Elements.end(); }
         iterator begin() { return m_Elements.begin(); }
         iterator end() { return m_Elements.end(); }
 
