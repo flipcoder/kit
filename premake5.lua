@@ -36,6 +36,7 @@ workspace("kit")
                 "boost_coroutine",
                 "boost_python",
                 "boost_regex",
+                "boost_chrono",
                 "jsoncpp",
             }
             includedirs {
