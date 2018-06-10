@@ -112,15 +112,15 @@ namespace kit
                 m_Value = value;
             }
 
-            void pend() {
+            void pend() const {
                 m_Value = boost::optional<T>();
             }
 
-            void recache() {
+            void recache() const {
                 m_Value = m_Getter();
             }
             
-            void ensure() {
+            void ensure() const {
                 if(!m_Value)
                     m_Value = m_Getter();
             }
@@ -129,10 +129,10 @@ namespace kit
                 return bool(m_Value);
             }
 
-            boost::optional<T> try_get() {
+            boost::optional<T> try_get() const {
                 return m_Value;
             }
-            T& get() {
+            T& get() const {
                 ensure();
                 return *m_Value;
             }
@@ -146,12 +146,12 @@ namespace kit
                 m_Getter = func;
             }
 
-            T& operator()() {
+            T& operator()() const {
                 return get();
             }
 
         private:
-            boost::optional<T> m_Value;
+            mutable boost::optional<T> m_Value;
             std::function<T()> m_Getter;
     };
 
