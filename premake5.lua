@@ -3,7 +3,13 @@ workspace("kit")
     
     configurations {"Debug", "Release"}
 
-        defines { "GLM_FORCE_RADIANS", "GLM_ENABLE_EXPERIMENTAL", "DO_NOT_USE_WMAIN", "NOMINMAX" }
+        defines {
+            "GLM_FORCE_CTOR_INIT",
+            "GLM_FORCE_RADIANS",
+            "GLM_ENABLE_EXPERIMENTAL",
+            "DO_NOT_USE_WMAIN",
+            "NOMINMAX"
+        }
         
         -- Debug Config
         configuration "Debug"
@@ -42,6 +48,7 @@ workspace("kit")
             includedirs {
                 "/usr/local/include/",
                 "/usr/include/bullet/",
+                "/usr/include/rapidxml/",
                 "/usr/include/raknet/DependentExtensions"
             }
 
