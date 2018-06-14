@@ -3,9 +3,15 @@
 
 #include <iostream>
 #include <boost/signals2.hpp>
+#include "../kit_compat.h"
 #include "../math/common.h"
 #include "../kit.h"
 #include "../log/log.h"
+
+#ifndef K_GET_TICKS
+    #include <SDL2/SDL.h>
+    #define K_GET_TICKS SDL_GetTicks
+#endif
 
 class Freq
 {
@@ -402,10 +408,10 @@ public:
     {}
     
     unsigned long get_ticks() const {
-        return SDL_GetTicks();
+        return K_GET_TICKS();
     }
     float get_seconds() const {
-        return SDL_GetTicks() * 0.001f;
+        return K_GET_TICKS() * 0.001f;
     }
     
     // TODO: not yet implemented

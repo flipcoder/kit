@@ -3,6 +3,13 @@ solution("kit")
 
     targetdir("bin")
 
+    defines {
+        "GLM_FORCE_CTOR_INIT",
+        "GLM_ENABLE_EXPERIMENTAL",
+        "GLM_FORCE_RADIANS",
+        "NOMINMAX"
+    }
+
     configuration "debug"
         defines { "DEBUG" }
         flags { "Symbols" }
@@ -25,8 +32,8 @@ solution("kit")
         }
         files {
             "src/echo.cpp",
-            "../include/**.cpp",
-            "../include/**.inl"
+            "../kit/**.cpp",
+            "../kit/**.inl"
         }
 
         defines { "BACKWARD_HAS_BFD=1" }
@@ -67,8 +74,8 @@ solution("kit")
         }
         files {
             "src/stability.cpp",
-            "../include/**.cpp",
-            "../include/**.inl"
+            "../kit/**.cpp",
+            "../kit/**.inl"
         }
 
         defines { "BACKWARD_HAS_BFD=1" }
@@ -109,8 +116,8 @@ solution("kit")
         }
         files {
             "src/chat.cpp",
-            "../include/**.cpp",
-            "../include/**.inl"
+            "../kit/**.cpp",
+            "../kit/**.inl"
         }
 
         defines { "BACKWARD_HAS_BFD=1" }

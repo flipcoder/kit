@@ -8,15 +8,31 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/transform2.hpp>
 
+#ifndef K_EPSILON
 #define K_EPSILON 0.00001
+#endif
 
+#ifndef K_PI
 #define K_PI 3.1415926535897932385
+#endif
+
+#ifndef K_TAU
 #define K_TAU 6.2831853071795864770
+#endif
 
 #define DEG2RAD(X) ((X)*K_TAU/360.0)
 #define RAD2DEG(X) ((X)*360.0/K_TAU)
 #define DEG2RADf(X) ((X)*((float)K_TAU)/360.0f)
 #define RAD2DEGf(X) ((X)*360.0f/((float)K_TAU))
+
+#define RAD2TRNf(X) ((X)/(float)K_TAU)
+#define TRN2RADf(X) ((X)*(float)K_TAU)
+#define DEG2TRNf(X) ((X)/360.0f)
+#define TRN2DEGf(X) ((X)*360.0f)
+
+inline float sinT(float theta){ return sin(theta*K_TAU);}
+inline float cosT(float theta){ return cos(theta*K_TAU);}
+inline float tanT(float theta){ return tan(theta*K_TAU);}
 
 inline float sin_deg(float theta){
     return (sinf(theta*((float)K_TAU/360.0f)));

@@ -4,31 +4,47 @@
 #include "common.h"
 #include <glm/gtx/vector_angle.hpp>
 
+#ifndef K_ANGLE_UNIT
+#define K_ANGLE_UNIT TURNS
+#endif
+
 class Angle
 {
 
-    float m_fDeg;
+    float m_fTurns;
 
     public:
         
         enum Type{
+            TURNS = 0,
             DEGREES,
             RADIANS
-            //TURNS
         };
 
-        Angle(float a = 0.0f, Type t = DEGREES)
+        Angle(float a = 0.0f, Type t = K_ANGLE_UNIT)
         {
-            m_fDeg = t==DEGREES ? a : RAD2DEGf(a);
+            switch(t){
+                case DEGREES:
+                    m_fTurns = a;
+                    break;
+                case RADIANS:
+                    m_fTurns = RAD2DEGf(a);
+                    break;
+                case TURNS:
+                    m_fTurns = RAD2DEGf(a*K_TAU);
+                    break;
+                default:
+                    assert(false);
+            }
             wrap();
         }
 
         //Angle(const glm::vec2& v) {
-        //    m_fDeg = glm::angle(Axis::X, glm::normalize(v));
+        //    m_fTurns = glm::angle(Axis::X, glm::normalize(v));
         //}
         
         glm::vec2 vector() const {
-            return glm::vec2(cos(), sin());
+            return glm::vec2(Angle::cos(), Angle::sin());
         }
 
         //static Angle between(const Angle& a, const Angle& b) {
@@ -39,7 +55,7 @@ class Angle
             return Angle(deg, DEGREES);
         }
         static Angle radians(float rad) {
-            return Angle(rad, RADIANS);
+            return Angle(RAD2DEGf(rad), RADIANS);
         }
         static Angle turns(float t) {
             return Angle(t * 360.0f, DEGREES);
@@ -47,14 +63,14 @@ class Angle
 
         void wrap()
         {
-            while(m_fDeg >= 180.0f)
-                m_fDeg -= 360.0f;
-            while(m_fDeg < -180.0f)
-                m_fDeg += 360.0f;
+            while(m_fTurns >= 0.5f)
+                m_fTurns -= 1.0f;
+            while(m_fTurns < -0.5f)
+                m_fTurns += 1.0f;
         }
 
         glm::vec2 vector(float mag = 1.0f) {
-            float rad = DEG2RADf(m_fDeg);
+            float rad = m_fTurns*K_TAU;
             return glm::vec2(
                 mag * std::cos(rad),
                 mag * std::sin(rad)
@@ -62,85 +78,86 @@ class Angle
         }
 
         float cos() const {
-            return std::cos(DEG2RADf(m_fDeg));
+            return std::cos(DEG2RADf(m_fTurns));
         }
         float sin() const {
-            return std::sin(DEG2RADf(m_fDeg));
+            return std::sin(DEG2RADf(m_fTurns));
         }
 
-        Angle flip() {
-            return *this+Angle::degrees(180.0f);
+        Angle flip() const {
+            return *this+Angle::turns(0.5f);
         }
 
-        float degrees() const { return m_fDeg; }
-        float radians() const { return DEG2RADf(m_fDeg); }
+        float degrees() const { return m_fTurns*360.0f; }
+        float radians() const { return m_fTurns*K_TAU; }
+        float turns() const { return DEG2RADf(m_fTurns*K_TAU); }
         //void degrees(float deg) {
-        //    m_fDeg = deg; 
+        //    m_fTurns = deg;
         //    wrap();
         //}
         //void radians(float rad) {
-        //    m_fDeg = RAD2DEGf(rad);
+        //    m_fTurns = RAD2DEGf(rad);
         //    wrap();
         //}
 
         Angle operator +(const Angle& a) const{
-            return Angle(m_fDeg + a.degrees());
+            return Angle(m_fTurns + a.turns());
         }
         const Angle& operator +=(const Angle& a) {
             return (*this = *this+a);
         }
         Angle operator -(const Angle& a) const{
-            return Angle(m_fDeg - a.degrees());
+            return Angle(m_fTurns - a.turns());
         }
         Angle operator -() const {
-            return Angle(-m_fDeg);
+            return Angle(-m_fTurns);
         }
         Angle operator *(float f) const{
-            return Angle(m_fDeg * f);
+            return Angle(m_fTurns * f);
         }
         const Angle& operator*=(float f) {
             return (*this = *this*f);
         }
         bool operator==(const Angle& a) const {
-            return floatcmp(m_fDeg, a.degrees());
+            return floatcmp(m_fTurns, a.turns());
         }
 
         bool operator==(float f) const {
-            return floatcmp(m_fDeg, Angle::degrees(f).degrees());
+            return floatcmp(m_fTurns, Angle::turns(f).turns());
         }
         bool operator!=(float f) const {
-            return !floatcmp(m_fDeg, Angle::degrees(f).degrees());
+            return !floatcmp(m_fTurns, Angle::turns(f).turns());
         }
         const Angle& operator=(float f) {
-            m_fDeg = f;
+            m_fTurns = f;
             wrap();
             return *this;
         }
 
         bool operator>(float f) const {
-            return degrees() > f;
+            return turns() > f;
         }
         bool operator>=(float f) const {
-            return degrees() >= f;
+            return turns() >= f;
         }
         bool operator<(float f) const {
-            return degrees() < f;
+            return turns() < f;
         }
         bool operator<=(float f) const {
-            return degrees() <= f;
+            return turns() <= f;
         }
 
         bool operator>(const Angle& a) const {
-            return degrees() > a.degrees();
+            return turns() > a.turns();
         }
         bool operator>=(const Angle& a) const {
-            return degrees() >= a.degrees();
+            return turns() >= a.turns();
         }
         bool operator<(const Angle& a) const {
-            return degrees() < a.degrees();
+            return turns() < a.turns();
         }
         bool operator<=(const Angle& a) const {
-            return degrees() <= a.degrees();
+            return turns() <= a.turns();
         }
 };
 

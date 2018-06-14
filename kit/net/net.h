@@ -1,16 +1,9 @@
 #ifndef NET_H_QTJHVVWD
 #define NET_H_QTJHVVWD
 
-#ifdef _MSC_VER
-    #ifndef __WIN32__
-        #define __WIN32__
-    #endif
-#endif
+#include "../kit_compat.h"
 
 #ifdef __WIN32__
-    #define WIN32_LEAN_AND_MEAN
-    #define NOMINMAX
-    #include <windows.h>
     #include <winsock2.h>
     typedef int socklen_t;
 #else

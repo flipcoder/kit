@@ -507,7 +507,7 @@ class Multiplexer:
 
         struct CacheLinePadding
         {
-            volatile int8_t pad[CACHE_LINE_SIZE];
+            volatile int8_t pad[CACHE_LINE_SIZE * 2];
         };
 
         const unsigned m_Concurrency;
