@@ -6,6 +6,7 @@
 #include <boost/thread.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/coroutine/all.hpp>
+#include <boost/smart_ptr/make_local_shared.hpp>
 #include <algorithm>
 #include <atomic>
 #include <deque>
@@ -82,6 +83,9 @@ typedef boost::coroutines::coroutine<void>::push_type push_coro_t;
 #define AWAIT_HINT(HINT, EXPR) AWAIT_HINT_MX(MUX, HINT, EXPR)
 
 // coroutine async sleep()
+#define MX_SLEEP(TIME) Multiplexer::sleep(TIME);
+
+// deprecated
 #define SLEEP(TIME) Multiplexer::sleep(TIME);
 
 #define MX_EPSILON 0.00001
@@ -157,7 +161,7 @@ class Multiplexer:
                         if(!m_Buffered || m_Units.size() < m_Buffered) {
                             auto cbt = Task<T()>(std::move(cb));
                             auto fut = cbt.get_future();
-                            auto cbc = std::make_shared<Task<T()>>(std::move(cbt));
+                            auto cbc = boost::make_local_shared<Task<T()>>(std::move(cbt));
                             m_Units.emplace_back(cond, [cbc]() {
                                 (*cbc)();
                             });
@@ -178,7 +182,7 @@ class Multiplexer:
                         if(!m_Buffered || m_Units.size() < m_Buffered) {
                             auto cbt = Task<T()>(std::move(cb));
                             auto fut = cbt.get_future();
-                            auto cbc = std::make_shared<Task<T()>>(std::move(cbt));
+                            auto cbc = boost::make_local_shared<Task<T()>>(std::move(cbt));
                             m_Units.emplace_back(
                                 std::function<bool()>(),
                                 std::function<void()>()
@@ -222,7 +226,7 @@ class Multiplexer:
             //std::shared_ptr<Channel<T>> channel(
             //    std::function<void(std::shared_ptr<Channel<T>>)> worker
             //) {
-            //    auto chan = std::make_shared<Channel<>>();
+            //    auto chan = boost::make_local_shared<Channel<>>();
             //    // ... inside lambda if(chan->closed()) remove?
             //}
             
@@ -230,7 +234,7 @@ class Multiplexer:
 
             template<class R, class T>
             std::future<R> when(std::future<T>& fut, std::function<R(std::future<T>&)> cb) {
-                auto futc = std::make_shared<std::future<T>>(std::move(fut));
+                auto futc = boost::make_local_shared<std::future<T>>(std::move(fut));
                 
                 return task<void>([cb, futc]() {
                     if(futc->wait_for(std::chrono::seconds(0)) ==
@@ -439,6 +443,7 @@ class Multiplexer:
                 m_Circuits.emplace_back(make_tuple(
                     kit::make_unique<Circuit>(this, i), CacheLinePadding()
                 ));
+            //m_MultiCircuit = kit::make_unique<Circuit>(this, i);
         }
         //void join() {
         //    for(auto& s: m_Circuits)
@@ -501,7 +506,23 @@ class Multiplexer:
                 std::get<0>(s)->finish_nojoin();
             for(auto& s: m_Circuits)
                 std::get<0>(s)->join();
+            //for(auto& s: m_MultiCircuit)
+            //    std::get<0>(s)->finish_nojoin();
+            //for(auto& s: m_MultiCircuit)
+            //    std::get<0>(s)->join();
         }
+        
+        //template <class Time>
+        //static bool retry(int count, Time delay, std::function<bool()> func)
+        //{
+        //    for(int i=0; i<count || count<0; count<0 || ++i)
+        //    {
+        //        if(func())
+        //            return true;
+        //        SLEEP(delay);
+        //    }
+        //    return false;
+        //}
         
     private:
 
@@ -512,6 +533,7 @@ class Multiplexer:
 
         const unsigned m_Concurrency;
         std::vector<std::tuple<std::unique_ptr<Circuit>, CacheLinePadding>> m_Circuits;
+        //std::unique_ptr<Circuit> m_MultiCircuit;
 
         // read-write mutex might be more optimal here
         kit::mutex_wrap<std::map<boost::thread::id, unsigned>> m_ThreadToCircuit;
