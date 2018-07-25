@@ -2,12 +2,15 @@
 #include "../kit/kit.h"
 #include "../kit/meta/meta.h"
 #include "../kit/math/common.h"
+#include <kit/smart_ptr.hpp>
 using namespace std;
+using kit::make_local_shared;
+using kit::local_shared_ptr;
 
 TEST_CASE("Meta","[meta]") {
 
     SECTION("empty") {
-        auto m = make_shared<Meta>();
+        auto m = make_local_shared<Meta>();
         REQUIRE(m);
         REQUIRE(!*m);
         REQUIRE(m->empty());
@@ -15,7 +18,7 @@ TEST_CASE("Meta","[meta]") {
     }
     
     SECTION("set") {
-        auto m = make_shared<Meta>();
+        auto m = make_local_shared<Meta>();
         m->set<int>("one", 1);
 
         REQUIRE(*m);
@@ -38,16 +41,16 @@ TEST_CASE("Meta","[meta]") {
     }
 
     SECTION("add") {
-        auto m = make_shared<Meta>();
+        auto m = make_local_shared<Meta>();
 
-        REQUIRE(m->add(make_shared<Meta>()) == 0);
-        REQUIRE(m->add(make_shared<Meta>()) == 1);
+        REQUIRE(m->add(make_local_shared<Meta>()) == 0);
+        REQUIRE(m->add(make_local_shared<Meta>()) == 1);
         REQUIRE(m->size() == 2);
         REQUIRE(m->key_count() == 0);
     }
     
     SECTION("ensure") {
-        auto m = make_shared<Meta>();
+        auto m = make_local_shared<Meta>();
 
         REQUIRE(m->ensure<int>("a", 1) == 1);
         REQUIRE(m->ensure<int>("b", 2) == 2);
@@ -62,7 +65,7 @@ TEST_CASE("Meta","[meta]") {
     SECTION("remove") {
 
         SECTION("at index") {
-            auto m = make_shared<Meta>();
+            auto m = make_local_shared<Meta>();
             m->add(1);
             m->add(2); // index 1
             m->add(3);
@@ -82,7 +85,7 @@ TEST_CASE("Meta","[meta]") {
 
         SECTION("pop") {
             SECTION("front") {
-                auto m = make_shared<Meta>();
+                auto m = make_local_shared<Meta>();
                 m->add<int>(1);
                 m->add<int>(2);
                 m->pop_front();
@@ -93,7 +96,7 @@ TEST_CASE("Meta","[meta]") {
                 REQUIRE_THROWS_AS(m->pop_front(), std::out_of_range);
             }
             SECTION("back") {
-                auto m = make_shared<Meta>();
+                auto m = make_local_shared<Meta>();
                 m->add<int>(1);
                 m->add<int>(2);
                 m->pop_back();
@@ -106,7 +109,7 @@ TEST_CASE("Meta","[meta]") {
         }
 
         SECTION("by key") {
-            auto m = make_shared<Meta>();
+            auto m = make_local_shared<Meta>();
             m->set("one" ,1);
             m->set("two", 2);
             m->set("three", 3);
@@ -128,11 +131,11 @@ TEST_CASE("Meta","[meta]") {
 
     SECTION("types") {
         {
-            auto m = make_shared<Meta>();
+            auto m = make_local_shared<Meta>();
             m->set("nullptr", nullptr);
-            m->set("nullmeta", std::shared_ptr<Meta>());
+            m->set("nullmeta", local_shared_ptr<Meta>());
             //REQUIRE(not m->at<nullptr_t>("nullptr"));
-            //REQUIRE(not m->at<shared_ptr<Meta>>("nullmeta"));
+            //REQUIRE(not m->at<local_shared_ptr<Meta>>("nullmeta"));
         }
     }
  
@@ -141,7 +144,7 @@ TEST_CASE("Meta","[meta]") {
     //}
 
     SECTION("clear") {
-        auto m = make_shared<Meta>();
+        auto m = make_local_shared<Meta>();
         m->set<int>("one",1);
         m->set<string>("two","2");
 
@@ -153,10 +156,10 @@ TEST_CASE("Meta","[meta]") {
     }
        
     SECTION("at") {
-        auto m = make_shared<Meta>();
+        auto m = make_local_shared<Meta>();
         m->set<int>("one", 1);
         m->set<string>("two", "2");
-        m->add(make_shared<Meta>());
+        m->add(make_local_shared<Meta>());
 
         REQUIRE(m->at<int>("one") == 1);
         REQUIRE(m->at<int>(0) == 1);
@@ -166,10 +169,10 @@ TEST_CASE("Meta","[meta]") {
     }
 
     SECTION("parent") {
-        auto m = make_shared<Meta>();
+        auto m = make_local_shared<Meta>();
         REQUIRE(!m->parent());
         REQUIRE(m->root() == m);
-        auto c1 = make_shared<Meta>();
+        auto c1 = make_local_shared<Meta>();
         m->add(c1);
         REQUIRE(c1->parent() == m);
     }
@@ -177,11 +180,11 @@ TEST_CASE("Meta","[meta]") {
     SECTION("iterate") {
         SECTION("map") {
             string json = "{\"one\":1,\"two\":2,\"three\": 3}";
-            auto m = make_shared<Meta>(MetaFormat::JSON, json);
+            auto m = make_local_shared<Meta>(MetaFormat::JSON, json);
             int i = 0;
-            m->each([&](
-                const shared_ptr<Meta>& parent,
-                MetaElement& e,
+            m->each_c([&](
+                local_shared_ptr<const Meta> parent,
+                const MetaElement& e,
                 unsigned level
             ){
                 REQUIRE(parent);
@@ -215,11 +218,11 @@ TEST_CASE("Meta","[meta]") {
     SECTION("serialization") {
 
         SECTION("objects") {
-            auto m = make_shared<Meta>(MetaFormat::JSON,"{\"one\":1}");
+            auto m = make_local_shared<Meta>(MetaFormat::JSON,"{\"one\":1}");
             REQUIRE(m->at<int>("one") == 1);
             m->clear();
 
-            m = make_shared<Meta>();
+            m = make_local_shared<Meta>();
             m->deserialize(MetaFormat::JSON,"{\"one\":1}");
             REQUIRE(m->at<int>("one") == 1);
             
@@ -230,7 +233,7 @@ TEST_CASE("Meta","[meta]") {
             REQUIRE(not m->empty());
             REQUIRE(m->at<int>("one") == 1);
 
-            m->set("test", make_shared<Meta>());
+            m->set("test", make_local_shared<Meta>());
             m->meta("test")->set("two", 2);
             data = m->serialize(MetaFormat::INI);
             m->clear();
@@ -249,8 +252,8 @@ TEST_CASE("Meta","[meta]") {
         }
 
         SECTION("arrays") {
-            auto m = make_shared<Meta>(MetaFormat::JSON,"{\"numbers\":[1,2,3]}");
-            auto a = m->at<std::shared_ptr<Meta>>(0);
+            auto m = make_local_shared<Meta>(MetaFormat::JSON,"{\"numbers\":[1,2,3]}");
+            auto a = m->at<local_shared_ptr<Meta>>(0);
             REQUIRE(a);
             REQUIRE(a->size() == 3);
             REQUIRE(a->at<int>(0) == 1);
@@ -258,16 +261,16 @@ TEST_CASE("Meta","[meta]") {
             REQUIRE(a->at<int>(2) == 3);
 
             // strings
-            m = make_shared<Meta>(MetaFormat::JSON,"{ \"a\": [\"b\",\"c\"] }");
-            a = m->at<std::shared_ptr<Meta>>(0);
+            m = make_local_shared<Meta>(MetaFormat::JSON,"{ \"a\": [\"b\",\"c\"] }");
+            a = m->at<local_shared_ptr<Meta>>(0);
             REQUIRE(a);
             REQUIRE(a->size() == 2);
             REQUIRE(a->at<string>(0) == "b");
             REQUIRE(a->at<string>(1) == "c");
             
             // nested
-            m = make_shared<Meta>(MetaFormat::JSON,"{\"numbers\":[[],[[]],[[],[]]]}");
-            a = m->at<std::shared_ptr<Meta>>(0);
+            m = make_local_shared<Meta>(MetaFormat::JSON,"{\"numbers\":[[],[[]],[[],[]]]}");
+            a = m->at<local_shared_ptr<Meta>>(0);
             REQUIRE(a);
             REQUIRE(a->size() == 3);
             REQUIRE(a->meta(0)->size() == 0);
@@ -284,14 +287,14 @@ TEST_CASE("Meta","[meta]") {
             
             {
                 // no deserialize flags
-                auto m = make_shared<Meta>(MetaFormat::JSON,"{\"one\":1}");
+                auto m = make_local_shared<Meta>(MetaFormat::JSON,"{\"one\":1}");
                 m->deserialize(MetaFormat::JSON,"{\"two\":2}");
                 REQUIRE(m->size() == 1); // no flags should clear prior data
             }
             
             {
                 // same as above, but with F_MERGE flag
-                auto m = make_shared<Meta>(MetaFormat::JSON,"{\"one\":1}");
+                auto m = make_local_shared<Meta>(MetaFormat::JSON,"{\"one\":1}");
                 m->deserialize(MetaFormat::JSON,"{\"two\":2}",
                     Meta::F_MERGE // <-- new flag
                 );
@@ -305,7 +308,7 @@ TEST_CASE("Meta","[meta]") {
 
         SECTION("correct types") {
             // make sure doubles with trailing .0 don't serialize as ints
-            auto m = make_shared<Meta>(MetaFormat::JSON,"{\"one\":1.0}");
+            auto m = make_local_shared<Meta>(MetaFormat::JSON,"{\"one\":1.0}");
             REQUIRE_THROWS_AS(m->at<int>("one"), boost::bad_any_cast);
             REQUIRE(floatcmp(m->at<double>("one"), 1.0));
         }

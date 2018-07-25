@@ -2,31 +2,33 @@
 #include <deque>
 #include <tuple>
 #include <boost/algorithm/string.hpp>
+#include <kit/smart_ptr.hpp>
 #include "schema.h"
 
-template<class Mutex>
-SchemaBase<Mutex> :: SchemaBase(const std::shared_ptr<MetaBase<Mutex>>& m):
+template<class Mutex, template <class> class Storage, template <typename> class This>
+SchemaBase<Mutex,Storage,This> :: SchemaBase(const Storage<MetaBase<Mutex,Storage,This>>& m):
     m_pSchema(m)
 {
     assert(m);
 }
 
-template<class Mutex>
-template<class TMutex>
-void SchemaBase<Mutex> :: validate(const std::shared_ptr<MetaBase<TMutex>>& m) const
+template<class Mutex, template <class> class Storage, template <typename> class This>
+template<class TMutex, template <class> class TStorage, template <typename> class TThis>
+void SchemaBase<Mutex,Storage,This> :: validate(const TStorage<MetaBase<TMutex,TStorage,TThis>>& m) const
 {
     // our stack for keeping track of location in tree while iterating
     std::deque<std::tuple<
-        std::shared_ptr<MetaBase<TMutex>>,
+        TStorage<const MetaBase<TMutex,TStorage,TThis>>,
         std::unique_lock<TMutex>,
         std::string
     >> metastack;
     
     // TODO: loop thru schema, look up required fields in m
     
-    m->each([this, &metastack](
-        const std::shared_ptr<MetaBase<TMutex>>& parent,
-        MetaElement& e,
+    m->each_c([this, &metastack](
+        //Storage<const MetaBase<TMutex,TStorage,TThis>> item,
+        Storage<const MetaBase<Mutex,Storage,This>> parent,
+        const MetaElement& e,
         unsigned level
     ){
         //LOGf("level: %s, key: %s", level % e.key);
@@ -49,20 +51,20 @@ void SchemaBase<Mutex> :: validate(const std::shared_ptr<MetaBase<TMutex>>& m) c
             
         //LOGf("path element: %s", boost::algorithm::join(path,"/"));
         
-        std::shared_ptr<MetaBase<Mutex>> r;
+        Storage<MetaBase<Mutex,Storage,This>> r;
         try{
             auto schema_metadata = m_pSchema->path(path);
             bool valid_value = false;
             //LOGf("json: %s", schema_metadata->serialize(MetaFormat::JSON));
-                for(auto&& val: *schema_metadata->meta(".values")) {
-                    //LOGf("key: %s", e.key);
-                    if(kit::any_eq(val.value, e.value)) {
-                        valid_value = true;
-                        break;
-                    }
+            for(auto&& val: *schema_metadata->meta(".values")) {
+                //LOGf("key: %s", e.key);
+                if(kit::any_eq(val.value, e.value)) {
+                    valid_value = true;
+                    break;
                 }
-                if(!valid_value)
-                    K_ERROR(PARSE, "schema validation failed");
+            }
+            if(!valid_value)
+                K_ERROR(PARSE, "schema validation failed");
                     
             //}catch(const boost::bad_any_cast&){
             }catch(const std::out_of_range&){
@@ -103,22 +105,23 @@ void SchemaBase<Mutex> :: validate(const std::shared_ptr<MetaBase<TMutex>>& m) c
     );
 }
 
-template<class Mutex>
-template<class TMutex>
-void SchemaBase<Mutex> :: add_missing_fields(std::shared_ptr<MetaBase<TMutex>>& m) const
+template<class Mutex, template <class> class Storage, template <typename> class This>
+template<class TMutex, template <class> class TStorage, template <typename> class TThis>
+void SchemaBase<Mutex,Storage,This> :: add_missing_fields(TStorage<MetaBase<TMutex,TStorage,TThis>>& m) const
 {
 }
 
-template<class Mutex>
-template<class TMutex>
-void SchemaBase<Mutex> :: add_required_fields(std::shared_ptr<MetaBase<TMutex>>& m) const
+template<class Mutex, template <class> class Storage, template <typename> class This>
+template<class TMutex, template <class> class TStorage, template <typename> class TThis>
+void SchemaBase<Mutex,Storage,This> :: add_required_fields(TStorage<MetaBase<TMutex,TStorage,TThis>>& m) const
 {
 }
 
-template<class Mutex>
-template<class TMutex>
-std::shared_ptr<MetaBase<TMutex>> SchemaBase<Mutex> :: make_default() const
+
+template<class Mutex, template <class> class Storage, template <typename> class This>
+template<class TMutex, template <class> class TStorage, template <typename> class TThis>
+TThis<MetaBase<TMutex,TStorage,TThis>> SchemaBase<Mutex,Storage,This> :: make_default() const
 {
-    return std::shared_ptr<MetaBase<TMutex>>();
+    return TStorage<MetaBase<TMutex>>();
 }
 

@@ -1,14 +1,17 @@
 #include <catch.hpp>
 #include <memory>
+#include <kit/smart_ptr.hpp>
 #include "../kit/meta/schema.h"
 using namespace std;
+using kit::make_local_shared;
+using kit::local_shared_ptr;
 
 TEST_CASE("Schema","[schema]") {
 
     SECTION("load from string") {
         
-        auto schema = make_shared<Schema>(
-            make_shared<Meta>(
+        auto schema = make_local_shared<Schema>(
+            make_local_shared<Meta>(
                 MetaFormat::JSON,
                 R"({})"
             )
@@ -17,8 +20,8 @@ TEST_CASE("Schema","[schema]") {
         REQUIRE(schema->meta().get());
         REQUIRE(schema->meta()->empty());
         
-        schema = make_shared<Schema>(
-            make_shared<Meta>(
+        schema = make_local_shared<Schema>(
+            make_local_shared<Meta>(
                 MetaFormat::JSON,
                 R"({
                     "foo": "bar",
@@ -41,8 +44,8 @@ TEST_CASE("Schema","[schema]") {
     
     SECTION("validate") {
     
-        auto schema = make_shared<Schema>(
-            make_shared<Meta>(
+        auto schema = make_local_shared<Schema>(
+            make_local_shared<Meta>(
                 MetaFormat::JSON,
                 R"({
                     "foo": {
@@ -57,7 +60,7 @@ TEST_CASE("Schema","[schema]") {
         );
 
         // diff mutex type, for variety
-        auto test = make_shared<MetaMT>(
+        auto test = make_local_shared<Meta>(
             MetaFormat::JSON,
             R"({
                 "foo": "a"

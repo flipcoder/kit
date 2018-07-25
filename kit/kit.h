@@ -13,6 +13,7 @@
 #include <future>
 #include <chrono>
 #include <boost/algorithm/string.hpp>
+#include <boost/smart_ptr/local_shared_ptr.hpp>
 #include <boost/optional.hpp>
 #include <boost/bimap.hpp>
 #include <boost/any.hpp>
@@ -68,6 +69,14 @@ namespace kit
     };
     template<class T>
     struct is_shared_ptr<std::shared_ptr<T>> {
+        static bool const value = true;
+    };
+    template<class T, class _ = void>
+    struct is_local_shared_ptr {
+        static const bool value = false;
+    };
+    template<class T>
+    struct is_local_shared_ptr<boost::local_shared_ptr<T>> {
         static bool const value = true;
     };
 
@@ -805,6 +814,12 @@ namespace kit
         return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
     }
     template<class T, class... Args>
+    T make(Args&&... args)
+    {
+        return T(new typename T::element_type(std::forward<Args>(args)...));
+    }
+
+    template<class T, class... Args>
     std::unique_ptr<T> init_unique(Args&&... args)
     {
         auto p = std::unique_ptr<T>(new T(std::forward<Args>(args)...));
@@ -818,18 +833,18 @@ namespace kit
         p->init();
         return p;
     }
-    template<class T, class... Args>
-    std::unique_ptr<T>& make(std::unique_ptr<T>& p, Args&&... args)
-    {
-        p = std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-        return p;
-    }
-    template<class T, class... Args>
-    std::shared_ptr<T>& make(std::shared_ptr<T>& p, Args&&... args)
-    {
-        p = std::shared_ptr<T>(new T(std::forward<Args>(args)...));
-        return p;
-    }
+    //template<class T, class... Args>
+    //std::unique_ptr<T>& make(std::unique_ptr<T>& p, Args&&... args)
+    //{
+    //    p = std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+    //    return p;
+    //}
+    //template<class T, class... Args>
+    //std::shared_ptr<T>& make(std::shared_ptr<T>& p, Args&&... args)
+    //{
+    //    p = std::shared_ptr<T>(new T(std::forward<Args>(args)...));
+    //    return p;
+    //}
     template<class T, class... Args>
     std::unique_ptr<T>& init(std::unique_ptr<T>& p, Args&&... args)
     {

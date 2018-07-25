@@ -139,6 +139,7 @@ workspace("kit")
         }
         
         includedirs {
+            "lib/local_shared_ptr/",
             "/usr/local/include/",
             "/usr/include/bullet/",
             "/usr/include/raknet/DependentExtensions"
