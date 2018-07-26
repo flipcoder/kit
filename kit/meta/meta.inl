@@ -1,6 +1,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
 #include <sstream>
+#include <string>
 #include "meta.h"
 #include "../log/log.h"
 #include "../kit.h"
@@ -344,7 +345,7 @@ MetaLoop MetaBase<Mutex,Storage,This>::each(
 
 //  use type checks with typeid() before attempting conversion
 //   or boost::any cast?
-//  POD types should also work if behind smart ptrs
+//  POD types should also work if behind smart ptrs -- not yet impl
 //  only Storage's to other trees should serialize (not weak)
 
 /*
@@ -532,17 +533,42 @@ std::string MetaBase<Mutex,Storage,This> :: serialize(MetaFormat fmt, unsigned f
             if(m)
             {
                 data += "["+e.key+"]\n";
-                for(auto&& j: *m)
-                    data += j.key + "=" + kit::any_to_string(j.value) + "\n";
+                for(auto&& j: *m){
+                    // TODO: write sub category [foo.bar]
+                    //if(e.type.id==MetaType::ID::META)
+                    //    data += j.key + "=" + boost::any_cast<Storage<MetaBase<Mutex,Storage,This>>>(j.value) + "\n";
+                    if(j.type.id==MetaType::ID::INT)
+                        data += j.key + "=" + std::to_string(boost::any_cast<int>(j.value)) + "\n";
+                    else if(j.type.id==MetaType::ID::REAL)
+                        data += j.key + "=" + std::to_string(boost::any_cast<double>(j.value)) + "\n";
+                    else if(j.type.id==MetaType::ID::BOOL)
+                        data += j.key + "=" + (boost::any_cast<bool>(j.value)?"true":"false") + "\n";
+                    else if(j.type.id==MetaType::ID::STRING)
+                        data += j.key + "=" + boost::any_cast<std::string>(j.value) + "\n";
+                    else{
+                        //LOG(std::to_string(int(j.type.id)));
+                        WARNING("warning: cannot serialize value");
+                    }
+                }
                 data += "\n";
             }
             else
             {
-                data += e.key + "=" + kit::any_to_string(e.value) + "\n";
+                //data += e.key + "=" + kit::any_to_string(e.value) + "\n";
+                if(e.type.id==MetaType::ID::INT)
+                    data += e.key + "=" + std::to_string(boost::any_cast<int>(e.value)) + "\n";
+                else if(e.type.id==MetaType::ID::REAL)
+                    data += e.key + "=" + std::to_string(boost::any_cast<double>(e.value)) + "\n";
+                else if(e.type.id==MetaType::ID::BOOL)
+                    data += e.key + "=" + (boost::any_cast<bool>(e.value)?"true":"false") + "\n";
+                else if(e.type.id==MetaType::ID::STRING)
+                    data += e.key + "=" + boost::any_cast<std::string>(e.value) + "\n";
+                else
+                    WARNING("warning: cannot serialize value");
             }
         }
     }
-    //else if (fmt == MetaFormat::HUMAN)
+    //else if (fmt == MetaFormat::YAML)
     //    assert(false);
     else
         assert(false);
@@ -653,9 +679,8 @@ void MetaBase<Mutex,Storage,This> :: deserialize(MetaFormat fmt, std::istream& d
             //deserialize_json(root, pth_vec);
         }
     }
-    else if (fmt == MetaFormat::HUMAN)
+    else if (fmt == MetaFormat::YAML)
     {
-        // human deserialization unsupported
         assert(false);
     }
     else if (fmt == MetaFormat::INI)

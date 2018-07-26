@@ -219,14 +219,18 @@ TEST_CASE("Meta","[meta]") {
 
         SECTION("objects") {
             auto m = make_local_shared<Meta>(MetaFormat::JSON,"{\"one\":1}");
+            REQUIRE(!m->empty());
             REQUIRE(m->at<int>("one") == 1);
+            REQUIRE(!m->empty());
             m->clear();
+            REQUIRE(m->empty());
 
             m = make_local_shared<Meta>();
             m->deserialize(MetaFormat::JSON,"{\"one\":1}");
             REQUIRE(m->at<int>("one") == 1);
             
             string data = m->serialize(MetaFormat::JSON);
+            REQUIRE(!m->empty());
             m->clear();
             REQUIRE(m->empty());
             m->deserialize(MetaFormat::JSON,data);

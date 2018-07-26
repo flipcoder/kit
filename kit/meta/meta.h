@@ -247,7 +247,7 @@ enum class MetaFormat : unsigned {
     UNKNOWN=0,
     JSON,
     INI,
-    HUMAN,
+    YAML,
     //BSON
 };
 
@@ -271,7 +271,8 @@ enum class MetaSerialize : unsigned {
 template<
     class Mutex=kit::dummy_mutex,
     template <typename> class Storage=kit::local_shared_ptr,
-    template <typename> class This=kit::enable_shared_from_this
+    template <typename> class This=kit::enable_shared_from_this//,
+    //template <typename> class Make=kit::make_local_shared
 >
 class MetaBase:
     public This<MetaBase<Mutex,Storage,This>>,
@@ -286,6 +287,15 @@ class MetaBase:
             F_CREATE = kit::bit(0),
             F_MERGE = kit::bit(1)
         };
+
+        //template<class... Args>
+        //static Storage<Mutex,Storage,This,Make> make(Args&&... args) {
+        //    return Make<MeteBase<Mutex,Storage,This,Make>>((std::forward<Args>(args)...));
+        //}
+        //static Storage<Mutex,Storage,This,Make> json(const std::string& s) {
+        //    return Make<MeteBase<Mutex,Storage,This,Make>>(MetaFormat::JSON,s);
+        //}
+
         //typedef Mutex mutex_type;
         
         //struct Iterator
