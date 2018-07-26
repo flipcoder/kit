@@ -1,5 +1,4 @@
 #ifndef _META_H_59ROLBDK
-#include "../kit.h"
 #define _META_H_59ROLBDK
 
 #include <boost/signals2.hpp>
@@ -54,41 +53,41 @@ struct MetaType {
         return *this;
     }
 
-    template<class T>
-    MetaType(T val) {
-
-        if(kit::is_shared_ptr<T>::value) {
-            //if(typeid(val) == typeid(Storage<Meta<Mutex>>))
-            id = ID::META;
-        }else if(kit::is_local_shared_ptr<T>::value) {
-            id = ID::META;
+    template<class T,class U>
+    static MetaType create(T val) {
+        MetaType r;
+        //if(kit::is_shared_ptr<T>::value) {
+        if(typeid(val) == typeid(U)){
+            r.id = ID::META;
+            //else
+            //    id = ID::USER;
         } else if(typeid(val) == typeid(std::string))
-            id = ID::STRING;
+            r.id = ID::STRING;
         else if(typeid(val) == typeid(bool)){
-            id = ID::BOOL;
+            r.id = ID::BOOL;
         }
         else if(boost::is_integral<T>::value)
         {
-            id = ID::INT;
+            r.id = ID::INT;
             //if(boost::is_signed<T>::value)
             //    flags |= SIGN;
         }
         else if(boost::is_floating_point<T>::value)
-            id = ID::REAL;
+            r.id = ID::REAL;
         //else if(is_pointer<char* const>::value)
         //    type = MetaType::STRING;
         else if(typeid(val) == typeid(std::nullptr_t))
         {
-            id = ID::EMPTY;
+            r.id = ID::EMPTY;
         }
         else if(kit::is_vector<T>::value)
-            flags |= CONTAINER;
+            r.flags |= CONTAINER;
         else if(typeid(val) == typeid(boost::any))
         {
             //if(val)
             //{
                 WARNING("adding raw boost::any value");
-                id = ID::USER;
+                r.id = ID::USER;
             //}
             //else
             //    id = ID::EMPTY;
@@ -96,8 +95,9 @@ struct MetaType {
         else
         {
             //WARNINGf("unserializable type: %s", typeid(T).name());
-            id = ID::USER;
+            r.id = ID::USER;
         }
+        return r;
     }
     
     /*
@@ -575,8 +575,7 @@ class MetaBase:
             Storage<MetaBase<Mutex,Storage,This>>& m
         ) {
             auto l = this->lock();
-            auto par = parent();
-            return par->first_key_of(m);
+            return parent()->first_key_of(m);
         }
 
         //Storage<const MetaBase<Mutex,Storage,This>> parent_c() const {
@@ -590,7 +589,7 @@ class MetaBase:
         
         Storage<MetaBase<Mutex,Storage,This>> parent(
             unsigned lock_flags=0,
-            bool recursion=false
+            bool root=false
         ){
             auto l = this->lock(std::defer_lock);
             if(lock_flags & TRY_LOCK)
@@ -603,20 +602,20 @@ class MetaBase:
                 l.lock();
             }
 
-            if(!recursion)
+            if(!root)
             {
                 //auto p = m_pParent.lock();
                 //return p ? p : shared_from_this();
                 //return m_pParent.lock(); // allow null for this case
                 return m_pParent ?
                     m_pParent->shared() :
-                    this->shared_from_this();
+                    nullptr;
             }
             else
             {
                 //auto p = m_pParent.lock();
                 return m_pParent ?
-                    m_pParent->parent(lock_flags, recursion) :
+                    m_pParent->parent(lock_flags, root) :
                     this->shared_from_this();
             }
         }
@@ -981,6 +980,7 @@ class MetaBase:
         //    // but does not overwrite a preexisting value with the given key
         //    ENSURE = kit::bit(0)
         //};
+        using U = Storage<MetaBase<Mutex,Storage,This>>;
         template<class T>
         unsigned set(
             const std::string& key,
@@ -998,10 +998,10 @@ class MetaBase:
                 if((itr = m_Keys.find(key)) != m_Keys.end()) {
                     // TODO: if dynamic typing is off, check type compatibility
                     auto& e = m_Elements[itr->second];
-                    if(e.type.id != MetaType(val).id)
+                    if(e.type.id != MetaType::create<T,U>(val).id)
                     {
                         // type changed
-                        e.type = MetaType(val);
+                        e.type = MetaType::create<T,U>(val);
                         e.value = val;
                         e.on_change.disconnect_all_slots();
                     }
@@ -1025,7 +1025,10 @@ class MetaBase:
             const size_t idx = m_Elements.size();
             if(!key.empty())
                 m_Keys[key] = idx;
-            m_Elements.emplace_back(MetaType(val), key, boost::any(val));
+            {
+                MetaType mt = MetaType::create<T,U>(val);
+                m_Elements.emplace_back(mt, key, boost::any(val));
+            }
 
             if(
                 m_Elements[idx].type.id == MetaType::ID::META
@@ -1361,7 +1364,7 @@ class MetaBase:
         ){
             // TODO: lock order is bad here, should be try_lock
             auto l = this->lock();
-            return parent(lock_flags);
+            return parent(lock_flags,true);
         }
 
         Storage<const MetaBase<Mutex,Storage,This>> root_c(

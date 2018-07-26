@@ -13,7 +13,7 @@
 #include <future>
 #include <chrono>
 #include <boost/algorithm/string.hpp>
-#include <boost/smart_ptr/local_shared_ptr.hpp>
+#include <kit/local_shared_ptr.hpp>
 #include <boost/optional.hpp>
 #include <boost/bimap.hpp>
 #include <boost/any.hpp>
@@ -71,14 +71,14 @@ namespace kit
     struct is_shared_ptr<std::shared_ptr<T>> {
         static bool const value = true;
     };
-    template<class T, class _ = void>
-    struct is_local_shared_ptr {
-        static const bool value = false;
-    };
     template<class T>
-    struct is_local_shared_ptr<boost::local_shared_ptr<T>> {
+    struct is_shared_ptr<kit::local_shared_ptr<T>> {
         static bool const value = true;
     };
+    //template<class T>
+    //struct is_shared_ptr<boost::shared_ptr<T>> {
+    //    static bool const value = true;
+    //};
 
     template<class T>
     T mod(T a, T b)
