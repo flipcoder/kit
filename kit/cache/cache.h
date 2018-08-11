@@ -7,21 +7,32 @@
 #include "../kit.h"
 #include "icache.h"
 
-template<class Class, class T, class Mutex=kit::dummy_mutex>
+template<
+    class Class,
+    class T,
+    template <typename> class Ptr=std::shared_ptr,
+    class TMeta=Meta,
+    class Mutex=kit::dummy_mutex
+>
 class Cache:
-    public Factory<Class, std::tuple<T, ICache*>, std::string, Mutex>,
+    public Factory<Class, std::tuple<T, ICache*>, std::string, Ptr, TMeta, Mutex>,
     public ICache,
     virtual public kit::mutexed<Mutex>
 {
     public:
+        //using factory_type = Factory<Class, std::tuple<T, ICache*>, Ptr, std::string, Mutex>;
         
         Cache() = default;
-        Cache(std::string fn):
-            Factory<Class, std::tuple<T, ICache*>>(fn)
-        {}
-        Cache(std::shared_ptr<Meta> cfg):
-            Factory<Class, std::tuple<T, ICache*>>(cfg)
-        {}
+        explicit Cache(std::string fn)
+            //Factory<>(fn)
+        {
+            this->config(fn);
+        }
+        explicit Cache(typename TMeta::ptr cfg)
+            //Factory<>(cfg)
+        {
+            this->config(cfg);
+        }
         
         virtual ~Cache() {}
         
@@ -44,18 +55,19 @@ class Cache:
          * Cache resource, force type
          */
         template<class Cast>
-        std::shared_ptr<Cast> cache_as(T arg) {
+        Ptr<Cast> cache_as(T arg) {
             auto l = this->lock();
             arg = transform(arg);
             if(m_Preserve && not m_Preserve(arg)) {
-                return std::make_shared<Cast>(
+                return kit::make<Ptr<Cast>>(
                     std::tuple<T, ICache*>(arg, this)
                 );
             }
             try{
                 return std::dynamic_pointer_cast<Cast>(m_Resources.at(arg));
             }catch(...){
-                auto p = std::make_shared<Cast>(
+                auto p = kit::make<Ptr<Cast>>(
+                    //arg,this
                     std::tuple<T, ICache*>(arg, this)
                 );
                 m_Resources[arg] = std::static_pointer_cast<Class>(p);
@@ -66,10 +78,10 @@ class Cache:
         /*
          * Cache resource, bypass parameter transformer
          */
-        virtual std::shared_ptr<Class> cache_raw(const T& arg) {
+        virtual Ptr<Class> cache_raw(const T& arg) {
             auto l = this->lock();
             if(m_Preserve && not m_Preserve(arg)) {
-                return Factory<Class, std::tuple<T, ICache*>, std::string, Mutex>::create(
+                return this->create(
                     std::tuple<T, ICache*>(arg, this)
                 );
             }
@@ -77,7 +89,7 @@ class Cache:
                 return m_Resources.at(arg);
             }catch(const std::out_of_range&){
                 return (m_Resources[arg] =
-                    Factory<Class, std::tuple<T, ICache*>, std::string, Mutex>::create(
+                    this->create(
                         std::tuple<T, ICache*>(arg, this)
                     )
                 );
@@ -87,24 +99,24 @@ class Cache:
         /*
          * Cache resource and let factory choose type
          */
-        virtual std::shared_ptr<Class> cache(T arg) {
+        virtual Ptr<Class> cache(T arg) {
             auto l = this->lock();
             arg = transform(arg);
             return cache_raw(arg);
         }
 
         //template<class Cast>
-        //virtual void cache(const std::shared_ptr<Cast>& blah) {
+        //virtual void cache(const Ptr<Cast>& blah) {
         //}
         
         /*
          * Cache resource and attempt to cast resource to a given type
          */
         template<class Cast>
-        std::shared_ptr<Cast> cache_cast(T arg) {
+        Ptr<Cast> cache_cast(T arg) {
             auto l = this->lock();
             arg = transform(arg);
-            std::shared_ptr<Cast> p;
+            Ptr<Cast> p;
             //try{
                 p = std::dynamic_pointer_cast<Cast>(cache_raw(arg));
                 if(!p)

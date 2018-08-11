@@ -6,7 +6,7 @@
 #include "../log/log.h"
 #include <kit/smart_ptr.hpp>
 
-template<class Mutex, template <class> class Storage, template <typename> class This>
+template<class Mutex, template <class> class Ptr, template <typename> class This>
 class SchemaBase
 {
     public:
@@ -14,18 +14,18 @@ class SchemaBase
         
         SchemaBase() = default;
 
-        SchemaBase(const Storage<MetaBase<Mutex,Storage,This>>& m);
+        SchemaBase(const Ptr<Meta_<Mutex,Ptr,This>>& m);
         
         SchemaBase(const std::string& fn):
-            SchemaBase(kit::make<Storage<MetaBase<Mutex,Storage,This>>>(fn))
+            SchemaBase(kit::make<Ptr<Meta_<Mutex,Ptr,This>>>(fn))
         {}
         
         // validate throws on error, check just returns false
-        template<class TMutex, template <class> class TStorage, template <class> class TThis>
-        void validate(const TStorage<MetaBase<TMutex,TStorage,TThis>>& m) const;
+        template<class TMutex, template <class> class TPtr, template <class> class TThis>
+        void validate(const TPtr<Meta_<TMutex,TPtr,TThis>>& m) const;
         
-        template<class TMutex, template <class> class TStorage, template <class> class TThis>
-        bool check(const TStorage<MetaBase<TMutex,TStorage,TThis>>& m) const {
+        template<class TMutex, template <class> class TPtr, template <class> class TThis>
+        bool check(const TPtr<Meta_<TMutex,TPtr,TThis>>& m) const {
             try{
                 Log::Silencer ls;
                 validate(m);
@@ -38,25 +38,25 @@ class SchemaBase
         }
 
         // adds all schema fields with default values
-        template<class TMutex, template <class> class TStorage, template <class> class TThis>
-        void add_missing_fields(TStorage<MetaBase<TMutex,TStorage,TThis>>& m) const;
+        template<class TMutex, template <class> class TPtr, template <class> class TThis>
+        void add_missing_fields(TPtr<Meta_<TMutex,TPtr,TThis>>& m) const;
 
         // ignores fields marked as optional
-        template<class TMutex, template <class> class TStorage, template <class> class TThis>
-        void add_required_fields(TStorage<MetaBase<TMutex,TStorage,TThis>>& m) const;
+        template<class TMutex, template <class> class TPtr, template <class> class TThis>
+        void add_required_fields(TPtr<Meta_<TMutex,TPtr,TThis>>& m) const;
         
-        template<class TMutex, template <class> class TStorage, template <class> class TThis>
-        TThis<MetaBase<TMutex,TStorage,TThis>> make_default() const;
+        template<class TMutex, template <class> class TPtr, template <class> class TThis>
+        TThis<Meta_<TMutex,TPtr,TThis>> make_default() const;
 
-        Storage<MetaBase<Mutex,Storage,This>> meta() {
+        Ptr<Meta_<Mutex,Ptr,This>> meta() {
             return m_pSchema;
         }
-        Storage<const MetaBase<Mutex,Storage,This>> meta() const {
+        Ptr<const Meta_<Mutex,Ptr,This>> meta() const {
             return m_pSchema;
         }
 
     private:
-        Storage<MetaBase<Mutex,Storage,This>> m_pSchema;
+        Ptr<Meta_<Mutex,Ptr,This>> m_pSchema;
 };
 
 using Schema = SchemaBase<kit::dummy_mutex, kit::local_shared_ptr, kit::enable_shared_from_this>;

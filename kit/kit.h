@@ -137,6 +137,77 @@ namespace kit
     //        mutable T m_Data;
     //};
     
+    template<class T, class ...Args>
+    std::future<T> make_future(Args&&... args)
+    {
+        std::promise<T> tmp;
+        tmp.set_value(std::forward<Args>(args)...);
+        return tmp.get_future();
+    }
+
+    template<class T, class... Args>
+    std::unique_ptr<T> make_unique(Args&&... args)
+    {
+        return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+    }
+    
+    template<class T, class... Args>
+    T make(Args&&... args)
+    {
+        return T(new typename T::element_type(std::forward<Args>(args)...));
+    }
+
+    template<class T, class... Args>
+    std::unique_ptr<T> init_unique(Args&&... args)
+    {
+        auto p = std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+        p->init();
+        return p;
+    }
+    template<class T, class... Args>
+    std::shared_ptr<T> init_shared(Args&&... args)
+    {
+        auto p = std::shared_ptr<T>(new T(std::forward<Args>(args)...));
+        p->init();
+        return p;
+    }
+    //template<class T, class... Args>
+    //std::unique_ptr<T>& make(std::unique_ptr<T>& p, Args&&... args)
+    //{
+    //    p = std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+    //    return p;
+    //}
+    //template<class T, class... Args>
+    //std::shared_ptr<T>& make(std::shared_ptr<T>& p, Args&&... args)
+    //{
+    //    p = std::shared_ptr<T>(new T(std::forward<Args>(args)...));
+    //    return p;
+    //}
+    template<class T, class... Args>
+    std::unique_ptr<T>& init(std::unique_ptr<T>& p, Args&&... args)
+    {
+        try {
+            p = std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+            p->init();
+        }catch(...){
+            p = std::unique_ptr<T>();
+            throw;
+        }
+        return p;
+    }
+    template<class T, class... Args>
+    std::shared_ptr<T>& init(std::shared_ptr<T>& p, Args&&... args)
+    {
+        try {
+            p = std::shared_ptr<T>(new T(std::forward<Args>(args)...));
+            p->init();
+        }catch(...){
+            p = std::shared_ptr<T>();
+            throw;
+        }
+        return p;
+    }
+    
     struct dummy_mutex
     {
         void lock() {}
@@ -148,7 +219,7 @@ namespace kit
     struct optional_mutex
     {
         optional_mutex():
-            mutex(std::make_shared<Mutex>())
+            mutex(kit::make_unique<Mutex>())
         {}
         optional_mutex(const optional_mutex<Mutex>&) = default;
         optional_mutex(optional_mutex<Mutex>&&) = default;
@@ -167,7 +238,7 @@ namespace kit
             if(mutex)
                 mutex->unlock();
         }
-        std::shared_ptr<Mutex> mutex;
+        std::unique_ptr<Mutex> mutex;
     };
     
     template<class Mutex=std::mutex>
@@ -797,77 +868,6 @@ namespace kit
         if(start < 0)
             c.at(c.size() + start);
         return c.at(start);
-    }
-
-    
-    template<class T, class ...Args>
-    std::future<T> make_future(Args&&... args)
-    {
-        std::promise<T> tmp;
-        tmp.set_value(std::forward<Args>(args)...);
-        return tmp.get_future();
-    }
-
-    template<class T, class... Args>
-    std::unique_ptr<T> make_unique(Args&&... args)
-    {
-        return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-    }
-    template<class T, class... Args>
-    T make(Args&&... args)
-    {
-        return T(new typename T::element_type(std::forward<Args>(args)...));
-    }
-
-    template<class T, class... Args>
-    std::unique_ptr<T> init_unique(Args&&... args)
-    {
-        auto p = std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-        p->init();
-        return p;
-    }
-    template<class T, class... Args>
-    std::shared_ptr<T> init_shared(Args&&... args)
-    {
-        auto p = std::shared_ptr<T>(new T(std::forward<Args>(args)...));
-        p->init();
-        return p;
-    }
-    //template<class T, class... Args>
-    //std::unique_ptr<T>& make(std::unique_ptr<T>& p, Args&&... args)
-    //{
-    //    p = std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-    //    return p;
-    //}
-    //template<class T, class... Args>
-    //std::shared_ptr<T>& make(std::shared_ptr<T>& p, Args&&... args)
-    //{
-    //    p = std::shared_ptr<T>(new T(std::forward<Args>(args)...));
-    //    return p;
-    //}
-    template<class T, class... Args>
-    std::unique_ptr<T>& init(std::unique_ptr<T>& p, Args&&... args)
-    {
-        try {
-            p = std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-            p->init();
-        }catch(...){
-            p = std::unique_ptr<T>();
-            throw;
-        }
-        return p;
-    }
-    template<class T, class... Args>
-    std::shared_ptr<T>& init(std::shared_ptr<T>& p, Args&&... args)
-    {
-        try {
-            p = std::shared_ptr<T>(new T(std::forward<Args>(args)...));
-            p->init();
-        }catch(...){
-            p = std::shared_ptr<T>();
-            throw;
-        }
-        return p;
     }
 
     inline std::vector<std::string> lines(const std::string& s)

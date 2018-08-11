@@ -23,7 +23,9 @@ template<
     class Class,
     class T,
     class ClassName=std::string,
-    class Mutex=kit::dummy_mutex
+    template <typename> class Ptr=std::shared_ptr,
+    class TMeta=Meta, // use MetaMT for config thread safety
+    class Mutex=kit::dummy_mutex // or std::recursive_mutex
 >
 class Factory:
     public IFactory,
@@ -34,7 +36,7 @@ class Factory:
         // derived class make_shared() functors
         std::vector<
             std::function<
-                std::shared_ptr<Class>(const T&)
+                Ptr<Class>(const T&)
             >
         > m_Classes;
 
@@ -50,28 +52,30 @@ class Factory:
 
         std::function<unsigned(const T&)> m_Resolver;
         std::function<T(const T&)> m_Transformer;
-        std::shared_ptr<MetaBase<Mutex>> m_pConfig;
+        typename TMeta::ptr m_pConfig;
 
     public:
 
         Factory():
-            m_pConfig(std::make_shared<MetaBase<Mutex>>())
+            m_pConfig(kit::make<typename TMeta::ptr>())
         {}
-        Factory(std::string fn):
-            m_pConfig(std::make_shared<MetaBase<Mutex>>(fn))
+        explicit Factory(std::string fn):
+            m_pConfig(kit::make<typename TMeta::ptr>(fn))
         {}
-        Factory(std::shared_ptr<Meta> cfg):
-            m_pConfig(std::make_shared<MetaBase<Mutex>>(cfg))
+        explicit Factory(typename TMeta::ptr cfg):
+            m_pConfig(kit::make<typename TMeta::ptr>(cfg))
         {}
 
-        std::shared_ptr<MetaBase<Mutex>> config() {
+        typename TMeta::ptr config() {
             auto l = this->lock();
             return m_pConfig; 
         }
-        std::shared_ptr<const MetaBase<Mutex>> config() const {
+        typename TMeta::cptr config() const {
             auto l = this->lock();
             return m_pConfig;
         }
+        void config(typename TMeta::ptr cfg) {m_pConfig=cfg;}
+        void config(std::string cfg) {m_pConfig=kit::make<typename TMeta::ptr>(cfg);}
         void with(std::function<void()> cb){
             auto l = this->lock();
             cb();
@@ -170,11 +174,11 @@ class Factory:
             return m_Transformer(t);
         }
         
-        //void share_config(std::shared_ptr<MetaBase<Mutex>> cfg){
+        //void share_config(TMeta::Ptr cfg){
         //    //auto l = this->lock();
         //    m_pConfig = cfg;
         //}
-        //std::shared_ptr<MetaBase<Mutex>> share_config() {
+        //TMeta::Ptr share_config() {
         //    //auto l = this->lock();
         //    return m_pConfig;
         //}

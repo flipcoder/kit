@@ -23,13 +23,8 @@
 #include <atomic>
 #include <boost/type_traits.hpp>
 
-// these are just defaults for the "Meta" alias, there are more at end of file
-#ifndef META_STORAGE
-#define META_STORAGE kit::local_shared_ptr
-#endif
-#ifndef META_THIS
-#define META_THIS kit::enable_shared_from_this
-#endif
+// these are just defaults for the "Meta" type for backwards compat
+// instead: use the typenames at the bottom of file (Meta,MetaS,MetaMT,etc.)
 
 struct MetaType {
 
@@ -120,7 +115,7 @@ struct MetaType {
         MASK = kit::mask(2)
     };
 
-    //enum Storage {
+    //enum Ptr {
     //    STACK = 0,
     //    UNIQUE = 1,
     //    SHARED = 2,
@@ -129,7 +124,7 @@ struct MetaType {
 
     ID id = ID::EMPTY;
     unsigned flags = 0;
-    //Storage storage = Storage::STACK;
+    //Ptr storage = Ptr::STACK;
 
     // 0 means platform-sized
     //unsigned bytes = 0; // size hint (optional)
@@ -172,7 +167,7 @@ struct MetaElement
         return *this;
     }
     
-    template<class Mutex, template <class> class Storage, template <typename> class This>
+    template<class Mutex, template <class> class Ptr, template <typename> class This>
     Json::Value serialize_json(unsigned flags = 0) const;
 
     class SkipSerialize:
@@ -184,7 +179,7 @@ struct MetaElement
             {}
     };
     
-    //template<class Mutex, template <class> class Storage, template <typename> class This>
+    //template<class Mutex, template <class> class Ptr, template <typename> class This>
     //void deserialize_json(const Json::Value&);
 
     //MetaElement& operator=(MetaElement&& e) = default;
@@ -270,17 +265,26 @@ enum class MetaSerialize : unsigned {
 
 template<
     class Mutex=kit::dummy_mutex,
-    template <typename> class Storage=kit::local_shared_ptr,
+    template <typename> class Ptr=kit::local_shared_ptr,
     template <typename> class This=kit::enable_shared_from_this//,
     //template <typename> class Make=kit::make_local_shared
 >
-class MetaBase:
-    public This<MetaBase<Mutex,Storage,This>>,
+class Meta_:
+    public This<Meta_<Mutex,Ptr,This>>,
     public kit::mutexed<Mutex>
     //public kit::freezable
 {
     public:
+        
         using mutex_type = Mutex;
+        using ptr = Ptr<Meta_<Mutex,Ptr,This>>;
+        using cptr = Ptr<const Meta_<Mutex,Ptr,This>>;
+
+        template<class... Args>
+        static ptr make(Args&&... args){
+            return kit::make<ptr>(std::forward<Args>(args)...);
+        }
+        
         friend struct MetaElement;
 
         enum DeserializeFlags {
@@ -289,19 +293,19 @@ class MetaBase:
         };
 
         //template<class... Args>
-        //static Storage<Mutex,Storage,This,Make> make(Args&&... args) {
-        //    return Make<MeteBase<Mutex,Storage,This,Make>>((std::forward<Args>(args)...));
+        //static Ptr<Mutex,Ptr,This,Make> make(Args&&... args) {
+        //    return Make<MeteBase<Mutex,Ptr,This,Make>>((std::forward<Args>(args)...));
         //}
-        //static Storage<Mutex,Storage,This,Make> json(const std::string& s) {
-        //    return Make<MeteBase<Mutex,Storage,This,Make>>(MetaFormat::JSON,s);
+        //static Ptr<Mutex,Ptr,This,Make> json(const std::string& s) {
+        //    return Make<MeteBase<Mutex,Ptr,This,Make>>(MetaFormat::JSON,s);
         //}
 
         //typedef Mutex mutex_type;
         
         //struct Iterator
         //{
-        //    Iterator(MetaBase* m):
-        //        m_MetaBase(m),
+        //    Iterator(Meta_* m):
+        //        m_Meta_(m),
         //        m_Value(0)
         //    {}
         //    Iterator& operator++() {
@@ -315,7 +319,7 @@ class MetaBase:
         //    }
 
         //    private:
-        //        MetaBase* m_MetaBase = nullptr;
+        //        Meta_* m_Meta_ = nullptr;
         //        unsigned m_Value=0;
         //};
 
@@ -349,37 +353,37 @@ class MetaBase:
                 
                 // flags: DeserializeFlags
                 explicit Serializable(const std::string& fn, unsigned flags = 0):
-                    m_Cached(kit::make<Storage<MetaBase<Mutex,Storage,This>>>(fn, flags))
+                    m_Cached(kit::make<Ptr<Meta_<Mutex,Ptr,This>>>(fn, flags))
                 {}
-                explicit Serializable(const Storage<MetaBase<Mutex,Storage,This>>& m):
+                explicit Serializable(const Ptr<Meta_<Mutex,Ptr,This>>& m):
                     m_Cached(m)
                 {}
 
-                //Serializable(const Storage<MetaBase>& meta) {
+                //Serializable(const Ptr<Meta_>& meta) {
                 //    deserialize(meta);
                 //}
                 virtual ~Serializable() {}
 
                 /*
-                 * Return shared_ptr<MetaBase> representation of object
+                 * Return shared_ptr<Meta_> representation of object
                  *
                  * Set up necessary change listeners at each level of the meta
                  * if necessary
                  */
-                virtual void serialize(Storage<MetaBase<Mutex,Storage,This>>& meta) const = 0;
+                virtual void serialize(Ptr<Meta_<Mutex,Ptr,This>>& meta) const = 0;
 
                 /*
-                 * Return shared_ptr<MetaBase> with placeholder values representing
+                 * Return shared_ptr<Meta_> with placeholder values representing
                  *  the meta's schema
                  */
-                //virtual Storage<MetaBase> schema() const = 0;
+                //virtual Ptr<Meta_> schema() const = 0;
 
                 //enum class SyncFlags : unsigned {
                 //    NONE = 0
                 //};
                 void sync() {
                     try{
-                        // TODO: add flags to MetaBase::deserialize() to auto-create
+                        // TODO: add flags to Meta_::deserialize() to auto-create
                         m_Cached->deserialize();
                     }catch(const Error&){
                         m_Cached->serialize();
@@ -389,20 +393,20 @@ class MetaBase:
                     deserialize(m_Cached);
                 }
                 virtual void deserialize(
-                    const Storage<MetaBase<Mutex,Storage,This>>& meta
+                    const Ptr<Meta_<Mutex,Ptr,This>>& meta
                 ) = 0;
                 
-                Storage<MetaBase<Mutex,Storage,This>> serialization() {
+                Ptr<Meta_<Mutex,Ptr,This>> serialization() {
                     return m_Cached;
                 }
 
                 /*
                  * Check file modification dates
-                 * Use MetaBase's change listeners when syncing
+                 * Use Meta_'s change listeners when syncing
                  *
                  * returns false if the meta's format is no longer compatible
                  */
-                //virtual void sync(Storage<MetaBase>& cached) {
+                //virtual void sync(Ptr<Meta_>& cached) {
                 //}
 
                 //virtual bool needs_sync() const {
@@ -411,45 +415,45 @@ class MetaBase:
 
                 // TODO: methods to move file (to another path)?
 
-                //Storage<MetaBase> meta() const;
+                //Ptr<Meta_> meta() const;
             private:
                 // TODO: last modified date (same timestamp type as sync())
-                Storage<MetaBase<Mutex,Storage,This>> m_Cached;
+                Ptr<Meta_<Mutex,Ptr,This>> m_Cached;
         };
         
-        MetaBase() = default;
-        MetaBase(int argc, const char** argv){
+        Meta_() = default;
+        Meta_(int argc, const char** argv){
             from_args(std::vector<std::string>(argv+1, argv+argc));
         }
-        MetaBase(const std::string& fn, unsigned flags = 0);
-        MetaBase(MetaFormat fmt, const std::string& data, unsigned flags = 0);
+        Meta_(const std::string& fn, unsigned flags = 0);
+        Meta_(MetaFormat fmt, const std::string& data, unsigned flags = 0);
 
-        MetaBase(MetaBase&&)= delete;
+        Meta_(Meta_&&)= delete;
         
-        MetaBase(const MetaBase&) = delete;
-        explicit MetaBase(const Storage<MetaBase<Mutex,Storage,This>>& rhs);
-        MetaBase& operator=(const MetaBase&) = delete;
-        MetaBase& operator=(MetaBase&&) = delete;
+        Meta_(const Meta_&) = delete;
+        explicit Meta_(const Ptr<Meta_<Mutex,Ptr,This>>& rhs);
+        Meta_& operator=(const Meta_&) = delete;
+        Meta_& operator=(Meta_&&) = delete;
         
-        virtual ~MetaBase() {}
+        virtual ~Meta_() {}
         
         void from_args(std::vector<std::string> args);
 
         // convert between meta types?
-        //template<class Mutex2,template <class> class Storage2>
-        //static Storage<MetaBase<Mutex,Storage,This>> convert(
-        //    Storage2<Mutex2>
+        //template<class Mutex2,template <class> class Ptr2>
+        //static Ptr<Meta_<Mutex,Ptr,This>> convert(
+        //    Ptr2<Mutex2>
         //){
         //    // TODO: impl
-        //    return Storage<Mutex>();
+        //    return Ptr<Mutex>();
         //}
 
-        //// Traversal visits MetaBase objects recursively
+        //// Traversal visits Meta_ objects recursively
         //class Traversal
         //{
         //    public:
 
-        //        Traversal(Storage<MetaBase>& m) {
+        //        Traversal(Ptr<Meta_>& m) {
         //            //m_Locks.push_back(m->lock());
         //        }
 
@@ -470,14 +474,14 @@ class MetaBase:
         //template<class Func>
         MetaLoop each(
             std::function<MetaLoop(
-                //Storage<MetaBase<Mutex,Storage,This>>, // item
-                Storage<MetaBase<Mutex,Storage,This>>, // parent
+                //Ptr<Meta_<Mutex,Ptr,This>>, // item
+                Ptr<Meta_<Mutex,Ptr,This>>, // parent
                 MetaElement&,
                 unsigned
             )> func,
             unsigned flags = 0, // EachFlag enum
             std::deque<std::tuple<
-                Storage<MetaBase<Mutex,Storage,This>>,
+                Ptr<Meta_<Mutex,Ptr,This>>,
                 std::unique_lock<Mutex>,
                 std::string // key in parent (blank if root or empty key)
             >>* metastack = nullptr,
@@ -486,14 +490,14 @@ class MetaBase:
         );
         MetaLoop each(
             std::function<MetaLoop(
-                //Storage<const MetaBase<Mutex,Storage,This>>, // item
-                Storage<const MetaBase<Mutex,Storage,This>>, // parent
+                //Ptr<const Meta_<Mutex,Ptr,This>>, // item
+                Ptr<const Meta_<Mutex,Ptr,This>>, // parent
                 const MetaElement&,
                 unsigned
             )> func,
             unsigned flags = 0, // EachFlag enum
             std::deque<std::tuple<
-                Storage<const MetaBase<Mutex,Storage,This>>,
+                Ptr<const Meta_<Mutex,Ptr,This>>,
                 std::unique_lock<Mutex>,
                 std::string // key in parent (blank if root or empty key)
             >>* metastack = nullptr,
@@ -502,14 +506,14 @@ class MetaBase:
         ) const;
         MetaLoop each_c(
             std::function<MetaLoop(
-                //Storage<const MetaBase<Mutex,Storage,This>>, // item
-                Storage<const MetaBase<Mutex,Storage,This>>, // parent
+                //Ptr<const Meta_<Mutex,Ptr,This>>, // item
+                Ptr<const Meta_<Mutex,Ptr,This>>, // parent
                 const MetaElement&,
                 unsigned
             )> func,
             unsigned flags = 0, // EachFlag enum
             std::deque<std::tuple<
-                Storage<const MetaBase<Mutex,Storage,This>>,
+                Ptr<const Meta_<Mutex,Ptr,This>>,
                 std::unique_lock<Mutex>,
                 std::string // key in parent (blank if root or empty key)
             >>* metastack = nullptr,
@@ -571,33 +575,33 @@ class MetaBase:
             throw std::out_of_range("no such element");
         }
 
-        void parent(const Storage<MetaBase<Mutex,Storage,This>>& p) {
+        void parent(const Ptr<Meta_<Mutex,Ptr,This>>& p) {
             auto l = this->lock();
             m_pParent = p.get();
         }
-        void parent(MetaBase<Mutex,Storage,This>* p) {
+        void parent(Meta_<Mutex,Ptr,This>* p) {
             auto l = this->lock();
             m_pParent = p;
         }
 
         // warning: O(n)
         std::string key_in_parent(
-            Storage<MetaBase<Mutex,Storage,This>>& m
+            Ptr<Meta_<Mutex,Ptr,This>>& m
         ) {
             auto l = this->lock();
             return parent()->first_key_of(m);
         }
 
-        //Storage<const MetaBase<Mutex,Storage,This>> parent_c() const {
+        //Ptr<const Meta_<Mutex,Ptr,This>> parent_c() const {
         //    auto l = this->lock();
         //    return m_pParent;
         //}
-        //Storage<MetaBase<Mutex,Storage,This>> parent() {
+        //Ptr<Meta_<Mutex,Ptr,This>> parent() {
         //    auto l = this->lock();
         //    return m_pParent;
         //}
         
-        Storage<MetaBase<Mutex,Storage,This>> parent(
+        Ptr<Meta_<Mutex,Ptr,This>> parent(
             unsigned lock_flags=0,
             bool root=false
         ){
@@ -630,10 +634,10 @@ class MetaBase:
             }
         }
 
-        Storage<MetaBase<Mutex,Storage,This>> shared() {
+        Ptr<Meta_<Mutex,Ptr,This>> shared() {
             return this->shared_from_this();
         }
-        Storage<const MetaBase<Mutex,Storage,This>> shared() const {
+        Ptr<const Meta_<Mutex,Ptr,This>> shared() const {
             return this->shared_from_this();
         }
 
@@ -671,14 +675,14 @@ class MetaBase:
         //    unsigned timeout = 0; // delay between tries ms (you may also block in your functor)
         //};
         // return value (bool) indicates whether to retrigger
-        typedef std::function<bool(Storage<MetaBase<Mutex,Storage,This>>&)> TimeoutCallback_t;
+        typedef std::function<bool(const Ptr<Meta_<Mutex,Ptr,This>>&)> TimeoutCallback_t;
 
         typedef std::function<boost::variant<Which, MetaElement>(
             const MetaElement&, const MetaElement&
         )> WhichCallback_t;
         
         typedef std::function<void(
-            Storage<MetaBase<Mutex,Storage,This>>&, const MetaElement&
+            const Ptr<Meta_<Mutex,Ptr,This>>&, const MetaElement&
         )> VisitorCallback_t;
 
         /*
@@ -690,18 +694,23 @@ class MetaBase:
          *
          *  For throw-on-conflict behavior, throw inside of `which`
          */
-        template<class TMutex,template <class> class TStorage, template <class> class TThis>
+        template<class TMutex,template <class> class TPtr, template <class> class TThis>
         void merge(
-            const TStorage<MetaBase<TMutex,TStorage,TThis>>& t,
+            const TPtr<Meta_<TMutex,TPtr,TThis>>& t,
             WhichCallback_t which,
             unsigned flags = (unsigned)MergeFlags::DEFAULTS, // MergeFlags
             TimeoutCallback_t timeout = TimeoutCallback_t(),
-            VisitorCallback_t visit = VisitorCallback_t()
+            std::function<void(
+                const TPtr<Meta_<Mutex,TPtr,TThis>>&, const MetaElement&
+            )> visit = std::function<void(
+                const TPtr<Meta_<Mutex,TPtr,TThis>>&, const MetaElement&
+            )>()
+            //Meta_<TMutex,TPtr,TThis>::VisitorCallback_t visit = VisitorCallback_t()
         );
 
-        template<class TMutex,template <class> class TStorage, template <class> class TThis>
+        template<class TMutex,template <class> class TPtr, template <class> class TThis>
         void merge(
-            const TStorage<MetaBase<TMutex,TStorage,TThis>>& t,
+            const TPtr<Meta_<TMutex,TPtr,TThis>>& t,
             unsigned flags = (unsigned)MergeFlags::DEFAULTS // MergeFlags
         );
 
@@ -719,7 +728,7 @@ class MetaBase:
         );
         
         //void merge(
-        //    const MetaBase& t,
+        //    const Meta_& t,
         //    unsigned flags = (unsigned)MergeFlags::DEFAULTS,
         //    std::function<
         //        boost::any(const boost::any&, const boost::any&)
@@ -803,13 +812,13 @@ class MetaBase:
             return m_Elements.at(idx).value;
         }
 
-        Storage<MetaBase<Mutex,Storage,This>> meta(
+        Ptr<Meta_<Mutex,Ptr,This>> meta(
             const std::string& key,
-            const Storage<MetaBase<Mutex,Storage,This>>& def
+            const Ptr<Meta_<Mutex,Ptr,This>>& def
         ){
             auto l = this->lock();
             try{
-                return boost::any_cast<Storage<MetaBase<Mutex,Storage,This>>>(
+                return boost::any_cast<Ptr<Meta_<Mutex,Ptr,This>>>(
                     m_Elements.at(m_Keys.at(key)).value
                 );
             }catch(...){
@@ -818,28 +827,28 @@ class MetaBase:
             }
         }
 
-        Storage<MetaBase<Mutex,Storage,This>> meta(unsigned idx) {
+        Ptr<Meta_<Mutex,Ptr,This>> meta(unsigned idx) {
             auto l = this->lock();
-            return boost::any_cast<Storage<MetaBase<Mutex,Storage,This>>>(
+            return boost::any_cast<Ptr<Meta_<Mutex,Ptr,This>>>(
                 m_Elements.at(idx).value
             );
         }
-        Storage<const MetaBase<Mutex,Storage,This>> meta(unsigned idx) const {
+        Ptr<const Meta_<Mutex,Ptr,This>> meta(unsigned idx) const {
             auto l = this->lock();
-            return boost::any_cast<Storage<MetaBase<Mutex,Storage,This>>>(
+            return boost::any_cast<Ptr<Meta_<Mutex,Ptr,This>>>(
                 m_Elements.at(idx).value
             );
         }
 
-        Storage<MetaBase<Mutex,Storage,This>> meta(const std::string& key) {
+        Ptr<Meta_<Mutex,Ptr,This>> meta(const std::string& key) {
             auto l = this->lock();
-            return boost::any_cast<Storage<MetaBase<Mutex,Storage,This>>>(
+            return boost::any_cast<Ptr<Meta_<Mutex,Ptr,This>>>(
                 m_Elements.at(m_Keys.at(key)).value
             );
         }
-        Storage<const MetaBase<Mutex>> meta(const std::string& key) const {
+        Ptr<const Meta_<Mutex>> meta(const std::string& key) const {
             auto l = this->lock();
-            return boost::any_cast<Storage<MetaBase<Mutex>>>(
+            return boost::any_cast<Ptr<Meta_<Mutex>>>(
                 m_Elements.at(m_Keys.at(key)).value
             );
         }
@@ -927,16 +936,16 @@ class MetaBase:
         };
         // Ensures the path exists in the tree and initializes an element `val`
         // the endpoint.
-        //Storage<MetaBase<Mutex,Storage,This>> path(
-        Storage<MetaBase<Mutex,Storage,This>> path(
-            //const Storage<MetaBase<Mutex,Storage,This>> spthis,
+        //Ptr<Meta_<Mutex,Ptr,This>> path(
+        Ptr<Meta_<Mutex,Ptr,This>> path(
+            //const Ptr<Meta_<Mutex,Ptr,This>> spthis,
             const std::vector<std::string>& path,
             unsigned flags = 0,
             bool* created = nullptr
         );
-        //Storage<MetaBase<Mutex,Storage,This>> path(
-        Storage<MetaBase<Mutex,Storage,This>> path(
-            //const Storage<MetaBase<Mutex,Storage,This>> spthis,
+        //Ptr<Meta_<Mutex,Ptr,This>> path(
+        Ptr<Meta_<Mutex,Ptr,This>> path(
+            //const Ptr<Meta_<Mutex,Ptr,This>> spthis,
             std::string& p,
             unsigned flags = 0,
             bool* created = nullptr
@@ -990,7 +999,7 @@ class MetaBase:
         //    // but does not overwrite a preexisting value with the given key
         //    ENSURE = kit::bit(0)
         //};
-        using U = Storage<MetaBase<Mutex,Storage,This>>;
+        using U = Ptr<Meta_<Mutex,Ptr,This>>;
         template<class T>
         unsigned set(
             const std::string& key,
@@ -1042,10 +1051,10 @@ class MetaBase:
 
             if(
                 m_Elements[idx].type.id == MetaType::ID::META
-                //m_Elements[idx].type.storage == MetaType::Storage::SHARED
+                //m_Elements[idx].type.storage == MetaType::Ptr::SHARED
             ){
                 try{
-                    safe_ptr(at<Storage<MetaBase<Mutex,Storage,This>>>(idx))->parent(this);
+                    safe_ptr(at<Ptr<Meta_<Mutex,Ptr,This>>>(idx))->parent(this);
                 }catch(const kit::null_ptr_exception&){}
             }
 
@@ -1194,7 +1203,7 @@ class MetaBase:
             m_Keys.erase(key);
         }
 
-        // Copying internal MetaBase::Element into an existing element of type key
+        // Copying internal Meta_::Element into an existing element of type key
         // may throw std::out_of_range
         void replace(
             unsigned id,
@@ -1226,7 +1235,7 @@ class MetaBase:
         //    assert(r);
         //    auto rl = r->lock();
 
-        //    std::vector<Storage<MetaBase<Mutex>>> metastack;
+        //    std::vector<Ptr<Meta_<Mutex>>> metastack;
 
         //    do{
         //        metastack.clear();
@@ -1368,8 +1377,8 @@ class MetaBase:
             //return m_Keys.size() != m_Elements.size();
         }
 
-        Storage<MetaBase<Mutex,Storage,This>> root(
-            //Storage<const MetaBase<Mutex,Storage,This>> self,
+        Ptr<Meta_<Mutex,Ptr,This>> root(
+            //Ptr<const Meta_<Mutex,Ptr,This>> self,
             unsigned lock_flags = 0
         ){
             // TODO: lock order is bad here, should be try_lock
@@ -1377,8 +1386,8 @@ class MetaBase:
             return parent(lock_flags,true);
         }
 
-        Storage<const MetaBase<Mutex,Storage,This>> root_c(
-            //Storage<MetaBase<Mutex,Storage,This>> self,
+        Ptr<const Meta_<Mutex,Ptr,This>> root_c(
+            //Ptr<Meta_<Mutex,Ptr,This>> self,
             unsigned lock_flags = 0
         ){
             // TODO: lock order is bad here, should be try_lock
@@ -1432,8 +1441,8 @@ class MetaBase:
 
         //kit::string_index m_Keys;
 
-        // boost::any allows Values to be OTHER MetaBases (in the form of
-        //  shared_ptr<MetaBase> for shared or weak_ptr<MetaBase> for links)
+        // boost::any allows Values to be OTHER Meta_s (in the form of
+        //  shared_ptr<Meta_> for shared or weak_ptr<Meta_> for links)
         //  so we can nest these to form a property tree
 
         // hooks (for non-locked indexing into data) (see notes)
@@ -1444,12 +1453,12 @@ class MetaBase:
 
         // TODO: switch to bimap?
         std::unordered_map<std::string, unsigned> m_Keys;
-        //std::unordered_map<unsigned, Storage<unsigned>> m_Hooks;
+        //std::unordered_map<unsigned, Ptr<unsigned>> m_Hooks;
         std::vector<MetaElement> m_Elements; // elements also contain keys
 
-        //Storage<boost::shared_mutex> m_Treespace;
+        //Ptr<boost::shared_mutex> m_Treespace;
 
-        //void unsafe_merge(MetaBase<Mutex>&& t, unsigned flags);
+        //void unsafe_merge(Meta_<Mutex>&& t, unsigned flags);
 
         /*
          * Note: bind() a parameter yourself to get the specific object id
@@ -1457,24 +1466,39 @@ class MetaBase:
          * Had to be wrapped in ptr since resize() invokes a copy ctor :(
          */
         //std::vector<
-        //    Storage<boost::signals2::signal<void()>>
+        //    Ptr<boost::signals2::signal<void()>>
         //> m_Change;
 
         // may be empty / incorrect, search parent to resolve
         //unsigned m_IndexOfSelfInParent = std::numeric_limits<unsigned>::max();
 
-        //std::weak_ptr<MetaBase<Mutex>> m_pParent;
-        MetaBase<Mutex,Storage,This>* m_pParent = nullptr;
+        //std::weak_ptr<Meta_<Mutex>> m_pParent;
+        Meta_<Mutex,Ptr,This>* m_pParent = nullptr;
 
         bool m_bCallbacks = true;
 
         //bool m_bQuiet = false; // don't throw on file not found
 };
 
-using Meta = MetaBase<kit::dummy_mutex, META_STORAGE, META_THIS>;
-using MetaS = MetaBase<kit::dummy_mutex, std::shared_ptr, std::enable_shared_from_this>;
-using MetaL = MetaBase<kit::dummy_mutex, kit::local_shared_ptr>;
-using MetaMT = MetaBase<std::recursive_mutex, std::shared_ptr>;
+// Note: use these for keeping backwards compatibility only
+#ifdef META_SHARED
+    #define META_STORAGE std::shared_ptr
+    #define META_THIS std::enable_shared_from_this
+#endif
+#ifndef META_STORAGE
+    #define META_STORAGE kit::local_shared_ptr
+#endif
+#ifndef META_THIS
+    #define META_THIS kit::enable_shared_from_this
+#endif
+//#ifdef META_LOCAL
+//#endif
+
+// Use these instead of defines
+using Meta = Meta_<kit::dummy_mutex, META_STORAGE, META_THIS>;
+using MetaS = Meta_<kit::dummy_mutex, std::shared_ptr, std::enable_shared_from_this>;
+using MetaL = Meta_<kit::dummy_mutex, kit::local_shared_ptr>;
+using MetaMT = Meta_<std::recursive_mutex, std::shared_ptr>;
 
 #include "meta.inl"
 

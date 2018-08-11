@@ -5,20 +5,20 @@
 #include <kit/smart_ptr.hpp>
 #include "schema.h"
 
-template<class Mutex, template <class> class Storage, template <typename> class This>
-SchemaBase<Mutex,Storage,This> :: SchemaBase(const Storage<MetaBase<Mutex,Storage,This>>& m):
+template<class Mutex, template <class> class Ptr, template <typename> class This>
+SchemaBase<Mutex,Ptr,This> :: SchemaBase(const Ptr<Meta_<Mutex,Ptr,This>>& m):
     m_pSchema(m)
 {
     assert(m);
 }
 
-template<class Mutex, template <class> class Storage, template <typename> class This>
-template<class TMutex, template <class> class TStorage, template <typename> class TThis>
-void SchemaBase<Mutex,Storage,This> :: validate(const TStorage<MetaBase<TMutex,TStorage,TThis>>& m) const
+template<class Mutex, template <class> class Ptr, template <typename> class This>
+template<class TMutex, template <class> class TPtr, template <typename> class TThis>
+void SchemaBase<Mutex,Ptr,This> :: validate(const TPtr<Meta_<TMutex,TPtr,TThis>>& m) const
 {
     // our stack for keeping track of location in tree while iterating
     std::deque<std::tuple<
-        TStorage<const MetaBase<TMutex,TStorage,TThis>>,
+        TPtr<const Meta_<TMutex,TPtr,TThis>>,
         std::unique_lock<TMutex>,
         std::string
     >> metastack;
@@ -26,8 +26,8 @@ void SchemaBase<Mutex,Storage,This> :: validate(const TStorage<MetaBase<TMutex,T
     // TODO: loop thru schema, look up required fields in m
     
     m->each_c([this, &metastack](
-        //Storage<const MetaBase<TMutex,TStorage,TThis>> item,
-        Storage<const MetaBase<Mutex,Storage,This>> parent,
+        //Ptr<const Meta_<TMutex,TPtr,TThis>> item,
+        TPtr<const Meta_<TMutex,TPtr,TThis>> parent,
         const MetaElement& e,
         unsigned level
     ){
@@ -51,7 +51,7 @@ void SchemaBase<Mutex,Storage,This> :: validate(const TStorage<MetaBase<TMutex,T
             
         //LOGf("path element: %s", boost::algorithm::join(path,"/"));
         
-        Storage<MetaBase<Mutex,Storage,This>> r;
+        //Ptr<Meta_<Mutex,Ptr,This>> r;
         try{
             auto schema_metadata = m_pSchema->path(path);
             bool valid_value = false;
@@ -99,29 +99,31 @@ void SchemaBase<Mutex,Storage,This> :: validate(const TStorage<MetaBase<TMutex,T
         
         return MetaLoop::STEP;
     },
-        (unsigned)MetaBase<>::EachFlag::DEFAULTS |
-            (unsigned)MetaBase<>::EachFlag::RECURSIVE,
+        (unsigned)Meta::EachFlag::DEFAULTS |
+            (unsigned)Meta::EachFlag::RECURSIVE,
         &metastack
     );
 }
 
-template<class Mutex, template <class> class Storage, template <typename> class This>
-template<class TMutex, template <class> class TStorage, template <typename> class TThis>
-void SchemaBase<Mutex,Storage,This> :: add_missing_fields(TStorage<MetaBase<TMutex,TStorage,TThis>>& m) const
+template<class Mutex, template <class> class Ptr, template <typename> class This>
+template<class TMutex, template <class> class TPtr, template <typename> class TThis>
+void SchemaBase<Mutex,Ptr,This> :: add_missing_fields(TPtr<Meta_<TMutex,TPtr,TThis>>& m) const
 {
+    assert(false);
 }
 
-template<class Mutex, template <class> class Storage, template <typename> class This>
-template<class TMutex, template <class> class TStorage, template <typename> class TThis>
-void SchemaBase<Mutex,Storage,This> :: add_required_fields(TStorage<MetaBase<TMutex,TStorage,TThis>>& m) const
+template<class Mutex, template <class> class Ptr, template <typename> class This>
+template<class TMutex, template <class> class TPtr, template <typename> class TThis>
+void SchemaBase<Mutex,Ptr,This> :: add_required_fields(TPtr<Meta_<TMutex,TPtr,TThis>>& m) const
 {
+    assert(false);
 }
 
 
-template<class Mutex, template <class> class Storage, template <typename> class This>
-template<class TMutex, template <class> class TStorage, template <typename> class TThis>
-TThis<MetaBase<TMutex,TStorage,TThis>> SchemaBase<Mutex,Storage,This> :: make_default() const
+template<class Mutex, template <class> class Ptr, template <typename> class This>
+template<class TMutex, template <class> class TPtr, template <typename> class TThis>
+TThis<Meta_<TMutex,TPtr,TThis>> SchemaBase<Mutex,Ptr,This> :: make_default() const
 {
-    return TStorage<MetaBase<TMutex>>();
+    return TPtr<Meta_<TMutex>>();
 }
 
