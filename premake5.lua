@@ -47,7 +47,6 @@ workspace("kit")
             }
             includedirs {
                 "/usr/local/include/",
-                "/usr/include/bullet/",
                 "/usr/include/rapidxml/",
                 "/usr/include/raknet/DependentExtensions"
             }
@@ -135,13 +134,8 @@ workspace("kit")
 
         -- Exluding Files
         excludes {
-            
         }
         
         includedirs {
-            "lib/local_shared_ptr/",
-            "/usr/local/include/",
-            "/usr/include/bullet/",
-            "/usr/include/raknet/DependentExtensions"
         }
 

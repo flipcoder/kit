@@ -259,6 +259,11 @@ namespace kit
             Lock lock(Strategy strategy) const {
                 return Lock(m_Mutex, strategy);
             }
+            template<class Func>
+            void with(Func cb){
+                auto l = lock();
+                cb();
+            }
 
             //template<class Lock=std::unique_lock<Mutex>, class DeferStrategy>
             //std::optional<Lock> try_lock() {

@@ -277,13 +277,20 @@ class Meta_:
     public:
         
         using mutex_type = Mutex;
+        //typedef Ptr<Meta_<Mutex,Ptr,This>> ptr;
+        //typedef Ptr<const Meta_<Mutex,Ptr,This>> cptr;
         using ptr = Ptr<Meta_<Mutex,Ptr,This>>;
         using cptr = Ptr<const Meta_<Mutex,Ptr,This>>;
 
+        //template<class... Args>
+        //static ptr make(Args&&... args){
+        //    return kit::make<ptr>(std::forward<Args>(args)...);
+        //}
         template<class... Args>
         static ptr make(Args&&... args){
             return kit::make<ptr>(std::forward<Args>(args)...);
         }
+
         
         friend struct MetaElement;
 

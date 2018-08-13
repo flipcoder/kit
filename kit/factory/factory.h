@@ -76,10 +76,10 @@ class Factory:
         }
         void config(typename TMeta::ptr cfg) {m_pConfig=cfg;}
         void config(std::string cfg) {m_pConfig=kit::make<typename TMeta::ptr>(cfg);}
-        void with(std::function<void()> cb){
-            auto l = this->lock();
-            cb();
-        }
+        //void with(std::function<void()> cb){
+        //    auto l = this->lock();
+        //    cb();
+        //}
         
         virtual ~Factory() {}
 

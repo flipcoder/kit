@@ -17,129 +17,51 @@ solution("kit")
         defines { "NDEBUG" }
         flags { "OptimizeSpeed" }
 
+    language("C++")
+    links {
+        "pthread",
+        "boost_thread",
+        "SDL2",
+        "boost_system",
+        "boost_regex",
+        "boost_filesystem",
+        "boost_coroutine",
+        "jsoncpp"
+    }
+    defines { "BACKWARD_HAS_BFD=1" }
+    includedirs {
+        "../lib/local_shared_ptr",
+        "../vendor/include/",
+        "/usr/include/cpp-netlib/"
+    }
+    
+    configuration {"debug"}
+        links {
+            "bfd",
+            "iberty"
+        }
+        linkoptions { "`llvm-config --libs core` `llvm-config --ldflags`" }
+    configuration {}
+
+    configuration { "gmake" }
+        --buildoptions { "-std=c++11",  "-pedantic", "-Wall", "-Wextra" }
+        buildoptions { "-std=c++11" }
+        configuration { "macosx" }
+            buildoptions { "-U__STRICT_ANSI__", "-stdlib=libc++" }
+            linkoptions { "-stdlib=libc++" }
+    configuration {}
+    
+    files { "../kit/**.cpp" }
+    
     project("echo")
         kind("ConsoleApp")
-        language("C++")
-        links {
-            "pthread",
-            "boost_thread",
-            "SDL2",
-            "boost_system",
-            "boost_regex",
-            "boost_filesystem",
-            "boost_coroutine",
-            "jsoncpp"
-        }
-        files {
-            "src/echo.cpp",
-            "../kit/**.cpp",
-            "../kit/**.inl"
-        }
-
-        defines { "BACKWARD_HAS_BFD=1" }
-
-        includedirs {
-            "../vendor/include/",
-            "/usr/include/cpp-netlib/"
-        }
-
-        configuration {"debug"}
-            links {
-                "bfd",
-                "iberty"
-            }
-            linkoptions { "`llvm-config --libs core` `llvm-config --ldflags`" }
-        configuration {}
-
-        configuration { "gmake" }
-            --buildoptions { "-std=c++11",  "-pedantic", "-Wall", "-Wextra" }
-            buildoptions { "-std=c++11" }
-            configuration { "macosx" }
-                buildoptions { "-U__STRICT_ANSI__", "-stdlib=libc++" }
-                linkoptions { "-stdlib=libc++" }
-        configuration {}
+        files { "src/echo.cpp" }
 
     project("stability")
         kind("ConsoleApp")
-        language("C++")
-        links {
-            "pthread",
-            "boost_thread",
-            "SDL2",
-            "boost_system",
-            "boost_regex",
-            "boost_filesystem",
-            "boost_coroutine",
-            "jsoncpp"
-        }
-        files {
-            "src/stability.cpp",
-            "../kit/**.cpp",
-            "../kit/**.inl"
-        }
+        files { "src/stability.cpp" }
 
-        defines { "BACKWARD_HAS_BFD=1" }
-
-        includedirs {
-            "../vendor/include/",
-            "/usr/include/cpp-netlib/"
-        }
-
-        configuration {"debug"}
-            links {
-                "bfd",
-                "iberty"
-            }
-            linkoptions { "`llvm-config --libs core` `llvm-config --ldflags`" }
-        configuration {}
-
-        configuration { "gmake" }
-            --buildoptions { "-std=c++11",  "-pedantic", "-Wall", "-Wextra" }
-            buildoptions { "-std=c++11" }
-            configuration { "macosx" }
-                buildoptions { "-U__STRICT_ANSI__", "-stdlib=libc++" }
-                linkoptions { "-stdlib=libc++" }
-        configuration {}
-        
     project("chat")
         kind("ConsoleApp")
-        language("C++")
-        links {
-            "pthread",
-            "boost_thread",
-            "SDL2",
-            "boost_system",
-            "boost_regex",
-            "boost_filesystem",
-            "boost_coroutine",
-            "jsoncpp"
-        }
-        files {
-            "src/chat.cpp",
-            "../kit/**.cpp",
-            "../kit/**.inl"
-        }
+        files { "src/chat.cpp" }
 
-        defines { "BACKWARD_HAS_BFD=1" }
-
-        includedirs {
-            "../vendor/include/",
-            "/usr/include/cpp-netlib/"
-        }
-
-        configuration {"debug"}
-            links {
-                "bfd",
-                "iberty"
-            }
-            linkoptions { "`llvm-config --libs core` `llvm-config --ldflags`" }
-        configuration {}
-
-        configuration { "gmake" }
-            --buildoptions { "-std=c++11",  "-pedantic", "-Wall", "-Wextra" }
-            buildoptions { "-std=c++11" }
-            configuration { "macosx" }
-                buildoptions { "-U__STRICT_ANSI__", "-stdlib=libc++" }
-                linkoptions { "-stdlib=libc++" }
-        configuration {}
-    

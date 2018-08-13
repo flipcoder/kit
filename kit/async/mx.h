@@ -226,7 +226,7 @@ class Multiplexer:
             //std::shared_ptr<Channel<T>> channel(
             //    std::function<void(std::shared_ptr<Channel<T>>)> worker
             //) {
-            //    auto chan = boost::make_local_shared<Channel<>>();
+            //    auto chan = boost::make_shared<Channel<>>();
             //    // ... inside lambda if(chan->closed()) remove?
             //}
             
