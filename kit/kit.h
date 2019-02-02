@@ -17,7 +17,6 @@
 #include <boost/optional.hpp>
 #include <boost/bimap.hpp>
 #include <boost/any.hpp>
-#include <boost/logic/tribool.hpp>
 
 // extended identifiers in msvc (and,or,not)
 #ifdef _MSC_VER
@@ -882,22 +881,22 @@ namespace kit
     }
     
     template<class T>
-    boost::tribool any_eq_type(const boost::any& a, const boost::any& b) {
+    int any_eq_type(const boost::any& a, const boost::any& b) {
         if (a.type() == typeid(T) && b.type() == typeid(T))
             return boost::any_cast<T>(a) ==
                 boost::any_cast<T>(b);
-        return boost::tribool::indeterminate_value;
+        return -1;
     }
 
     inline bool any_eq(const boost::any& a, const boost::any& b) {
         if(a.type() != b.type())
             return false;
-        {auto r = any_eq_type<std::string>(a,b); if(r||!r) return r;}
-        {auto r = any_eq_type<int>(a,b); if(r||!r) return r;}
-        {auto r = any_eq_type<unsigned>(a,b); if(r||!r) return r;}
-        {auto r = any_eq_type<float>(a,b); if(r||!r) return r;}
-        {auto r = any_eq_type<double>(a,b); if(r||!r) return r;}
-        {auto r = any_eq_type<bool>(a,b); if(r||!r) return r;}
+        {auto r = any_eq_type<std::string>(a,b); if(r>=0) return r; }
+        {auto r = any_eq_type<int>(a,b); if(r>=0) return r;}
+        {auto r = any_eq_type<unsigned>(a,b); if(r>=0) return r;}
+        {auto r = any_eq_type<float>(a,b); if(r>=0) return r;}
+        {auto r = any_eq_type<double>(a,b); if(r>=0) return r;}
+        {auto r = any_eq_type<bool>(a,b); if(r>=0) return r;}
 
         throw std::runtime_error("unable to compare values");
     }

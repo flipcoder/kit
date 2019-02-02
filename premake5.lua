@@ -137,5 +137,6 @@ workspace("kit")
         }
         
         includedirs {
+            "lib/local_shared_ptr",
         }
 
