@@ -20,42 +20,41 @@ public:
     class Time
     {
     public:
-        unsigned int value;
+        //unsigned int value;
+        float sec;
         Time():
-            value(0) {}
-        explicit Time(unsigned int ms) {
-            value = ms;
-        }
+            sec(0) {}
+        explicit Time(float ms) { sec = ms/1000.0f; } // deprecated
         Time(const Time& t) = default;
         Time& operator=(const Time& t) = default;
         Time(Time&& t) = default;
         Time& operator=(Time&& t) = default;
 
-        unsigned int internal() const { return value; }
+        unsigned ui() const { return (unsigned int)(sec*1000.0f); }
         //static Time seconds(unsigned int s) { return Time(s * 1000);}
-        static Time seconds(float s) { return Time((unsigned int)(s * 1000.0f)); }
+        static Time seconds(float s) { return Time(s*1000.0f); }
         //static Time minutes(unsigned int m) { return Time(m * 60000);}
-        static Time minutes(float m) { return Time((unsigned int)(m * 60000.0f));}
-        static Time ms(unsigned int ms) { return Time(ms); }
+        static Time minutes(float m) { return Time(m * 60000.0f);}
+        static Time ms(float ms) { return Time(ms); }
 
-        //operator bool() const { return value; }
-        //operator float() const { return value / 1000.0f; }
+        //operator bool() const { return sec; }
+        //operator float() const { return sec / 1000.0f; }
 
         Time& operator+=(Time t) {
-            value += t.internal();
+            sec += t.sec;
             return *this;
         }
-        bool operator>(Time t) const { return value > t.internal(); }
-        bool operator<(Time t) const { return value < t.internal(); }
-        bool operator>=(Time t) const { return value >= t.internal(); }
-        bool operator<=(Time t) const { return value <= t.internal(); }
+        bool operator>(Time t) const { return sec > t.sec; }
+        bool operator<(Time t) const { return sec < t.sec; }
+        bool operator>=(Time t) const { return sec >= t.sec; }
+        bool operator<=(Time t) const { return sec <= t.sec; }
         operator bool() const {
-            return value;
+            return std::abs(sec*1000.0f) > K_EPSILON;
         }
 
-        float s() const { return value / 1000.0f; }
-        float seconds() const { return value / 1000.0f; }
-        unsigned int ms() const { return value; }
+        float s() const { return sec; }
+        float seconds() const { return sec; }
+        float ms() const { return sec * 1000.0f; }
     };
 
     class Timeline {
@@ -122,7 +121,7 @@ public:
             }
 
             bool elapsed(Freq::Time value) {
-                return m_ulPassedTime > value.ms();
+                return m_ulPassedTime > value.ui();
             }
             Freq::Time age() const {
                 return Freq::Time::ms(m_ulPassedTime);
@@ -225,7 +224,7 @@ public:
         }
 
         Freq::Time pause() {
-            return Freq::Time(m_ulAlarmTime - m_ulStartTime);
+            return Freq::Time::ms(m_ulAlarmTime - m_ulStartTime);
         }
 
         void minutes(unsigned int m)
@@ -277,7 +276,7 @@ public:
         Freq::Time excess() const {
             if(!elapsed())
                 return Freq::Time(0);
-            return Freq::Time(m_pTimer->ms() - m_ulAlarmTime);
+            return Freq::Time::ms(m_pTimer->ms() - m_ulAlarmTime);
         }
 
         boost::signals2::connection connect(std::function<void()> cb) {
