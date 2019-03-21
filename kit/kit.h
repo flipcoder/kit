@@ -891,12 +891,12 @@ namespace kit
     inline bool any_eq(const boost::any& a, const boost::any& b) {
         if(a.type() != b.type())
             return false;
-        {auto r = any_eq_type<std::string>(a,b); if(r>=0) return r; }
-        {auto r = any_eq_type<int>(a,b); if(r>=0) return r;}
-        {auto r = any_eq_type<unsigned>(a,b); if(r>=0) return r;}
-        {auto r = any_eq_type<float>(a,b); if(r>=0) return r;}
-        {auto r = any_eq_type<double>(a,b); if(r>=0) return r;}
-        {auto r = any_eq_type<bool>(a,b); if(r>=0) return r;}
+        {auto r = any_eq_type<std::string>(a,b); if(r>=0) return bool(r); }
+        {auto r = any_eq_type<int>(a,b); if(r>=0) return bool(r);}
+        {auto r = any_eq_type<unsigned>(a,b); if(r>=0) return bool(r);}
+        {auto r = any_eq_type<float>(a,b); if(r>=0) return bool(r);}
+        {auto r = any_eq_type<double>(a,b); if(r>=0) return bool(r);}
+        {auto r = any_eq_type<bool>(a,b); if(r>=0) return bool(r);}
 
         throw std::runtime_error("unable to compare values");
     }

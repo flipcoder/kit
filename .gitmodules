@@ -1,3 +1,4 @@
+
 [submodule "lib/local_shared_ptr"]
 	path = lib/local_shared_ptr
-	url = https://github.com/flipcoder/local_shared_ptr
+	url = git@github.com:flipcoder/local_shared_ptr.git
