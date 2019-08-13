@@ -59,7 +59,9 @@ class SchemaBase
         Ptr<Meta_<Mutex,Ptr,This>> m_pSchema;
 };
 
-using Schema = SchemaBase<kit::dummy_mutex, kit::local_shared_ptr, kit::enable_shared_from_this>;
+using Schema = SchemaBase<kit::dummy_mutex, META_STORAGE, META_THIS>;
+using SchemaL = SchemaBase<kit::dummy_mutex, kit::local_shared_ptr, kit::enable_shared_from_this>;
+using SchemaS = SchemaBase<kit::dummy_mutex, std::shared_ptr, std::enable_shared_from_this>;
 using SchemaMT = SchemaBase<std::recursive_mutex, std::shared_ptr, std::enable_shared_from_this>;
 
 #include "schema.inl"

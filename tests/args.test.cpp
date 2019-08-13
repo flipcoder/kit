@@ -62,8 +62,16 @@ TEST_CASE("Args","[args]") {
         REQUIRE(not args.has('b', "bchar"));
         REQUIRE(args.has('c', "cchar"));
     }
+
+    SECTION("key-value") {
+        Args args;
+        REQUIRE_NOTHROW(args = Args(vector<string>{"--foo=bar"}));
+        REQUIRE(args.value("foo") == "bar");
+        REQUIRE(args.value_or("foo","baz") == "bar");
+        REQUIRE(args.value_or("bin","baz") == "baz");
+    }
     
-    SECTION("schemas") {
+    SECTION("expected") {
         Args args;
         
         REQUIRE_NOTHROW(args = Args(vector<string>{"--foo"}, "-f --foo"));
@@ -87,7 +95,6 @@ TEST_CASE("Args","[args]") {
             // -c invalid
             REQUIRE_THROWS(Args(vector<string>{"-abc"}, "-a -b"));
         }
-
     }
 }
 
