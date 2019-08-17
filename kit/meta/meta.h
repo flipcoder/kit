@@ -748,6 +748,13 @@ class Meta_:
         //    >()
         //);
 
+        MetaType::ID type_id(const std::string& key) const {
+            return m_Elements.at(m_Keys.at(key)).type.id;
+        }
+        MetaType::ID type_id(unsigned idx) const {
+            return m_Elements.at(idx).type.id;
+        }
+
         unsigned id(const std::string& key) {
             auto l = this->lock();
             return m_Keys.at(key);
