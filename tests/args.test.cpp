@@ -63,6 +63,16 @@ TEST_CASE("Args","[args]") {
         REQUIRE(args.has('c', "cchar"));
     }
 
+    SECTION("any") {
+        Args args;
+        args = Args(vector<string>{"foo", "bar"});
+        REQUIRE(not args.any({"bin"}));
+        REQUIRE(not args.any({"bin","baz"}));
+        REQUIRE(args.any({"bar","bin"}));
+        REQUIRE(args.any({"bin","bar"}));
+        REQUIRE(args.any({"foo","bar"}));
+    }
+
     SECTION("key-value") {
         Args args;
         REQUIRE_NOTHROW(args = Args(vector<string>{"--foo=bar"}));

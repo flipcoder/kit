@@ -62,7 +62,8 @@ class Args
 
         bool any(const std::vector<std::string>& v) const {
             for(auto&& s: v)
-                return kit::has(m_Args, s);
+                if(kit::has(m_Args, s))
+                    return true;
             return false;
         }
         bool has(const std::string& s) const {
