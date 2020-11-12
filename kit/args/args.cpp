@@ -18,7 +18,7 @@ void Args :: analyze()
         if(boost::starts_with(arg, "--"))
         {
             if(arg.length()==2)
-                after_sep = true;
+                after_sep = true; // empty -- is a separator
             
             if(!after_sep)
             {
@@ -34,12 +34,72 @@ void Args :: analyze()
                     if(!value.empty())
                         if(!m_Values.insert({key,value}).second)
                             throw exception(); // failed to insert
+                    
+                    m_Switches.insert(remove_dashes(key)); // insert key as switch
+                }
+                else
+                {
+                    m_Switches.insert(remove_dashes(arg)); // just a switch, --test is test
                 }
             }
         }
-        else if(not boost::starts_with(arg, "-"))
+        else if(boost::starts_with(arg, "-")) // only one dash? (above check is two)
+        {
+            string flags = arg.substr(1); // remove one dash
+            for(auto&& ch: flags)
+                m_Switches.insert(string()+ch); // add chars separately
+        }
+        else
+        {
+            // no - or --, assume its a filename
             m_Filenames.push_back(arg);
+        }
     }
+}
+
+string Args :: remove_dashes(string s, bool* success) // static
+{
+    if(success)
+        *success = false;
+    
+    if(boost::starts_with(s,"--"))
+    {
+        s = s.substr(2);
+        if(success)
+            *success = true;
+    }
+    else if(boost::starts_with(s,"-"))
+    {
+        s = s.substr(1);
+        if(success)
+            *success = true;
+    }
+    return s;
+}
+
+bool Args :: has(std::string op) const
+{
+    bool removed;
+    string flag = remove_dashes(op, &removed);
+    if(not removed)
+        return kit::has(m_Args, op);
+    
+    if(not flag.empty())
+        return kit::has(m_Switches, flag);
+    
+    assert(false);
+}
+
+bool Args :: has(char ch, std::string op) const
+{
+    if(boost::starts_with(op, "--"))
+        op = op.substr(2); // remove --
+    else if(boost::starts_with(op, "-"))
+        op = op.substr(1);
+    auto flag = string()+ch;
+    return (kit::has(m_Switches, flag) ||
+       (not op.empty() && kit::has(m_Switches, op))
+    );
 }
 
 void Args :: schema(std::string docstring)

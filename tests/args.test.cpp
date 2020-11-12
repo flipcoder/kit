@@ -29,18 +29,20 @@ TEST_CASE("Args","[args]") {
     SECTION("has") {
         // empty
         Args args;
-        REQUIRE(not args.has("foobar"));
+        REQUIRE(not args.has("foo"));
+        REQUIRE(not args.has("-f"));
+        REQUIRE(not args.has("--foobar"));
         
         // single arg
-        args = Args(vector<string>{"foobar"});
-        REQUIRE(args.has("foobar"));
-        REQUIRE(not args.has("foo"));
+        args = Args(vector<string>{"--foobar"});
+        REQUIRE(args.has("--foobar"));
+        REQUIRE(not args.has("--foo"));
         
         // multiple args
-        args = Args(vector<string>{"foo", "bar"});
-        REQUIRE(args.has("foo"));
-        REQUIRE(args.has("bar"));
-        REQUIRE(not args.has("baz"));
+        args = Args(vector<string>{"--foo", "--bar"});
+        REQUIRE(args.has("--foo"));
+        REQUIRE(args.has("--bar"));
+        REQUIRE(not args.has("--baz"));
 
         // switches
         args = Args();
@@ -52,25 +54,38 @@ TEST_CASE("Args","[args]") {
         REQUIRE(args.has('v', "verbose")); // single char
         REQUIRE(not args.has('n', "nope"));
 
-        // multiple char switches
-        args = Args(vector<string>{"-abc"}, "-a -b -c");
-        REQUIRE(args.has('a', "achar"));
-        REQUIRE(args.has('b', "bchar"));
-        REQUIRE(args.has('c', "cchar"));
-        args = Args(vector<string>{"-ac"}, "-a -b -c");
-        REQUIRE(args.has('a', "achar"));
-        REQUIRE(not args.has('b', "bchar"));
-        REQUIRE(args.has('c', "cchar"));
+        // multiple char switches (not combined)
+        //args = Args(vector<string>{"-abc"}, "-a -b -c");
+        //REQUIRE(args.has('a', "achar"));
+        //REQUIRE(args.has('b', "bchar"));
+        //REQUIRE(args.has('c', "cchar"));
+        //args = Args(vector<string>{"-ac"}, "-a -b -c");
+        //REQUIRE(args.has('a', "achar"));
+        //REQUIRE(not args.has('b', "bchar"));
+        //REQUIRE(args.has('c', "cchar"));
     }
 
+    SECTION("option") {
+        Args args;
+        args = Args(vector<string>{"-abc", "-d", "--go"});
+        REQUIRE(args.has('a'));
+        REQUIRE(args.has("-a"));
+        REQUIRE(args.has('b', "berry"));
+        REQUIRE(args.has('c'));
+        REQUIRE(args.has('d', "door"));
+        REQUIRE(not args.has('e'));
+        REQUIRE(not args.has('f', "foo"));
+        REQUIRE(args.has('g', "go"));
+    }
+    
     SECTION("any") {
         Args args;
-        args = Args(vector<string>{"foo", "bar"});
-        REQUIRE(not args.any({"bin"}));
-        REQUIRE(not args.any({"bin","baz"}));
-        REQUIRE(args.any({"bar","bin"}));
-        REQUIRE(args.any({"bin","bar"}));
-        REQUIRE(args.any({"foo","bar"}));
+        args = Args(vector<string>{"--foo", "--bar"});
+        REQUIRE(not args.any({"--bin"}));
+        REQUIRE(not args.any({"--bin","--baz"}));
+        REQUIRE(args.any({"--bar","--bin"}));
+        REQUIRE(args.any({"--bin","--bar"}));
+        REQUIRE(args.any({"--foo","--bar"}));
     }
 
     SECTION("key-value") {

@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <set>
 #include "../kit.h"
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
@@ -66,9 +67,12 @@ class Args
                     return true;
             return false;
         }
-        bool has(const std::string& s) const {
-            return kit::has(m_Args, s);
-        }
+        
+        // [OLD]
+        //bool has(const std::string& s) const {
+        //    return kit::has(m_Args, s);
+        //}
+        
         bool has_before(
             const std::string& match, const std::string& sep
         ) const {
@@ -227,16 +231,26 @@ class Args
             }
         }
 
-        // tests for a switch and its associated char
-        bool has(char c, std::string s) const {
-            assert(not boost::starts_with(s, "--"));
-            return has(c) || has(std::string("--")+s);
-        }
-        bool has(char c) const {
-            std::string chs = chars();
-            return chs.find(c) != std::string::npos;
-        }
-        // returns string containing all provided char switches
+        // [OLD] tests for a switch and its associated char
+        //bool has(char c, std::string s) const {
+        //    if(boost::starts_with(s, "--"))
+        //        s = s.substr(2); // remove --
+        //    else if(boost::starts_with(s, "-"))
+        //        s = s.substr(1);
+        //    if(has(c) || has(std::string("--")+s)
+        //        return true;
+        //    if(option(c,s))
+        //        return true;
+        //    return false;
+        //}
+        
+        // [DEPRECATED]
+        //bool has(char c) const {
+        //    std::string chs = chars();
+        //    return chs.find(c) != std::string::npos;
+        //}
+                
+        // [DEPRECATED] returns string containing all provided char switches
         std::string chars() const {
             std::string r;
             for(auto&& a: m_Args)
@@ -288,7 +302,12 @@ class Args
             m_Filename = fn;
         }
 
+        bool has(std::string op) const;
+        bool has(char ch, std::string full = std::string()) const;
+
     private:
+
+        static std::string remove_dashes(std::string s, bool* success = nullptr);
 
         struct Schema
         {
@@ -305,6 +324,12 @@ class Args
         std::map<std::string, std::string> m_Values;
         std::string m_Filename;
         boost::optional<Schema> m_Schema;
+
+        // all options broken down separately
+        //   ./program -abc --test
+        // will contain -a, -b, -c, and --test
+        // use has() to check this
+        std::set<std::string> m_Switches;
 };
 
 #endif
