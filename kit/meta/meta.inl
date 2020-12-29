@@ -19,7 +19,7 @@ Meta_<Mutex,Ptr,This> :: Meta_(const Ptr<Meta_<Mutex,Ptr,This>>& rhs)
     //clear();
     //auto tmp = make_shared<Meta>();
     //tmp->merge(rhs);
-    //merge(rhs);
+    merge(rhs);
 }
 
 template<class Mutex, template <class> class Ptr, template <typename> class This>
