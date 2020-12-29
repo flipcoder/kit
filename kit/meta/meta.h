@@ -697,7 +697,7 @@ class Meta_:
          *
          * TODO: timeout callback if we hit a lock
          * TODO: incremental behavior (merge only what you can without locking)
-         *  so you can loop this until `t` is empty)
+         *  so you can loop this until `t` is empty) -- warning: destructive
          *
          *  For throw-on-conflict behavior, throw inside of `which`
          */
@@ -733,7 +733,7 @@ class Meta_:
             const std::string& fn,
             unsigned flags = (unsigned)MergeFlags::DEFAULTS // MergeFlags
         );
-        
+
         //void merge(
         //    const Meta_& t,
         //    unsigned flags = (unsigned)MergeFlags::DEFAULTS,
@@ -1511,8 +1511,8 @@ class Meta_:
 // Use these instead of defines
 using Meta = Meta_<kit::dummy_mutex, META_STORAGE, META_THIS>;
 using MetaS = Meta_<kit::dummy_mutex, std::shared_ptr, std::enable_shared_from_this>;
-using MetaL = Meta_<kit::dummy_mutex, kit::local_shared_ptr>;
-using MetaMT = Meta_<std::recursive_mutex, std::shared_ptr>;
+using MetaL = Meta_<kit::dummy_mutex, kit::local_shared_ptr, kit::enable_shared_from_this>;
+using MetaMT = Meta_<std::recursive_mutex, std::shared_ptr, std::enable_shared_from_this>;
 
 #include "meta.inl"
 

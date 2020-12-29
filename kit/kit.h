@@ -12,6 +12,7 @@
 #include <atomic>
 #include <future>
 #include <chrono>
+#include <fstream>
 #include <boost/algorithm/string.hpp>
 #include <kit/local_shared_ptr.hpp>
 #include <boost/optional.hpp>
@@ -1174,6 +1175,31 @@ namespace kit
     template<class T>
     T mix(T a, T b, float t) {
         return a + (b-a)*t;
+    }
+
+    inline std::vector<char> file_to_buffer(const std::string& fn)
+    {
+        std::ifstream file(fn);
+        if(!file)
+            return std::vector<char>();
+        std::vector<char> data(
+            (std::istreambuf_iterator<char>(file)),
+            std::istreambuf_iterator<char>()
+        );
+        data.push_back('\0');
+        return data;
+    }
+
+    inline std::string file_to_string(const std::string & fn)
+    {
+        std::ifstream file(fn);
+        if (!file)
+            return std::string();
+        std::string data(
+            (std::istreambuf_iterator<char>(file)),
+            std::istreambuf_iterator<char>()
+        );
+        return data;
     }
 
     #define TRY(expr) try{ expr; } catch(...) {}

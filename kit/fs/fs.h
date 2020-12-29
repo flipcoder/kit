@@ -5,14 +5,14 @@
 #include <boost/filesystem/path.hpp>
 #include "../log/log.h"
 
-namespace fs {
-
 #ifdef _WIN32
-#define SEP "\\"
+    static const std::string PATH_SEP = "\\";
 #else
-#define SEP "/"
+    static const std::string PATH_SEP = "/";
 #endif
 
+namespace kit {
+    
     inline std::string homedir() {
         const char* homedir = getenv("HOME");
         if(!homedir)
@@ -42,13 +42,13 @@ namespace fs {
 #ifdef _WIN32
             r = std::string(cdir);
 #else
-            r = std::string(cdir) + SEP + ".config";
+            r = std::string(cdir) + PATH_SEP + ".config";
 #endif
         }
         else
             r = cdir;
         if(not apppath.empty())
-            return r + SEP + apppath;
+            return r + PATH_SEP + apppath;
         return r;
     }
 }

@@ -16,8 +16,10 @@ Meta_<Mutex,Ptr,This> :: Meta_(const std::string& fn, unsigned flags):
 template<class Mutex, template <class> class Ptr, template <typename> class This>
 Meta_<Mutex,Ptr,This> :: Meta_(const Ptr<Meta_<Mutex,Ptr,This>>& rhs)
 {
-    clear();
-    merge(rhs);
+    //clear();
+    //auto tmp = make_shared<Meta>();
+    //tmp->merge(rhs);
+    //merge(rhs);
 }
 
 template<class Mutex, template <class> class Ptr, template <typename> class This>
@@ -1078,4 +1080,137 @@ template<class Mutex, template <class> class Ptr, template <typename> class This
         return MetaFormat::YAML;
     return MetaFormat::UNKNOWN;
 }
+
+//template<class Mutex, template <class> class Ptr, template <typename> class This>
+//static std::shared_ptr<Meta> Meta_<Mutex,Ptr,This> :: copy()
+//{
+//    assert(t);
+
+//    auto l = lock();
+    
+//    if(!timeout)
+//        std::lock(al, bl);
+//    else
+//    {
+//        if(std::try_lock(al, bl) != -1) // failed to this->lock
+//        {
+//            // incremental merges only try subtrees once and only if they have
+//            // timeouts
+//            auto spthis = this->shared_from_this();
+//            if(flags & (unsigned)MergeFlags::INCREMENTAL)
+//            {
+//                // bail if no timeout function or if timeout returns false
+//                if(!timeout || !timeout(spthis))
+//                    return;
+//                // timeout told us to retry once more
+//                if(std::try_lock(al, bl) != -1)
+//                    return;
+//            }
+//            else
+//            {
+//                do {
+//                    if(!timeout(spthis))
+//                        return; // give up
+//                }while(std::try_lock(al, bl) == -1);
+//            }
+//        }
+//    }
+
+//    for(auto&& e: t->elements_ref())
+//    {
+//        if(visit)
+//            visit(t, e);
+        
+//        if(e.key.empty())
+//            m_Elements.push_back(e);
+//        else if(m_Keys.find(e.key)==m_Keys.end())
+//        {
+//            m_Elements.push_back(e);
+//            m_Keys[e.key] = m_Elements.size()-1;
+//        }
+//        else
+//        {
+//            // already there, merge?
+//            unsigned this_id = m_Keys[e.key];
+//            auto&& this_e = m_Elements[this_id];
+//            if(this_e.type.id == MetaType::ID::META &&
+//                    e.type.id == MetaType::ID::META// &&
+//                //this_e.type.storage == MetaType::Ptr::SHARED &&
+//                //     e.type.storage == MetaType::Ptr::SHARED
+//            ){
+//                if(flags & (unsigned)MergeFlags::RECURSIVE)
+//                {
+//                    //try{
+//                        at<Ptr<Meta_<Mutex,Ptr,This>>>(this_id)->merge(
+//                            t->template at<TPtr<Meta_<TMutex,TPtr>>>(e.key),
+//                            which,
+//                            flags,
+//                            timeout
+//                        );
+//                    //}catch(const kit::null_ptr_exception&){}
+//                }
+//                else
+//                {
+//                    auto r = which(this_e, e);
+//                    Meta_::Which* w = boost::get<Meta_::Which>(&r);
+//                    if(!w)
+//                    {
+//                        MetaElement* a = boost::get<MetaElement>(&r);
+//                        auto preserved_key = this_e.key;
+//                        if(flags & (unsigned)MergeFlags::INCREMENTAL)
+//                            this_e = std::move(*a);
+//                        else
+//                            this_e = *a;
+//                        this_e.key = preserved_key;
+//                    }
+//                    else if(*w == Which::RECURSE)
+//                    {
+//                        auto m = at<Ptr<Meta_<Mutex,Ptr,This>>>(this_id);
+//                        assert(m);
+//                        m->merge(
+//                            t->template at<Ptr<Meta_<Mutex,Ptr,This>>>(e.key),
+//                            which,
+//                            flags,
+//                            timeout
+//                        );
+//                        // delete entire null trees in destructive merges
+//                        if(flags & (unsigned)MergeFlags::INCREMENTAL)
+//                        {
+//                            if(m->all_empty())
+//                            {
+//                                m->clear();
+//                                e.nullify();
+//                            }
+//                        }
+//                    }
+//                    else if(*w == Which::OTHER)
+//                    {
+//                        replace(this_id, e);
+//                        if(flags & (unsigned)MergeFlags::INCREMENTAL)
+//                            e.nullify();
+//                    }
+//                    else if(*w == Which::NEITHER)
+//                    {
+//                        remove(this_id);
+//                        if(flags & (unsigned)MergeFlags::INCREMENTAL)
+//                            e.nullify();
+//                    }
+
+//                    // TODO: other Meta_::Which values (except Which::SELF,
+//                    //  that can be treated simply by continue; below)
+//                    // Meta_::Which values have preference over flags below
+//                    // so we continue; here
+
+//                    continue;
+//                }
+//            }
+
+//            if(flags & (unsigned)MergeFlags::REPLACE) {
+//                replace(this_id, e);
+//                e.nullify();
+//            }
+//        }
+//    }
+
+//}
 

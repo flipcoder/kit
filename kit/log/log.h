@@ -408,6 +408,25 @@ private:
     throw Error(ErrorCode::CODE, _msg);\
 }
 
+#ifdef _DEBUG
+    #define DEBUG_LOG(X) LOG(X)
+    #define DEBUG_LOGf(X,Y) LOGf(X,Y)
+    #define DEBUG_WARNING(X) WARNING(X)
+    #define DEBUG_WARNINGf(X,Y) WARNINGf(X,Y)
+    // this will only write the error in debug, otherwise assert(false);
+    #define DEBUG_ERROR(CODE,X) ERROR(CODE,X)
+    #define DEBUG_ERRORf(CODE,X,Y) ERRORf(CODE,X,Y)
+#else
+    #define DEBUG_LOG(X)
+    #define DEBUG_LOGf(X,Y)
+    #define DEBUG_WARNING(X)
+    #define DEBUG_WARNINGf(X,Y)
+    // this will only write the error in debug, otherwise assert(false);
+    #define DEBUG_ERROR(CODE,X) assert(false);
+    #define DEBUG_ERRORf(CODE,X,Y) assert(false);
+#endif
+
+
 //#ifdef DEBUG
 //    #define _()\
 //        Log::Indent _li(\
